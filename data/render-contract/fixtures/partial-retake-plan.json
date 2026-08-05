@@ -1,0 +1,81 @@
+{
+  "renderPlanVersion": "1.0.0",
+  "planId": "render-partial-board",
+  "sourceDraftId": "draft-partial-board",
+  "localComponentRegistryId": "v1-saturated-board-components",
+  "renderState": "retake",
+  "primaryAction": "retake_image",
+  "instances": [
+    {
+      "instanceId": "board-title",
+      "componentType": "board_title",
+      "renderer": "BoardTitle",
+      "dataPath": "/blocks/0",
+      "layoutPath": "/blocks/0/layout",
+      "ticketCountRole": "excluded",
+      "interactive": false,
+      "sourceLayout": {
+        "region": "header",
+        "boundingBox": { "x": 0.08, "y": 0.05, "width": 0.7, "height": 0.08 },
+        "parentId": null,
+        "zIndex": 1,
+        "readingOrder": 0
+      }
+    },
+    {
+      "instanceId": "tier-a",
+      "componentType": "prize_tier",
+      "renderer": "PrizeTier",
+      "dataPath": "/tiers/0",
+      "layoutPath": "/tiers/0/layout",
+      "ticketCountRole": "sum_tier_slots",
+      "interactive": false,
+      "sourceLayout": {
+        "region": "tier_grid",
+        "boundingBox": { "x": 0.06, "y": 0.18, "width": 0.42, "height": 0.18 },
+        "parentId": null,
+        "zIndex": 1,
+        "readingOrder": 1
+      }
+    },
+    {
+      "instanceId": "tier-b",
+      "componentType": "prize_tier",
+      "renderer": "PrizeTier",
+      "dataPath": "/tiers/1",
+      "layoutPath": "/tiers/1/layout",
+      "ticketCountRole": "sum_tier_slots",
+      "interactive": false,
+      "sourceLayout": {
+        "region": "tier_grid",
+        "boundingBox": { "x": 0.52, "y": 0.18, "width": 0.42, "height": 0.18 },
+        "parentId": null,
+        "zIndex": 1,
+        "readingOrder": 2
+      }
+    }
+  ],
+  "sourceMap": {
+    "enabled": true,
+    "readOnly": true,
+    "aspectRatio": 1,
+    "itemIds": ["board-title", "tier-a", "tier-b"]
+  },
+  "mobileFlow": {
+    "enabled": false,
+    "accessibilityOrder": ["board-title", "tier-a", "tier-b"],
+    "groups": []
+  },
+  "issues": [
+    { "code": "FRAME_PARTIAL", "path": "/draft/completeness/frame", "blocking": true, "action": "retake_image", "targetInstanceId": null },
+    { "code": "REGULAR_TIERS_INCOMPLETE", "path": "/draft/tiers", "blocking": true, "action": "retake_image", "targetInstanceId": null },
+    { "code": "ONE_SLOT_ONE_TICKET_UNCONFIRMED", "path": "/draft/completeness/oneSlotOneTicketConfirmed", "blocking": true, "action": "confirm_one_slot_one_ticket", "targetInstanceId": null },
+    { "code": "TOTAL_TICKETS_DERIVATION_BLOCKED", "path": "/draft/derived/totalTickets", "blocking": true, "action": "confirm_total_tickets", "targetInstanceId": null },
+    { "code": "REMAINING_TICKETS_DERIVATION_BLOCKED", "path": "/draft/derived/remainingTickets", "blocking": true, "action": "confirm_remaining_tickets", "targetInstanceId": null }
+  ],
+  "security": {
+    "rendererLookup": "local_registry_only",
+    "remoteCodeAccepted": false,
+    "unknownExecutableAccepted": false
+  }
+}

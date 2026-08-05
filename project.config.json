@@ -1,0 +1,37 @@
+{
+  "appid": "wx58669d300f6466b1",
+  "projectname": "ichi",
+  "compileType": "miniprogram",
+  "libVersion": "3.17.0",
+  "miniprogramRoot": "apps/client/miniprogram/",
+  "cloudfunctionRoot": "services/cloudbase/functions/",
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "uploadWithSourceMap": true,
+    "ignoreUploadUnusedFiles": true,
+    "useCompilerPlugins": ["typescript"],
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "condition": false,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "simulatorPluginLibVersion": {},
+  "editorSetting": {}
+}

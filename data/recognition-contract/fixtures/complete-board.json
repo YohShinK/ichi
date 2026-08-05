@@ -1,0 +1,244 @@
+{
+  "contractVersion": "1.0.0",
+  "request": {
+    "requestId": "fixture-complete-board",
+    "imageRef": "ephemeral:fixture-complete-board",
+    "image": {
+      "mediaType": "image/jpeg",
+      "width": 1080,
+      "height": 1440,
+      "acquisition": "camera"
+    },
+    "localeHints": ["zh-CN", "ja-JP"]
+  },
+  "response": {
+    "requestId": "fixture-complete-board",
+    "status": "ready_for_confirmation",
+    "draft": {
+      "schemaVersion": "1.0.0",
+      "draftId": "draft-complete-board",
+      "image": {
+        "width": 1080,
+        "height": 1440,
+        "orientation": "portrait",
+        "storedRemotely": false
+      },
+      "completeness": {
+        "frame": "complete",
+        "allRegularTiersDetected": true,
+        "oneSlotOneTicketConfirmed": true,
+        "confidence": 0.97
+      },
+      "price": {
+        "status": "recognized",
+        "amount": 58,
+        "currency": "CNY",
+        "rawText": "58元/抽",
+        "origin": "recognized",
+        "confidence": 0.96
+      },
+      "tiers": [
+        {
+          "componentId": "tier-a",
+          "componentType": "prize_tier",
+          "label": "A",
+          "rawLabel": "A赏",
+          "prizeName": "A赏奖品",
+          "origin": "recognized",
+          "confidence": 0.98,
+          "layout": {
+            "region": "tier_grid",
+            "boundingBox": { "x": 0.06, "y": 0.24, "width": 0.4, "height": 0.16 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 3
+          },
+          "slotObservation": {
+            "totalSlots": 1,
+            "openSlots": 1,
+            "coveredSlots": 0,
+            "unknownSlots": 0,
+            "arrangement": { "direction": "row", "rows": 1, "columns": 1 },
+            "confidence": 0.99
+          }
+        },
+        {
+          "componentId": "tier-b",
+          "componentType": "prize_tier",
+          "label": "B",
+          "rawLabel": "B赏",
+          "prizeName": "B赏奖品",
+          "origin": "recognized",
+          "confidence": 0.97,
+          "layout": {
+            "region": "tier_grid",
+            "boundingBox": { "x": 0.54, "y": 0.24, "width": 0.4, "height": 0.16 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 4
+          },
+          "slotObservation": {
+            "totalSlots": 2,
+            "openSlots": 1,
+            "coveredSlots": 1,
+            "unknownSlots": 0,
+            "arrangement": { "direction": "row", "rows": 1, "columns": 2 },
+            "confidence": 0.98
+          }
+        },
+        {
+          "componentId": "tier-c",
+          "componentType": "prize_tier",
+          "label": "C",
+          "rawLabel": "C赏",
+          "prizeName": "C赏奖品",
+          "origin": "recognized",
+          "confidence": 0.96,
+          "layout": {
+            "region": "tier_grid",
+            "boundingBox": { "x": 0.06, "y": 0.42, "width": 0.88, "height": 0.18 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 5
+          },
+          "slotObservation": {
+            "totalSlots": 3,
+            "openSlots": 2,
+            "coveredSlots": 1,
+            "unknownSlots": 0,
+            "arrangement": { "direction": "row", "rows": 1, "columns": 3 },
+            "confidence": 0.97
+          }
+        }
+      ],
+      "blocks": [
+        {
+          "componentId": "board-title",
+          "componentType": "board_title",
+          "ticketCountRole": "excluded",
+          "rawText": "示例一番赏兑换进度表",
+          "origin": "recognized",
+          "confidence": 0.97,
+          "layout": {
+            "region": "header",
+            "boundingBox": { "x": 0.08, "y": 0.05, "width": 0.68, "height": 0.09 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 0
+          },
+          "executable": false
+        },
+        {
+          "componentId": "price-block",
+          "componentType": "price",
+          "ticketCountRole": "excluded",
+          "rawText": "58元/抽",
+          "origin": "recognized",
+          "confidence": 0.96,
+          "layout": {
+            "region": "header",
+            "boundingBox": { "x": 0.78, "y": 0.05, "width": 0.16, "height": 0.09 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 1
+          },
+          "executable": false
+        },
+        {
+          "componentId": "ticket-total",
+          "componentType": "ticket_total",
+          "ticketCountRole": "derived_output",
+          "rawText": "共6抽",
+          "origin": "derived",
+          "confidence": 1,
+          "layout": {
+            "region": "identity",
+            "boundingBox": { "x": 0.78, "y": 0.15, "width": 0.16, "height": 0.06 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 2
+          },
+          "executable": false
+        },
+        {
+          "componentId": "last-prize",
+          "componentType": "last_prize",
+          "ticketCountRole": "excluded",
+          "rawText": "最终赏",
+          "origin": "recognized",
+          "confidence": 0.94,
+          "layout": {
+            "region": "prize_showcase",
+            "boundingBox": { "x": 0.06, "y": 0.62, "width": 0.42, "height": 0.12 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 6
+          },
+          "executable": false
+        },
+        {
+          "componentId": "instruction",
+          "componentType": "instruction",
+          "ticketCountRole": "excluded",
+          "rawText": "每个等级奖品兑换完后请贴券",
+          "origin": "recognized",
+          "confidence": 0.91,
+          "layout": {
+            "region": "instruction",
+            "boundingBox": { "x": 0.52, "y": 0.62, "width": 0.42, "height": 0.12 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 7
+          },
+          "executable": false
+        },
+        {
+          "componentId": "qr-code",
+          "componentType": "qr_code",
+          "ticketCountRole": "excluded",
+          "origin": "recognized",
+          "confidence": 0.99,
+          "layout": {
+            "region": "footer",
+            "boundingBox": { "x": 0.78, "y": 0.82, "width": 0.16, "height": 0.12 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 8
+          },
+          "executable": false
+        }
+      ],
+      "readingOrder": [
+        "board-title",
+        "price-block",
+        "ticket-total",
+        "tier-a",
+        "tier-b",
+        "tier-c",
+        "last-prize",
+        "instruction",
+        "qr-code"
+      ],
+      "derived": {
+        "totalTickets": {
+          "status": "auto_confirmed",
+          "value": 6,
+          "formula": "sum(tiers.slotObservation.totalSlots)",
+          "origin": "derived"
+        },
+        "remainingTickets": {
+          "status": "auto_confirmed",
+          "value": 4,
+          "formula": "sum(tiers.slotObservation.openSlots)",
+          "origin": "derived"
+        }
+      }
+    },
+    "issues": [],
+    "imageHandling": {
+      "retention": "ephemeral",
+      "published": false,
+      "storedInSessionHistory": false
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "contractVersion": "1.0.0",
+  "issues": [
+    { "code": "IMAGE_UNREADABLE", "defaultAction": "retake_image", "blocking": true },
+    { "code": "FRAME_PARTIAL", "defaultAction": "retake_image", "blocking": true },
+    { "code": "FRAME_UNCERTAIN", "defaultAction": "retake_image", "blocking": true },
+    { "code": "REGULAR_TIERS_INCOMPLETE", "defaultAction": "retake_image", "blocking": true },
+    { "code": "ONE_SLOT_ONE_TICKET_UNCONFIRMED", "defaultAction": "confirm_one_slot_one_ticket", "blocking": true },
+    { "code": "TIER_LABEL_LOW_CONFIDENCE", "defaultAction": "confirm_tier_label", "blocking": true },
+    { "code": "TIER_LABEL_OTHER", "defaultAction": "confirm_tier_label", "blocking": true },
+    { "code": "TIER_SLOT_LOW_CONFIDENCE", "defaultAction": "correct_tier_slots", "blocking": true },
+    { "code": "TIER_SLOT_COUNT_INCONSISTENT", "defaultAction": "correct_tier_slots", "blocking": true },
+    { "code": "UNKNOWN_SLOT_STATE", "defaultAction": "correct_tier_slots", "blocking": true },
+    { "code": "PRICE_MISSING", "defaultAction": "fill_price", "blocking": true },
+    { "code": "PRICE_LOW_CONFIDENCE", "defaultAction": "confirm_price", "blocking": true },
+    { "code": "PRICE_HANDWRITTEN", "defaultAction": "fill_price", "blocking": true },
+    { "code": "TOTAL_TICKETS_DERIVATION_BLOCKED", "defaultAction": "confirm_total_tickets", "blocking": true },
+    { "code": "REMAINING_TICKETS_DERIVATION_BLOCKED", "defaultAction": "confirm_remaining_tickets", "blocking": true },
+    { "code": "UNKNOWN_BLOCK_DETECTED", "defaultAction": "review_unknown_block", "blocking": false },
+    { "code": "SERVICE_TIMEOUT", "defaultAction": "retry", "blocking": true },
+    { "code": "SERVICE_ERROR", "defaultAction": "retry", "blocking": true }
+  ],
+  "actions": [
+    "retake_image",
+    "fill_price",
+    "confirm_price",
+    "confirm_tier_label",
+    "correct_tier_slots",
+    "confirm_one_slot_one_ticket",
+    "confirm_total_tickets",
+    "confirm_remaining_tickets",
+    "review_unknown_block",
+    "retry"
+  ]
+}

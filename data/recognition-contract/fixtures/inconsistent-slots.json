@@ -1,0 +1,150 @@
+{
+  "contractVersion": "1.0.0",
+  "request": {
+    "requestId": "fixture-inconsistent-slots",
+    "imageRef": "ephemeral:fixture-inconsistent-slots",
+    "image": {
+      "mediaType": "image/png",
+      "width": 900,
+      "height": 1200,
+      "acquisition": "album"
+    },
+    "localeHints": ["ja-JP", "zh-CN"]
+  },
+  "response": {
+    "requestId": "fixture-inconsistent-slots",
+    "status": "needs_user_input",
+    "draft": {
+      "schemaVersion": "1.0.0",
+      "draftId": "draft-inconsistent-slots",
+      "image": {
+        "width": 900,
+        "height": 1200,
+        "orientation": "portrait",
+        "storedRemotely": false
+      },
+      "completeness": {
+        "frame": "complete",
+        "allRegularTiersDetected": true,
+        "oneSlotOneTicketConfirmed": true,
+        "confidence": 0.9
+      },
+      "price": {
+        "status": "recognized",
+        "amount": 790,
+        "currency": "JPY",
+        "rawText": "1回790円",
+        "origin": "recognized",
+        "confidence": 0.93
+      },
+      "tiers": [
+        {
+          "componentId": "tier-a",
+          "componentType": "prize_tier",
+          "label": "A",
+          "rawLabel": "A賞",
+          "origin": "recognized",
+          "confidence": 0.92,
+          "layout": {
+            "region": "tier_grid",
+            "boundingBox": { "x": 0.07, "y": 0.22, "width": 0.86, "height": 0.18 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 1
+          },
+          "slotObservation": {
+            "totalSlots": 2,
+            "openSlots": 2,
+            "coveredSlots": 1,
+            "unknownSlots": 0,
+            "arrangement": { "direction": "row", "rows": 1, "columns": 3 },
+            "confidence": 0.42
+          }
+        },
+        {
+          "componentId": "tier-b",
+          "componentType": "prize_tier",
+          "label": "B",
+          "rawLabel": "B賞",
+          "origin": "recognized",
+          "confidence": 0.95,
+          "layout": {
+            "region": "tier_grid",
+            "boundingBox": { "x": 0.07, "y": 0.43, "width": 0.86, "height": 0.18 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 2
+          },
+          "slotObservation": {
+            "totalSlots": 2,
+            "openSlots": 1,
+            "coveredSlots": 1,
+            "unknownSlots": 0,
+            "arrangement": { "direction": "row", "rows": 1, "columns": 2 },
+            "confidence": 0.96
+          }
+        }
+      ],
+      "blocks": [
+        {
+          "componentId": "board-title",
+          "componentType": "board_title",
+          "ticketCountRole": "excluded",
+          "rawText": "券位计数冲突示例",
+          "origin": "recognized",
+          "confidence": 0.92,
+          "layout": {
+            "region": "header",
+            "boundingBox": { "x": 0.08, "y": 0.06, "width": 0.7, "height": 0.08 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 0
+          },
+          "executable": false
+        },
+        {
+          "componentId": "double-chance",
+          "componentType": "double_chance",
+          "ticketCountRole": "excluded",
+          "rawText": "ダブルチャンス",
+          "origin": "recognized",
+          "confidence": 0.88,
+          "layout": {
+            "region": "footer",
+            "boundingBox": { "x": 0.07, "y": 0.8, "width": 0.42, "height": 0.1 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 3
+          },
+          "executable": false
+        }
+      ],
+      "readingOrder": ["board-title", "tier-a", "tier-b", "double-chance"],
+      "derived": {
+        "totalTickets": {
+          "status": "manual_required",
+          "formula": "sum(tiers.slotObservation.totalSlots)",
+          "origin": "derived",
+          "failedGuards": ["all_tier_slot_counts_consistent"]
+        },
+        "remainingTickets": {
+          "status": "manual_required",
+          "formula": "sum(tiers.slotObservation.openSlots)",
+          "origin": "derived",
+          "failedGuards": ["total_tickets_confirmed", "all_tier_slot_counts_consistent"]
+        }
+      }
+    },
+    "issues": [
+      { "code": "TIER_SLOT_LOW_CONFIDENCE", "path": "/draft/tiers/0/slotObservation", "blocking": true, "action": "correct_tier_slots", "confidence": 0.42 },
+      { "code": "TIER_SLOT_COUNT_INCONSISTENT", "path": "/draft/tiers/0/slotObservation", "blocking": true, "action": "correct_tier_slots" },
+      { "code": "TOTAL_TICKETS_DERIVATION_BLOCKED", "path": "/draft/derived/totalTickets", "blocking": true, "action": "confirm_total_tickets" },
+      { "code": "REMAINING_TICKETS_DERIVATION_BLOCKED", "path": "/draft/derived/remainingTickets", "blocking": true, "action": "confirm_remaining_tickets" }
+    ],
+    "imageHandling": {
+      "retention": "ephemeral",
+      "published": false,
+      "storedInSessionHistory": false
+    }
+  }
+}

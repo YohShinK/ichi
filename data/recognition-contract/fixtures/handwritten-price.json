@@ -1,0 +1,145 @@
+{
+  "contractVersion": "1.0.0",
+  "request": {
+    "requestId": "fixture-handwritten-price",
+    "imageRef": "ephemeral:fixture-handwritten-price",
+    "image": {
+      "mediaType": "image/jpeg",
+      "width": 1080,
+      "height": 1440,
+      "acquisition": "camera"
+    },
+    "localeHints": ["zh-CN"]
+  },
+  "response": {
+    "requestId": "fixture-handwritten-price",
+    "status": "needs_user_input",
+    "draft": {
+      "schemaVersion": "1.0.0",
+      "draftId": "draft-handwritten-price",
+      "image": {
+        "width": 1080,
+        "height": 1440,
+        "orientation": "portrait",
+        "storedRemotely": false
+      },
+      "completeness": {
+        "frame": "complete",
+        "allRegularTiersDetected": true,
+        "oneSlotOneTicketConfirmed": true,
+        "confidence": 0.96
+      },
+      "price": {
+        "status": "manual_required",
+        "rawText": "疑似手写：58?",
+        "origin": "recognized",
+        "confidence": 0.31
+      },
+      "tiers": [
+        {
+          "componentId": "tier-a",
+          "componentType": "prize_tier",
+          "label": "A",
+          "rawLabel": "A赏",
+          "origin": "recognized",
+          "confidence": 0.98,
+          "layout": {
+            "region": "tier_grid",
+            "boundingBox": { "x": 0.06, "y": 0.24, "width": 0.42, "height": 0.18 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 1
+          },
+          "slotObservation": {
+            "totalSlots": 1,
+            "openSlots": 1,
+            "coveredSlots": 0,
+            "unknownSlots": 0,
+            "arrangement": { "direction": "row", "rows": 1, "columns": 1 },
+            "confidence": 0.99
+          }
+        },
+        {
+          "componentId": "tier-b",
+          "componentType": "prize_tier",
+          "label": "B",
+          "rawLabel": "B赏",
+          "origin": "recognized",
+          "confidence": 0.97,
+          "layout": {
+            "region": "tier_grid",
+            "boundingBox": { "x": 0.52, "y": 0.24, "width": 0.42, "height": 0.18 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 2
+          },
+          "slotObservation": {
+            "totalSlots": 2,
+            "openSlots": 2,
+            "coveredSlots": 0,
+            "unknownSlots": 0,
+            "arrangement": { "direction": "row", "rows": 1, "columns": 2 },
+            "confidence": 0.98
+          }
+        }
+      ],
+      "blocks": [
+        {
+          "componentId": "price-block",
+          "componentType": "price",
+          "ticketCountRole": "excluded",
+          "rawText": "疑似手写：58?",
+          "origin": "recognized",
+          "confidence": 0.31,
+          "layout": {
+            "region": "header",
+            "boundingBox": { "x": 0.76, "y": 0.06, "width": 0.18, "height": 0.08 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 0
+          },
+          "executable": false
+        },
+        {
+          "componentId": "last-prize",
+          "componentType": "last_prize",
+          "ticketCountRole": "excluded",
+          "rawText": "最终赏",
+          "origin": "recognized",
+          "confidence": 0.95,
+          "layout": {
+            "region": "prize_showcase",
+            "boundingBox": { "x": 0.06, "y": 0.48, "width": 0.42, "height": 0.12 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 3
+          },
+          "executable": false
+        }
+      ],
+      "readingOrder": ["price-block", "tier-a", "tier-b", "last-prize"],
+      "derived": {
+        "totalTickets": {
+          "status": "auto_confirmed",
+          "value": 3,
+          "formula": "sum(tiers.slotObservation.totalSlots)",
+          "origin": "derived"
+        },
+        "remainingTickets": {
+          "status": "auto_confirmed",
+          "value": 3,
+          "formula": "sum(tiers.slotObservation.openSlots)",
+          "origin": "derived"
+        }
+      }
+    },
+    "issues": [
+      { "code": "PRICE_HANDWRITTEN", "path": "/draft/price", "blocking": true, "action": "fill_price", "confidence": 0.31 }
+    ],
+    "imageHandling": {
+      "retention": "ephemeral",
+      "published": false,
+      "storedInSessionHistory": false
+    }
+  }
+}

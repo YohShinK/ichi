@@ -1,0 +1,87 @@
+{
+  "renderPlanVersion": "1.0.0",
+  "acceptedBoardSchemaVersions": ["1.0.0"],
+  "acceptedRecognitionContractVersions": ["1.0.0"],
+  "localComponentRegistryId": "v1-saturated-board-components",
+  "responseModes": {
+    "ready_for_confirmation": {
+      "renderState": "board_confirmation",
+      "sourceMap": true,
+      "mobileFlow": true,
+      "interactiveFields": true
+    },
+    "needs_user_input": {
+      "renderState": "needs_user_input",
+      "sourceMap": true,
+      "mobileFlow": true,
+      "interactiveFields": true
+    },
+    "retake_required": {
+      "renderState": "retake",
+      "sourceMap": true,
+      "mobileFlow": false,
+      "interactiveFields": false
+    },
+    "service_error": {
+      "renderState": "service_error",
+      "sourceMap": false,
+      "mobileFlow": false,
+      "interactiveFields": false
+    }
+  },
+  "componentMapping": {
+    "prize_tier": "PrizeTier",
+    "board_title": "BoardTitle",
+    "series_identity": "SeriesIdentity",
+    "price": "Price",
+    "ticket_total": "TicketTotal",
+    "last_prize": "LastPrize",
+    "double_chance": "DoubleChance",
+    "prize_media": "PrizeMedia",
+    "instruction": "Instruction",
+    "shop_id": "Identifier",
+    "product_id": "Identifier",
+    "brand_mark": "BrandMark",
+    "qr_code": "QrPlaceholder",
+    "legal_notice": "LegalNotice",
+    "decorative_media": "DecorativeMedia",
+    "unknown_block": "UnknownBlock"
+  },
+  "dataBindings": {
+    "price": "/price",
+    "ticket_total": "/derived/totalTickets"
+  },
+  "ordering": {
+    "accessibilityOrder": "draft.readingOrder",
+    "sourceMapPosition": "component.layout.boundingBox",
+    "sourceMapLayer": "component.layout.zIndex",
+    "mobilePeerRule": "same_source_row_then_left_to_right",
+    "mobileMaxColumns": 2,
+    "fullWidthComponentTypes": [
+      "ticket_total",
+      "legal_notice",
+      "unknown_block"
+    ]
+  },
+  "breakpoints": [
+    { "id": "compact", "minWidth": 0, "maxWidth": 359, "maxColumns": 1 },
+    { "id": "phone", "minWidth": 360, "maxWidth": 479, "maxColumns": 2 },
+    { "id": "wide_phone", "minWidth": 480, "maxWidth": 767, "maxColumns": 2 }
+  ],
+  "unknownHandling": {
+    "knownFallbackType": "unknown_block",
+    "knownFallbackRenderer": "UnknownBlock",
+    "knownFallbackExecutable": false,
+    "unregisteredTypeAction": "reject_entire_plan",
+    "preservePreviousUsableState": true
+  },
+  "security": {
+    "rendererLookup": "local_registry_only",
+    "recognitionMaySpecifyRenderer": false,
+    "remoteWxmlAllowed": false,
+    "remoteScriptAllowed": false,
+    "remoteStyleAllowed": false,
+    "remoteHtmlAllowed": false,
+    "unknownExecutableAllowed": false
+  }
+}

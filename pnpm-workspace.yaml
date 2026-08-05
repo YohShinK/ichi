@@ -1,0 +1,6 @@
+packages:
+  - apps/*
+  - packages/*
+  - services/cloudbase/functions/*
+
+minimumReleaseAge: 1440

@@ -1,0 +1,6 @@
+{
+  "name": "@ichi/client",
+  "version": "0.0.0",
+  "private": true,
+  "description": "ICHI native WeChat Mini Program shell"
+}

@@ -1,0 +1,14 @@
+node_modules/
+coverage/
+dist/
+canvas/
+product-atlas/
+docs/
+memory-bank/
+data/
+AGENTS.md
+PRD.md
+README.md
+apps/client/miniprogram/**/*.wxml
+apps/client/miniprogram/**/*.wxss
+pnpm-lock.yaml

@@ -1,0 +1,100 @@
+{
+  "version": "1.0.0",
+  "fractionFormat": "numerator/denominator reduced; integers use denominator 1",
+  "vectors": [
+    {
+      "id": "ordinary-pool",
+      "kind": "single_target",
+      "input": { "remainingTickets": 10, "targetTickets": 2, "plannedDraws": 3, "unitPriceMinor": 100, "remainingBudgetMinor": 500 },
+      "expected": {
+        "nextDrawHitProbability": "1/5",
+        "atLeastOneHitProbability": "8/15",
+        "hitDistribution": { "0": "7/15", "1": "7/15", "2": "1/15" },
+        "expectedTargetCount": "3/5",
+        "expectedDrawsToFirstHit": "11/3",
+        "plannedCostMinor": 300,
+        "buyoutCostMinor": 1000,
+        "maxAffordableDraws": 5
+      }
+    },
+    {
+      "id": "target-zero",
+      "kind": "single_target",
+      "input": { "remainingTickets": 10, "targetTickets": 0, "plannedDraws": 3, "unitPriceMinor": 100, "remainingBudgetMinor": 500 },
+      "expected": {
+        "nextDrawHitProbability": "0/1",
+        "atLeastOneHitProbability": "0/1",
+        "hitDistribution": { "0": "1/1" },
+        "expectedTargetCount": "0/1",
+        "expectedDrawsToFirstHit": null,
+        "expectedDrawsReason": "TARGET_UNAVAILABLE"
+      }
+    },
+    {
+      "id": "draws-zero",
+      "kind": "single_target",
+      "input": { "remainingTickets": 10, "targetTickets": 2, "plannedDraws": 0, "unitPriceMinor": 100, "remainingBudgetMinor": 500 },
+      "expected": {
+        "atLeastOneHitProbability": "0/1",
+        "hitDistribution": { "0": "1/1" },
+        "expectedTargetCount": "0/1",
+        "plannedCostMinor": 0
+      }
+    },
+    {
+      "id": "draw-all",
+      "kind": "single_target",
+      "input": { "remainingTickets": 10, "targetTickets": 2, "plannedDraws": 10, "unitPriceMinor": 100, "remainingBudgetMinor": 2000 },
+      "expected": {
+        "atLeastOneHitProbability": "1/1",
+        "hitDistribution": { "2": "1/1" },
+        "expectedTargetCount": "2/1",
+        "plannedCostMinor": 1000,
+        "buyoutCostMinor": 1000
+      }
+    },
+    {
+      "id": "multiple-target-requirements",
+      "kind": "multiple_targets",
+      "input": {
+        "remainingTickets": 6,
+        "plannedDraws": 2,
+        "targets": [
+          { "id": "A", "available": 1, "required": 1 },
+          { "id": "B", "available": 2, "required": 1 }
+        ]
+      },
+      "expected": { "meetAllRequirementsProbability": "2/15" }
+    },
+    {
+      "id": "budget-below-one-draw",
+      "kind": "budget_boundary",
+      "input": { "remainingTickets": 10, "unitPriceMinor": 100, "remainingBudgetMinor": 99 },
+      "expected": { "maxAffordableDraws": 0, "canContinue": false }
+    },
+    {
+      "id": "invalid-negative-remaining",
+      "kind": "invalid_input",
+      "input": { "remainingTickets": -1, "targetTickets": 0, "plannedDraws": 0 },
+      "expected": { "error": "NEGATIVE_REMAINING_TICKETS" }
+    },
+    {
+      "id": "invalid-negative-draws",
+      "kind": "invalid_input",
+      "input": { "remainingTickets": 10, "targetTickets": 2, "plannedDraws": -1 },
+      "expected": { "error": "NEGATIVE_PLANNED_DRAWS" }
+    },
+    {
+      "id": "invalid-target-exceeds-pool",
+      "kind": "invalid_input",
+      "input": { "remainingTickets": 10, "targetTickets": 11, "plannedDraws": 1 },
+      "expected": { "error": "TARGET_EXCEEDS_REMAINING" }
+    },
+    {
+      "id": "invalid-draws-exceed-pool",
+      "kind": "invalid_input",
+      "input": { "remainingTickets": 10, "targetTickets": 2, "plannedDraws": 11 },
+      "expected": { "error": "DRAWS_EXCEED_REMAINING" }
+    }
+  ]
+}

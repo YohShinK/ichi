@@ -1,0 +1,207 @@
+{
+  "schemaVersion": "1.0.0",
+  "registryId": "v1-saturated-board-components",
+  "tierLabels": [
+    "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+    "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
+  ],
+  "tierFallback": {
+    "label": "OTHER",
+    "preserveRawLabel": true,
+    "requiresUserConfirmation": true
+  },
+  "components": [
+    {
+      "type": "prize_tier",
+      "renderer": "PrizeTier",
+      "cardinality": "one_or_more_when_detected",
+      "dataOnly": true,
+      "ticketCountRole": "sum_tier_slots"
+    },
+    {
+      "type": "board_title",
+      "renderer": "BoardTitle",
+      "cardinality": "optional_single",
+      "dataOnly": true,
+      "ticketCountRole": "excluded"
+    },
+    {
+      "type": "series_identity",
+      "renderer": "SeriesIdentity",
+      "cardinality": "optional_multiple",
+      "dataOnly": true,
+      "ticketCountRole": "excluded"
+    },
+    {
+      "type": "price",
+      "renderer": "Price",
+      "cardinality": "required_single",
+      "dataOnly": true,
+      "ticketCountRole": "excluded"
+    },
+    {
+      "type": "ticket_total",
+      "renderer": "TicketTotal",
+      "cardinality": "required_single",
+      "dataOnly": true,
+      "ticketCountRole": "derived_output"
+    },
+    {
+      "type": "last_prize",
+      "renderer": "LastPrize",
+      "cardinality": "optional_single",
+      "dataOnly": true,
+      "ticketCountRole": "excluded"
+    },
+    {
+      "type": "double_chance",
+      "renderer": "DoubleChance",
+      "cardinality": "optional_single",
+      "dataOnly": true,
+      "ticketCountRole": "excluded"
+    },
+    {
+      "type": "prize_media",
+      "renderer": "PrizeMedia",
+      "cardinality": "optional_multiple",
+      "dataOnly": true,
+      "ticketCountRole": "excluded"
+    },
+    {
+      "type": "instruction",
+      "renderer": "Instruction",
+      "cardinality": "optional_multiple",
+      "dataOnly": true,
+      "ticketCountRole": "excluded"
+    },
+    {
+      "type": "shop_id",
+      "renderer": "Identifier",
+      "cardinality": "optional_multiple",
+      "dataOnly": true,
+      "ticketCountRole": "excluded"
+    },
+    {
+      "type": "product_id",
+      "renderer": "Identifier",
+      "cardinality": "optional_multiple",
+      "dataOnly": true,
+      "ticketCountRole": "excluded"
+    },
+    {
+      "type": "brand_mark",
+      "renderer": "BrandMark",
+      "cardinality": "optional_multiple",
+      "dataOnly": true,
+      "ticketCountRole": "excluded"
+    },
+    {
+      "type": "qr_code",
+      "renderer": "QrPlaceholder",
+      "cardinality": "optional_multiple",
+      "dataOnly": true,
+      "ticketCountRole": "excluded"
+    },
+    {
+      "type": "legal_notice",
+      "renderer": "LegalNotice",
+      "cardinality": "optional_multiple",
+      "dataOnly": true,
+      "ticketCountRole": "excluded"
+    },
+    {
+      "type": "decorative_media",
+      "renderer": "DecorativeMedia",
+      "cardinality": "optional_multiple",
+      "dataOnly": true,
+      "ticketCountRole": "excluded"
+    },
+    {
+      "type": "unknown_block",
+      "renderer": "UnknownBlock",
+      "cardinality": "optional_multiple",
+      "dataOnly": true,
+      "executable": false,
+      "ticketCountRole": "excluded"
+    }
+  ],
+  "layoutRegions": [
+    "header",
+    "identity",
+    "prize_showcase",
+    "tier_grid",
+    "instruction",
+    "footer",
+    "floating",
+    "unknown"
+  ],
+  "layoutRules": {
+    "coordinateSystem": "normalized_0_to_1",
+    "preserve": ["bounding_box", "parent_id", "z_index", "reading_order"],
+    "mobileMayReflow": true,
+    "sourceSpatialRelationshipMustRemainAvailable": true
+  },
+  "derivationRules": [
+    {
+      "field": "totalTickets",
+      "formula": "sum(tiers.slotObservation.totalSlots)",
+      "requiredGuards": [
+        "frame_complete",
+        "all_regular_tiers_detected",
+        "one_slot_one_ticket_confirmed",
+        "all_tier_slot_counts_consistent"
+      ],
+      "excludedComponentTypes": [
+        "last_prize",
+        "double_chance",
+        "instruction",
+        "shop_id",
+        "product_id",
+        "brand_mark",
+        "qr_code",
+        "legal_notice",
+        "decorative_media",
+        "unknown_block"
+      ],
+      "guardFailureStatus": "manual_required"
+    },
+    {
+      "field": "remainingTickets",
+      "formula": "sum(tiers.slotObservation.openSlots)",
+      "requiredGuards": [
+        "total_tickets_confirmed",
+        "no_unknown_slot_state",
+        "all_tier_slot_counts_consistent"
+      ],
+      "guardFailureStatus": "manual_required"
+    }
+  ],
+  "manualFallbacks": [
+    {
+      "field": "price",
+      "trigger": "missing_low_confidence_or_handwritten",
+      "preserveOtherRecognition": true
+    },
+    {
+      "field": "tierLabel",
+      "trigger": "other_or_low_confidence",
+      "preserveOtherRecognition": true
+    },
+    {
+      "field": "tierSlotCounts",
+      "trigger": "incomplete_occluded_or_inconsistent",
+      "preserveOtherRecognition": true
+    },
+    {
+      "field": "totalTickets",
+      "trigger": "derivation_guard_failed",
+      "preserveOtherRecognition": true
+    }
+  ],
+  "security": {
+    "remoteComponentCodeAllowed": false,
+    "remoteWxmlAllowed": false,
+    "remoteScriptAllowed": false,
+    "unknownBlockExecutable": false
+  }
+}

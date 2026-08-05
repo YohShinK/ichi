@@ -1,0 +1,60 @@
+{
+  "version": "1.0.0",
+  "moneyRepresentation": "integer_minor_units",
+  "terms": [
+    {
+      "id": "probability",
+      "name": "概率",
+      "definition": "在当前已确认票池中，下一抽或计划抽数内命中至少一个目标的可能性。",
+      "inputs": ["remainingTickets", "targetTickets", "plannedDraws"],
+      "outputs": ["nextDrawHitProbability", "atLeastOneHitProbability"],
+      "limits": ["只接受守恒且范围合法的当前票池", "概率不是保证，也不判断商家行为"],
+      "example": "余 10 抽、目标 2 张时，下一抽命中概率为 2/10；抽 3 次至少命中一次为 8/15。"
+    },
+    {
+      "id": "hit_distribution",
+      "name": "命中分布",
+      "definition": "不放回抽取 k 次时，恰好命中 x 张目标票的完整概率分布。",
+      "inputs": ["remainingTickets", "targetTickets", "plannedDraws"],
+      "outputs": ["probabilityByHitCount"],
+      "limits": ["各项概率之和必须为 1", "多个目标或指定数量使用精确组合数或动态规划，不把概率简单相乘"],
+      "example": "余 10 抽、目标 2 张、抽 3 次时，命中 0/1/2 张的概率依次为 7/15、7/15、1/15。"
+    },
+    {
+      "id": "expected_draws",
+      "name": "期望抽数",
+      "definition": "在随机不放回顺序下首次命中任一目标所需抽数的长期平均值。",
+      "inputs": ["remainingTickets", "targetTickets"],
+      "outputs": ["expectedDrawsToFirstHit"],
+      "limits": ["期望不是保证、保底或推荐抽数", "目标票为 0 时不存在有限期望抽数"],
+      "example": "余 10 抽且目标 2 张时，首次命中的期望抽数为 (10+1)/(2+1)=11/3。"
+    },
+    {
+      "id": "cost_budget",
+      "name": "成本与预算",
+      "definition": "以最小货币单位整数记录单抽价、计划成本、累计成本和剩余预算，并据此限制最大可抽数。",
+      "inputs": ["unitPriceMinor", "plannedDraws", "sessionBudgetMinor", "spentMinor", "remainingTickets"],
+      "outputs": ["plannedCostMinor", "remainingBudgetMinor", "maxAffordableDraws"],
+      "limits": ["金额不使用二进制浮点存储", "最大可抽数向下取整且不超过余票", "预算不足时不隐藏既有历史"],
+      "example": "单抽 100、剩余预算 450、余票 10 时，最多可抽 4 次，计划 5 抽不可执行。"
+    },
+    {
+      "id": "buyout",
+      "name": "包套",
+      "definition": "一次性取得当前全部余票的确定性方案，成本等于余票数乘单抽价。",
+      "inputs": ["remainingTickets", "unitPriceMinor", "remainingBudgetMinor", "lastPrizeState"],
+      "outputs": ["buyoutCostMinor", "budgetState", "guaranteedRemainingPrizes", "lastPrizeEligibility"],
+      "limits": ["只有抽完全部余票时才能把 Last 条件表达为确定结果", "超预算时只能标为不可执行或不建议，不生成消费刺激文案"],
+      "example": "余 10 抽、单抽 100 时，包套成本为 1000；预算 450 时不可执行。"
+    },
+    {
+      "id": "stop",
+      "name": "停止",
+      "definition": "不再增加本次抽数并保留当前会话、已花费与剩余预算的并列方案。",
+      "inputs": ["spentMinor", "remainingBudgetMinor", "stopConditions", "sessionState"],
+      "outputs": ["spentMinor", "remainingBudgetMinor", "matchedStopConditions", "preservedSession"],
+      "limits": ["停止与抽取、包套、直接购买同级展示", "停止不删除历史，也不被弱化为次要退出动作"],
+      "example": "已花费 300、预算剩余 200 且达到预设上限时，停止方案保留会话并显示命中的停止条件。"
+    }
+  ]
+}

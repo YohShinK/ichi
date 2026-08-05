@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ichi.example/schema/recognition-contract/1.0.0",
+  "title": "ICHI Board Recognition Exchange",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contractVersion", "request", "response"],
+  "properties": {
+    "contractVersion": { "const": "1.0.0" },
+    "request": { "$ref": "#/$defs/request" },
+    "response": { "$ref": "#/$defs/response" }
+  },
+  "$defs": {
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestId", "imageRef", "image", "localeHints"],
+      "properties": {
+        "requestId": { "type": "string", "minLength": 1 },
+        "imageRef": { "type": "string", "minLength": 1 },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mediaType", "width", "height", "acquisition"],
+          "properties": {
+            "mediaType": { "enum": ["image/jpeg", "image/png", "image/webp"] },
+            "width": { "type": "integer", "minimum": 1 },
+            "height": { "type": "integer", "minimum": 1 },
+            "acquisition": { "enum": ["camera", "album"] }
+          }
+        },
+        "localeHints": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["zh-CN", "ja-JP", "en"] }
+        }
+      }
+    },
+    "response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requestId", "status", "issues", "imageHandling"],
+      "properties": {
+        "requestId": { "type": "string", "minLength": 1 },
+        "status": {
+          "enum": [
+            "ready_for_confirmation",
+            "needs_user_input",
+            "retake_required",
+            "service_error"
+          ]
+        },
+        "draft": {
+          "$ref": "https://ichi.example/schema/board-layout/1.0.0"
+        },
+        "issues": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/issue" }
+        },
+        "imageHandling": { "$ref": "#/$defs/imageHandling" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": ["ready_for_confirmation", "needs_user_input", "retake_required"]
+              }
+            }
+          },
+          "then": { "required": ["draft"] }
+        }
+      ]
+    },
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "path", "blocking", "action"],
+      "properties": {
+        "code": {
+          "enum": [
+            "IMAGE_UNREADABLE",
+            "FRAME_PARTIAL",
+            "FRAME_UNCERTAIN",
+            "REGULAR_TIERS_INCOMPLETE",
+            "ONE_SLOT_ONE_TICKET_UNCONFIRMED",
+            "TIER_LABEL_LOW_CONFIDENCE",
+            "TIER_LABEL_OTHER",
+            "TIER_SLOT_LOW_CONFIDENCE",
+            "TIER_SLOT_COUNT_INCONSISTENT",
+            "UNKNOWN_SLOT_STATE",
+            "PRICE_MISSING",
+            "PRICE_LOW_CONFIDENCE",
+            "PRICE_HANDWRITTEN",
+            "TOTAL_TICKETS_DERIVATION_BLOCKED",
+            "REMAINING_TICKETS_DERIVATION_BLOCKED",
+            "UNKNOWN_BLOCK_DETECTED",
+            "SERVICE_TIMEOUT",
+            "SERVICE_ERROR"
+          ]
+        },
+        "path": { "type": "string", "pattern": "^/" },
+        "blocking": { "type": "boolean" },
+        "action": {
+          "enum": [
+            "retake_image",
+            "fill_price",
+            "confirm_price",
+            "confirm_tier_label",
+            "correct_tier_slots",
+            "confirm_one_slot_one_ticket",
+            "confirm_total_tickets",
+            "confirm_remaining_tickets",
+            "review_unknown_block",
+            "retry"
+          ]
+        },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "imageHandling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["retention", "published", "storedInSessionHistory"],
+      "properties": {
+        "retention": { "const": "ephemeral" },
+        "published": { "const": false },
+        "storedInSessionHistory": { "const": false }
+      }
+    }
+  }
+}

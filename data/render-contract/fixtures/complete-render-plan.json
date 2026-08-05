@@ -1,0 +1,198 @@
+{
+  "renderPlanVersion": "1.0.0",
+  "planId": "render-complete-board",
+  "sourceDraftId": "draft-complete-board",
+  "localComponentRegistryId": "v1-saturated-board-components",
+  "renderState": "board_confirmation",
+  "primaryAction": "confirm_board",
+  "instances": [
+    {
+      "instanceId": "board-title",
+      "componentType": "board_title",
+      "renderer": "BoardTitle",
+      "dataPath": "/blocks/0",
+      "layoutPath": "/blocks/0/layout",
+      "ticketCountRole": "excluded",
+      "interactive": false,
+      "sourceLayout": {
+        "region": "header",
+        "boundingBox": { "x": 0.08, "y": 0.05, "width": 0.68, "height": 0.09 },
+        "parentId": null,
+        "zIndex": 1,
+        "readingOrder": 0
+      }
+    },
+    {
+      "instanceId": "price-block",
+      "componentType": "price",
+      "renderer": "Price",
+      "dataPath": "/price",
+      "layoutPath": "/blocks/1/layout",
+      "ticketCountRole": "excluded",
+      "interactive": true,
+      "sourceLayout": {
+        "region": "header",
+        "boundingBox": { "x": 0.78, "y": 0.05, "width": 0.16, "height": 0.09 },
+        "parentId": null,
+        "zIndex": 1,
+        "readingOrder": 1
+      }
+    },
+    {
+      "instanceId": "ticket-total",
+      "componentType": "ticket_total",
+      "renderer": "TicketTotal",
+      "dataPath": "/derived/totalTickets",
+      "layoutPath": "/blocks/2/layout",
+      "ticketCountRole": "derived_output",
+      "interactive": true,
+      "sourceLayout": {
+        "region": "identity",
+        "boundingBox": { "x": 0.78, "y": 0.15, "width": 0.16, "height": 0.06 },
+        "parentId": null,
+        "zIndex": 1,
+        "readingOrder": 2
+      }
+    },
+    {
+      "instanceId": "tier-a",
+      "componentType": "prize_tier",
+      "renderer": "PrizeTier",
+      "dataPath": "/tiers/0",
+      "layoutPath": "/tiers/0/layout",
+      "ticketCountRole": "sum_tier_slots",
+      "interactive": true,
+      "sourceLayout": {
+        "region": "tier_grid",
+        "boundingBox": { "x": 0.06, "y": 0.24, "width": 0.4, "height": 0.16 },
+        "parentId": null,
+        "zIndex": 1,
+        "readingOrder": 3
+      }
+    },
+    {
+      "instanceId": "tier-b",
+      "componentType": "prize_tier",
+      "renderer": "PrizeTier",
+      "dataPath": "/tiers/1",
+      "layoutPath": "/tiers/1/layout",
+      "ticketCountRole": "sum_tier_slots",
+      "interactive": true,
+      "sourceLayout": {
+        "region": "tier_grid",
+        "boundingBox": { "x": 0.54, "y": 0.24, "width": 0.4, "height": 0.16 },
+        "parentId": null,
+        "zIndex": 1,
+        "readingOrder": 4
+      }
+    },
+    {
+      "instanceId": "tier-c",
+      "componentType": "prize_tier",
+      "renderer": "PrizeTier",
+      "dataPath": "/tiers/2",
+      "layoutPath": "/tiers/2/layout",
+      "ticketCountRole": "sum_tier_slots",
+      "interactive": true,
+      "sourceLayout": {
+        "region": "tier_grid",
+        "boundingBox": { "x": 0.06, "y": 0.42, "width": 0.88, "height": 0.18 },
+        "parentId": null,
+        "zIndex": 1,
+        "readingOrder": 5
+      }
+    },
+    {
+      "instanceId": "last-prize",
+      "componentType": "last_prize",
+      "renderer": "LastPrize",
+      "dataPath": "/blocks/3",
+      "layoutPath": "/blocks/3/layout",
+      "ticketCountRole": "excluded",
+      "interactive": true,
+      "sourceLayout": {
+        "region": "prize_showcase",
+        "boundingBox": { "x": 0.06, "y": 0.62, "width": 0.42, "height": 0.12 },
+        "parentId": null,
+        "zIndex": 1,
+        "readingOrder": 6
+      }
+    },
+    {
+      "instanceId": "instruction",
+      "componentType": "instruction",
+      "renderer": "Instruction",
+      "dataPath": "/blocks/4",
+      "layoutPath": "/blocks/4/layout",
+      "ticketCountRole": "excluded",
+      "interactive": false,
+      "sourceLayout": {
+        "region": "instruction",
+        "boundingBox": { "x": 0.52, "y": 0.62, "width": 0.42, "height": 0.12 },
+        "parentId": null,
+        "zIndex": 1,
+        "readingOrder": 7
+      }
+    },
+    {
+      "instanceId": "qr-code",
+      "componentType": "qr_code",
+      "renderer": "QrPlaceholder",
+      "dataPath": "/blocks/5",
+      "layoutPath": "/blocks/5/layout",
+      "ticketCountRole": "excluded",
+      "interactive": false,
+      "sourceLayout": {
+        "region": "footer",
+        "boundingBox": { "x": 0.78, "y": 0.82, "width": 0.16, "height": 0.12 },
+        "parentId": null,
+        "zIndex": 1,
+        "readingOrder": 8
+      }
+    }
+  ],
+  "sourceMap": {
+    "enabled": true,
+    "readOnly": true,
+    "aspectRatio": 0.75,
+    "itemIds": [
+      "board-title",
+      "price-block",
+      "ticket-total",
+      "tier-a",
+      "tier-b",
+      "tier-c",
+      "last-prize",
+      "instruction",
+      "qr-code"
+    ]
+  },
+  "mobileFlow": {
+    "enabled": true,
+    "accessibilityOrder": [
+      "board-title",
+      "price-block",
+      "ticket-total",
+      "tier-a",
+      "tier-b",
+      "tier-c",
+      "last-prize",
+      "instruction",
+      "qr-code"
+    ],
+    "groups": [
+      { "groupId": "source-row-1", "itemIds": ["board-title", "price-block"], "columns": { "compact": 1, "phone": 2, "wide_phone": 2 } },
+      { "groupId": "source-row-2", "itemIds": ["ticket-total"], "columns": { "compact": 1, "phone": 1, "wide_phone": 1 } },
+      { "groupId": "source-row-3", "itemIds": ["tier-a", "tier-b"], "columns": { "compact": 1, "phone": 2, "wide_phone": 2 } },
+      { "groupId": "source-row-4", "itemIds": ["tier-c"], "columns": { "compact": 1, "phone": 1, "wide_phone": 1 } },
+      { "groupId": "source-row-5", "itemIds": ["last-prize", "instruction"], "columns": { "compact": 1, "phone": 2, "wide_phone": 2 } },
+      { "groupId": "source-row-6", "itemIds": ["qr-code"], "columns": { "compact": 1, "phone": 1, "wide_phone": 1 } }
+    ]
+  },
+  "issues": [],
+  "security": {
+    "rendererLookup": "local_registry_only",
+    "remoteCodeAccepted": false,
+    "unknownExecutableAccepted": false
+  }
+}

@@ -1,0 +1,263 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ichi.example/schema/board-layout/1.0.0",
+  "title": "ICHI Recognized Board Draft",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "draftId",
+    "image",
+    "completeness",
+    "price",
+    "tiers",
+    "blocks",
+    "readingOrder",
+    "derived"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "1.0.0" },
+    "draftId": { "type": "string", "minLength": 1 },
+    "image": { "$ref": "#/$defs/imageMetadata" },
+    "completeness": { "$ref": "#/$defs/completeness" },
+    "price": { "$ref": "#/$defs/price" },
+    "tiers": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/tier" }
+    },
+    "blocks": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/block" }
+    },
+    "readingOrder": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "derived": { "$ref": "#/$defs/derivedCounts" }
+  },
+  "$defs": {
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "origin": { "enum": ["recognized", "derived", "manual"] },
+    "rect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 },
+        "width": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "height": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
+      }
+    },
+    "layoutEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["region", "boundingBox", "zIndex", "readingOrder"],
+      "properties": {
+        "region": {
+          "enum": [
+            "header",
+            "identity",
+            "prize_showcase",
+            "tier_grid",
+            "instruction",
+            "footer",
+            "floating",
+            "unknown"
+          ]
+        },
+        "boundingBox": { "$ref": "#/$defs/rect" },
+        "parentId": { "type": ["string", "null"] },
+        "zIndex": { "type": "integer" },
+        "readingOrder": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "imageMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height", "orientation", "storedRemotely"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "orientation": { "enum": ["portrait", "landscape", "square"] },
+        "storedRemotely": { "const": false }
+      }
+    },
+    "completeness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frame",
+        "allRegularTiersDetected",
+        "oneSlotOneTicketConfirmed",
+        "confidence"
+      ],
+      "properties": {
+        "frame": { "enum": ["complete", "partial", "uncertain"] },
+        "allRegularTiersDetected": { "type": "boolean" },
+        "oneSlotOneTicketConfirmed": { "type": "boolean" },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      }
+    },
+    "price": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "origin"],
+      "properties": {
+        "status": { "enum": ["recognized", "manual_required", "manual_confirmed"] },
+        "amount": { "type": "number", "exclusiveMinimum": 0 },
+        "currency": { "enum": ["CNY", "JPY", "OTHER"] },
+        "rawText": { "type": "string" },
+        "origin": { "$ref": "#/$defs/origin" },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "enum": ["recognized", "manual_confirmed"] } } },
+          "then": { "required": ["amount", "currency"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "recognized" } } },
+          "then": { "required": ["confidence"] }
+        }
+      ]
+    },
+    "slotObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "totalSlots",
+        "openSlots",
+        "coveredSlots",
+        "unknownSlots",
+        "arrangement",
+        "confidence"
+      ],
+      "properties": {
+        "totalSlots": { "type": "integer", "minimum": 0 },
+        "openSlots": { "type": "integer", "minimum": 0 },
+        "coveredSlots": { "type": "integer", "minimum": 0 },
+        "unknownSlots": { "type": "integer", "minimum": 0 },
+        "arrangement": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["direction", "rows", "columns"],
+          "properties": {
+            "direction": { "enum": ["row", "column", "wrapped_rows", "free"] },
+            "rows": { "type": "integer", "minimum": 1 },
+            "columns": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      }
+    },
+    "tier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "componentId",
+        "componentType",
+        "label",
+        "rawLabel",
+        "origin",
+        "confidence",
+        "layout",
+        "slotObservation"
+      ],
+      "properties": {
+        "componentId": { "type": "string", "minLength": 1 },
+        "componentType": { "const": "prize_tier" },
+        "label": {
+          "enum": [
+            "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+            "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "OTHER"
+          ]
+        },
+        "rawLabel": { "type": "string", "minLength": 1 },
+        "prizeName": { "type": "string" },
+        "origin": { "$ref": "#/$defs/origin" },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "layout": { "$ref": "#/$defs/layoutEnvelope" },
+        "slotObservation": { "$ref": "#/$defs/slotObservation" }
+      }
+    },
+    "block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "componentId",
+        "componentType",
+        "ticketCountRole",
+        "origin",
+        "confidence",
+        "layout"
+      ],
+      "properties": {
+        "componentId": { "type": "string", "minLength": 1 },
+        "componentType": {
+          "enum": [
+            "board_title",
+            "series_identity",
+            "price",
+            "ticket_total",
+            "last_prize",
+            "double_chance",
+            "prize_media",
+            "instruction",
+            "shop_id",
+            "product_id",
+            "brand_mark",
+            "qr_code",
+            "legal_notice",
+            "decorative_media",
+            "unknown_block"
+          ]
+        },
+        "ticketCountRole": { "enum": ["excluded", "derived_output"] },
+        "rawText": { "type": "string" },
+        "origin": { "$ref": "#/$defs/origin" },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "layout": { "$ref": "#/$defs/layoutEnvelope" },
+        "executable": { "const": false }
+      }
+    },
+    "derivedCount": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "formula", "origin"],
+      "properties": {
+        "status": { "enum": ["auto_confirmed", "estimated", "manual_required", "manual_confirmed"] },
+        "value": { "type": "integer", "minimum": 0 },
+        "formula": { "type": "string", "minLength": 1 },
+        "origin": { "$ref": "#/$defs/origin" },
+        "failedGuards": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "enum": ["auto_confirmed", "manual_confirmed"] } } },
+          "then": { "required": ["value"] }
+        },
+        {
+          "if": { "properties": { "status": { "const": "manual_required" } } },
+          "then": { "required": ["failedGuards"] }
+        }
+      ]
+    },
+    "derivedCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["totalTickets", "remainingTickets"],
+      "properties": {
+        "totalTickets": { "$ref": "#/$defs/derivedCount" },
+        "remainingTickets": { "$ref": "#/$defs/derivedCount" }
+      }
+    }
+  }
+}

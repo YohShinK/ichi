@@ -1,0 +1,33 @@
+{
+  "name": "ichi",
+  "version": "0.0.0",
+  "private": true,
+  "description": "ICHI WeChat Mini Program workspace",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=24.11.0 <25",
+    "pnpm": "11.9.0"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint apps packages services scripts",
+    "typecheck": "tsc -p tsconfig.json --pretty false",
+    "test": "vitest run --passWithNoTests",
+    "test:core": "vitest run packages/core",
+    "validate:contracts": "node scripts/validate-board-layout.mjs && node scripts/validate-recognition-contract.mjs && node scripts/validate-render-contract.mjs && node scripts/validate-v1a-baseline.mjs && node scripts/validate-workflow.mjs",
+    "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm validate:contracts",
+    "quality:prove": "node scripts/verify-quality-gate.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.13.3",
+    "eslint": "10.8.0",
+    "globals": "17.9.0",
+    "miniprogram-api-typings": "5.2.2",
+    "prettier": "3.9.6",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.66.0",
+    "vitest": "4.1.10"
+  }
+}

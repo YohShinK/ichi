@@ -1,0 +1,139 @@
+{
+  "contractVersion": "1.0.0",
+  "request": {
+    "requestId": "fixture-partial-board",
+    "imageRef": "ephemeral:fixture-partial-board",
+    "image": {
+      "mediaType": "image/jpeg",
+      "width": 1080,
+      "height": 1080,
+      "acquisition": "album"
+    },
+    "localeHints": ["zh-CN"]
+  },
+  "response": {
+    "requestId": "fixture-partial-board",
+    "status": "retake_required",
+    "draft": {
+      "schemaVersion": "1.0.0",
+      "draftId": "draft-partial-board",
+      "image": {
+        "width": 1080,
+        "height": 1080,
+        "orientation": "square",
+        "storedRemotely": false
+      },
+      "completeness": {
+        "frame": "partial",
+        "allRegularTiersDetected": false,
+        "oneSlotOneTicketConfirmed": false,
+        "confidence": 0.54
+      },
+      "price": {
+        "status": "recognized",
+        "amount": 58,
+        "currency": "CNY",
+        "rawText": "58元/抽",
+        "origin": "recognized",
+        "confidence": 0.91
+      },
+      "tiers": [
+        {
+          "componentId": "tier-a",
+          "componentType": "prize_tier",
+          "label": "A",
+          "rawLabel": "A赏",
+          "origin": "recognized",
+          "confidence": 0.93,
+          "layout": {
+            "region": "tier_grid",
+            "boundingBox": { "x": 0.06, "y": 0.18, "width": 0.42, "height": 0.18 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 1
+          },
+          "slotObservation": {
+            "totalSlots": 1,
+            "openSlots": 1,
+            "coveredSlots": 0,
+            "unknownSlots": 0,
+            "arrangement": { "direction": "row", "rows": 1, "columns": 1 },
+            "confidence": 0.94
+          }
+        },
+        {
+          "componentId": "tier-b",
+          "componentType": "prize_tier",
+          "label": "B",
+          "rawLabel": "B赏",
+          "origin": "recognized",
+          "confidence": 0.88,
+          "layout": {
+            "region": "tier_grid",
+            "boundingBox": { "x": 0.52, "y": 0.18, "width": 0.42, "height": 0.18 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 2
+          },
+          "slotObservation": {
+            "totalSlots": 2,
+            "openSlots": 1,
+            "coveredSlots": 1,
+            "unknownSlots": 0,
+            "arrangement": { "direction": "row", "rows": 1, "columns": 2 },
+            "confidence": 0.9
+          }
+        }
+      ],
+      "blocks": [
+        {
+          "componentId": "board-title",
+          "componentType": "board_title",
+          "ticketCountRole": "excluded",
+          "rawText": "只拍到上半部分",
+          "origin": "recognized",
+          "confidence": 0.86,
+          "layout": {
+            "region": "header",
+            "boundingBox": { "x": 0.08, "y": 0.05, "width": 0.7, "height": 0.08 },
+            "parentId": null,
+            "zIndex": 1,
+            "readingOrder": 0
+          },
+          "executable": false
+        }
+      ],
+      "readingOrder": ["board-title", "tier-a", "tier-b"],
+      "derived": {
+        "totalTickets": {
+          "status": "manual_required",
+          "formula": "sum(tiers.slotObservation.totalSlots)",
+          "origin": "derived",
+          "failedGuards": [
+            "frame_complete",
+            "all_regular_tiers_detected",
+            "one_slot_one_ticket_confirmed"
+          ]
+        },
+        "remainingTickets": {
+          "status": "manual_required",
+          "formula": "sum(tiers.slotObservation.openSlots)",
+          "origin": "derived",
+          "failedGuards": ["total_tickets_confirmed"]
+        }
+      }
+    },
+    "issues": [
+      { "code": "FRAME_PARTIAL", "path": "/draft/completeness/frame", "blocking": true, "action": "retake_image", "confidence": 0.54 },
+      { "code": "REGULAR_TIERS_INCOMPLETE", "path": "/draft/tiers", "blocking": true, "action": "retake_image", "confidence": 0.54 },
+      { "code": "ONE_SLOT_ONE_TICKET_UNCONFIRMED", "path": "/draft/completeness/oneSlotOneTicketConfirmed", "blocking": true, "action": "confirm_one_slot_one_ticket", "confidence": 0.54 },
+      { "code": "TOTAL_TICKETS_DERIVATION_BLOCKED", "path": "/draft/derived/totalTickets", "blocking": true, "action": "confirm_total_tickets" },
+      { "code": "REMAINING_TICKETS_DERIVATION_BLOCKED", "path": "/draft/derived/remainingTickets", "blocking": true, "action": "confirm_remaining_tickets" }
+    ],
+    "imageHandling": {
+      "retention": "ephemeral",
+      "published": false,
+      "storedInSessionHistory": false
+    }
+  }
+}

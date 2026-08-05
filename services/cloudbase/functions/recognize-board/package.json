@@ -1,0 +1,9 @@
+{
+  "name": "@ichi/cloud-function-recognize-board",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": ">=24.11.0 <25"
+  }
+}

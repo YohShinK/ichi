@@ -1,0 +1,15 @@
+{
+  "archiveStatus": "SUPERSEDED",
+  "supersededBy": "memory-bank/progress.md",
+  "archivedAt": "2026-08-05",
+  "stage": "PRODUCT_DEFINITION",
+  "activeStep": null,
+  "lastCompletedStep": "ATLAS-01",
+  "status": "READY",
+  "objective": "Product Atlas 0.1 已通过验收；等待定义下一项任务。",
+  "productAtlas": {
+    "version": "0.1",
+    "status": "APPROVED"
+  },
+  "acceptanceRefs": ["ATLAS-01:APPROVED:2026-08-05"]
+}

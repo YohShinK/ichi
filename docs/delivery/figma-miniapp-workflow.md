@@ -1,5 +1,7 @@
 # ICHI 产品设计与跨端实现工作流
 
+> **文档角色：交付参考。** 当前产品行为以 `memory-bank/design-document.md` 为准，执行顺序以 `memory-bank/implementation-plan.md` 和 `memory-bank/progress.md` 为准；本文不能单独解锁设计或开发。
+
 > 版本：v0.1  
 > 适用范围：Figma 设计、Codex 实现、GPT Image 图像资产、H5 网页、微信小程序  
 > 目标：用一套产品定义和尽可能共享的代码，交付同功能、同设计语言的 H5 网页与微信小程序。
@@ -253,7 +255,7 @@ H5 测试：Playwright
 │   ├── e2e/
 │   ├── visual/
 │   └── fixtures/
-├── workflow.md
+├── docs/delivery/figma-miniapp-workflow.md
 └── README.md
 ```
 
@@ -474,10 +476,13 @@ Figma Variable：
 #### 输出
 
 ```text
-docs/product/product-brief.md
-docs/product/requirements.md
-docs/product/page-inventory.md
-docs/product/user-flows.md
+product-atlas/index.json
+product-atlas/nodes/N1-situation.md
+product-atlas/nodes/N2-problem.md
+product-atlas/nodes/E1-scope.md
+product-atlas/nodes/E2-experience.md
+product-atlas/nodes/O1-system.md
+product-atlas/nodes/O2-validation.md
 ```
 
 #### 阶段验收

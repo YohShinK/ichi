@@ -1,0 +1,16 @@
+.DS_Store
+**/.DS_Store
+
+node_modules/
+dist/
+.cache/
+.temp/
+coverage/
+
+.env
+.env.*
+!.env.example
+
+*.log
+product-atlas/canvas/.autosave/
+product-atlas/canvas/tmp/

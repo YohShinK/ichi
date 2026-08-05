@@ -1,0 +1,55 @@
+{
+  "atlasId": "ichi",
+  "lifecycle": "ARCHIVED_REFERENCE",
+  "method": "NEO_CORE",
+  "version": "0.1",
+  "status": "APPROVED",
+  "approvedAt": "2026-08-05",
+  "canvasFile": "canvas/ichi-product-atlas.json",
+  "nodes": {
+    "N1": {
+      "revision": 2,
+      "status": "APPROVED",
+      "summary": "付款前几分钟内，用户需要在不完整票池前做出抽、包、直接买或离开的选择。",
+      "file": "nodes/N1-situation.md"
+    },
+    "N2": {
+      "revision": 1,
+      "status": "APPROVED",
+      "summary": "把现场信息转为可核对、可解释且符合个人愿望与预算的选择，而非商家鉴定。",
+      "file": "nodes/N2-problem.md"
+    },
+    "E1": {
+      "revision": 2,
+      "status": "APPROVED",
+      "summary": "首版选择个人决策助手方向；不做商家平台、公共评分或实时库存。",
+      "file": "nodes/E1-scope.md"
+    },
+    "E2": {
+      "revision": 1,
+      "status": "APPROVED",
+      "summary": "从拍照或手动输入，经人工确认和自检，到四种并列决策与私人记录。",
+      "file": "nodes/E2-experience.md"
+    },
+    "O1": {
+      "revision": 1,
+      "status": "APPROVED",
+      "summary": "人负责确认与决策，AI 只提取草稿，确定性逻辑负责计算、边界和降级。",
+      "file": "nodes/O1-system.md"
+    },
+    "O2": {
+      "revision": 1,
+      "status": "APPROVED",
+      "summary": "以有效决策、结果可解释、规则正确和消费隐私护栏验证首版价值。",
+      "file": "nodes/O2-validation.md"
+    }
+  },
+  "extensions": {
+    "AI-01": {
+      "revision": 0,
+      "status": "NOT_STARTED",
+      "summary": null,
+      "file": "extensions/ai-contract.md"
+    }
+  }
+}

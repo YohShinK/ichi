@@ -1,0 +1,135 @@
+{
+  "status": "ARCHIVED_REFERENCE",
+  "format": "cowart-tldraw-project",
+  "atlasVersion": "0.1",
+  "projectCanvas": "../../canvas",
+  "pageId": "page:page",
+  "snapshot": "../../canvas/pages/page/cowart-canvas.json",
+  "legacyExperiment": {
+    "status": "REJECTED",
+    "reason": "PPT/HTML 表达信息密度不足，且不是可编辑的 Atlas 原生图纸。",
+    "slides": "atlas-01/index.html",
+    "boards": "atlas-01/boards",
+    "generator": "atlas-01/generate-boards.mjs"
+  },
+  "nativeDrawings": {
+    "N1": {
+      "status": "SUPERSEDED",
+      "boardShapeId": "shape:atlas-n1-native-board",
+      "childShapePrefix": "shape:atlas-n1-native-",
+      "format": "tldraw-geo",
+      "visualRevision": 2,
+      "styleSystem": "Swiss International × electronic ink；暖灰纸张、克莱因蓝标尺、强网格与状态色。",
+      "source": "../nodes/N1-situation.md",
+      "revision": 2,
+      "acceptance": "30 秒内能回答谁、在哪里、何时触发、已知、未知、决策与后果。"
+    }
+  },
+  "htmlProjections": {
+    "N1": {
+      "status": "APPROVED",
+      "file": "atlas-01/n1-visual-v3.html",
+      "preview": "atlas-01/n1-visual-v3.png",
+      "generator": "atlas-01/build-n1-visual.mjs",
+      "cowartShapeId": "shape:ichi-atlas-n1-visual-v3",
+      "cowartAsset": "../../canvas/pages/page/assets/ichi-atlas-n1-visual-v3.html",
+      "layout": "S11",
+      "theme": "Swiss IKB"
+    },
+    "N2": {
+      "status": "APPROVED",
+      "manifest": "atlas-01/manifests/N2.json",
+      "file": "atlas-01/n2-visual-v3.html",
+      "preview": "atlas-01/n2-visual-v3.png",
+      "generator": "atlas-01/build-atlas-visuals.mjs",
+      "cowartShapeId": "shape:ichi-atlas-n2-visual-v3",
+      "cowartAsset": "../../canvas/pages/page/assets/ichi-atlas-n2-visual-v3.html",
+      "layout": "S08",
+      "theme": "Swiss IKB"
+    },
+    "E1": {
+      "status": "APPROVED",
+      "manifest": "atlas-01/manifests/E1.json",
+      "file": "atlas-01/e1-visual-v3.html",
+      "preview": "atlas-01/e1-visual-v3.png",
+      "generator": "atlas-01/build-atlas-visuals.mjs",
+      "cowartShapeId": "shape:ichi-atlas-e1-visual-v3",
+      "cowartAsset": "../../canvas/pages/page/assets/ichi-atlas-e1-visual-v3.html",
+      "layout": "S13",
+      "theme": "Swiss IKB"
+    },
+    "E2": {
+      "status": "APPROVED",
+      "manifest": "atlas-01/manifests/E2.json",
+      "file": "atlas-01/e2-visual-v3.html",
+      "preview": "atlas-01/e2-visual-v3.png",
+      "generator": "atlas-01/build-atlas-visuals.mjs",
+      "cowartShapeId": "shape:ichi-atlas-e2-visual-v3",
+      "cowartAsset": "../../canvas/pages/page/assets/ichi-atlas-e2-visual-v3.html",
+      "layout": "S11",
+      "theme": "Swiss IKB"
+    },
+    "O1": {
+      "status": "APPROVED",
+      "manifest": "atlas-01/manifests/O1.json",
+      "file": "atlas-01/o1-visual-v3.html",
+      "preview": "atlas-01/o1-visual-v3.png",
+      "generator": "atlas-01/build-atlas-visuals.mjs",
+      "cowartShapeId": "shape:ichi-atlas-o1-visual-v3",
+      "cowartAsset": "../../canvas/pages/page/assets/ichi-atlas-o1-visual-v3.html",
+      "layout": "S05",
+      "theme": "Swiss IKB"
+    },
+    "O2": {
+      "status": "APPROVED",
+      "manifest": "atlas-01/manifests/O2.json",
+      "file": "atlas-01/o2-visual-v3.html",
+      "preview": "atlas-01/o2-visual-v3.png",
+      "generator": "atlas-01/build-atlas-visuals.mjs",
+      "cowartShapeId": "shape:ichi-atlas-o2-visual-v3",
+      "cowartAsset": "../../canvas/pages/page/assets/ichi-atlas-o2-visual-v3.html",
+      "layout": "S15",
+      "theme": "Swiss IKB"
+    }
+  },
+  "legacyCowartObjects": {
+    "OVERVIEW": {
+      "shapeId": "shape:ichi-product-atlas-0-1-draft",
+      "asset": "../../canvas/pages/page/assets/ichi-product-atlas-0.1-draft.html"
+    },
+    "N1": {
+      "shapeId": "shape:ichi-atlas-n1",
+      "asset": "../../canvas/pages/page/assets/ichi-atlas-n1.html"
+    },
+    "N2": {
+      "shapeId": "shape:ichi-atlas-n2",
+      "asset": "../../canvas/pages/page/assets/ichi-atlas-n2.html"
+    },
+    "E1": {
+      "shapeId": "shape:ichi-atlas-e1",
+      "asset": "../../canvas/pages/page/assets/ichi-atlas-e1.html"
+    },
+    "E2": {
+      "shapeId": "shape:ichi-atlas-e2",
+      "asset": "../../canvas/pages/page/assets/ichi-atlas-e2.html"
+    },
+    "O1": {
+      "shapeId": "shape:ichi-atlas-o1",
+      "asset": "../../canvas/pages/page/assets/ichi-atlas-o1.html"
+    },
+    "O2": {
+      "shapeId": "shape:ichi-atlas-o2",
+      "asset": "../../canvas/pages/page/assets/ichi-atlas-o2.html"
+    }
+  },
+  "nodeRevisions": {
+    "N1": 2,
+    "N2": 1,
+    "E1": 2,
+    "E2": 1,
+    "O1": 1,
+    "O2": 1
+  },
+  "updatePolicy": "产品判断变化时先修改对应 Markdown 节点并增加 revision，再同步元素 manifest、生成单页 HTML，并按 cowartShapeId 原位更新无限画布。纯视觉变化不增加节点 revision。",
+  "note": "Cowart snapshot is the editable human canvas; Markdown and index.json remain the product source of truth."
+}

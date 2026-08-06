@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "fixtureType": "synthetic_tier_label_contract",
+  "authorization": "project_created_synthetic",
+  "labels": [
+    { "rawLabel": "A赏", "expectedLabel": "A", "expectedAction": "accept" },
+    { "rawLabel": "B赏", "expectedLabel": "B", "expectedAction": "accept" },
+    { "rawLabel": "C赏", "expectedLabel": "C", "expectedAction": "accept" },
+    { "rawLabel": "D赏", "expectedLabel": "D", "expectedAction": "accept" },
+    { "rawLabel": "E赏", "expectedLabel": "E", "expectedAction": "accept" },
+    { "rawLabel": "F赏", "expectedLabel": "F", "expectedAction": "accept" },
+    { "rawLabel": "G赏", "expectedLabel": "G", "expectedAction": "accept" },
+    { "rawLabel": "H赏", "expectedLabel": "H", "expectedAction": "accept" },
+    { "rawLabel": "I赏", "expectedLabel": "I", "expectedAction": "accept" },
+    { "rawLabel": "J赏", "expectedLabel": "J", "expectedAction": "accept" },
+    { "rawLabel": "K赏", "expectedLabel": "K", "expectedAction": "accept" },
+    { "rawLabel": "L赏", "expectedLabel": "L", "expectedAction": "accept" },
+    { "rawLabel": "M赏", "expectedLabel": "M", "expectedAction": "accept" },
+    { "rawLabel": "N赏", "expectedLabel": "N", "expectedAction": "accept" },
+    { "rawLabel": "O赏", "expectedLabel": "O", "expectedAction": "accept" },
+    { "rawLabel": "P赏", "expectedLabel": "P", "expectedAction": "accept" },
+    { "rawLabel": "Q赏", "expectedLabel": "Q", "expectedAction": "accept" },
+    { "rawLabel": "R赏", "expectedLabel": "R", "expectedAction": "accept" },
+    { "rawLabel": "S赏", "expectedLabel": "S", "expectedAction": "accept" },
+    { "rawLabel": "T赏", "expectedLabel": "T", "expectedAction": "accept" },
+    { "rawLabel": "U赏", "expectedLabel": "U", "expectedAction": "accept" },
+    { "rawLabel": "V赏", "expectedLabel": "V", "expectedAction": "accept" },
+    { "rawLabel": "W赏", "expectedLabel": "W", "expectedAction": "accept" },
+    { "rawLabel": "X赏", "expectedLabel": "X", "expectedAction": "accept" },
+    { "rawLabel": "Y赏", "expectedLabel": "Y", "expectedAction": "accept" },
+    { "rawLabel": "Z赏", "expectedLabel": "Z", "expectedAction": "accept" },
+    {
+      "rawLabel": "SP赏",
+      "expectedLabel": "OTHER",
+      "expectedAction": "confirm_tier_label",
+      "expectedIssueCode": "TIER_LABEL_OTHER"
+    }
+  ],
+  "lowConfidenceCase": {
+    "rawLabel": "?赏",
+    "expectedLabel": "OTHER",
+    "expectedAction": "confirm_tier_label",
+    "expectedIssueCode": "TIER_LABEL_LOW_CONFIDENCE"
+  }
+}

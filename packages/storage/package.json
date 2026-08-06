@@ -1,0 +1,12 @@
+{
+  "name": "@ichi/storage",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@ichi/board-layout": "workspace:*",
+    "@ichi/recognition-contract": "workspace:*",
+    "@ichi/session": "workspace:*"
+  }
+}

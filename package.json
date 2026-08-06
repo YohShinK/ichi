@@ -15,7 +15,7 @@
     "typecheck": "tsc -p tsconfig.json --pretty false",
     "test": "vitest run --passWithNoTests",
     "test:core": "vitest run packages/core",
-    "validate:contracts": "node scripts/validate-board-layout.mjs && node scripts/validate-recognition-contract.mjs && node scripts/validate-render-contract.mjs && node scripts/validate-v1a-baseline.mjs && node scripts/validate-workflow.mjs",
+    "validate:contracts": "node scripts/validate-board-layout.mjs && node scripts/validate-recognition-contract.mjs && node scripts/validate-render-contract.mjs && node scripts/validate-v1a-baseline.mjs && node scripts/validate-v1c-baseline.mjs && node scripts/validate-workflow.mjs",
     "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm validate:contracts",
     "quality:prove": "node scripts/verify-quality-gate.mjs"
   },

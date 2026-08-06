@@ -44,6 +44,24 @@ importers:
 
   packages/recognition-contract: {}
 
+  packages/session:
+    dependencies:
+      '@ichi/core':
+        specifier: workspace:*
+        version: link:../core
+
+  packages/storage:
+    dependencies:
+      '@ichi/board-layout':
+        specifier: workspace:*
+        version: link:../board-layout
+      '@ichi/recognition-contract':
+        specifier: workspace:*
+        version: link:../recognition-contract
+      '@ichi/session':
+        specifier: workspace:*
+        version: link:../session
+
   services/cloudbase/functions/recognize-board: {}
 
 packages:

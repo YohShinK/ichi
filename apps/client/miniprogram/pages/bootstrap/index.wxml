@@ -1,4 +1,7 @@
 <view class="shell">
   <text class="title">ICHI</text>
-  <text class="status">V1-A 工程骨架已就绪</text>
+  <text class="status">V1-C 工程验证入口</text>
+  <text class="status" data-testid="storage-state">Storage：{{storageState}}</text>
+  <text class="status" data-testid="storage-detail">{{storageDetail}}</text>
+  <text class="status" data-testid="capacity-state">容量：{{capacityState}}</text>
 </view>

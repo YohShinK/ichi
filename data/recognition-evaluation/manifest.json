@@ -1,0 +1,50 @@
+{
+  "schemaVersion": "1.0.0",
+  "name": "V1-C controlled recognition evaluation",
+  "purpose": "qa_only",
+  "runtimeDependency": false,
+  "realWorldAccuracyClaimed": false,
+  "assetPolicy": {
+    "allowedAuthorization": ["project_created_synthetic", "explicit_owner_authorization"],
+    "containsImageBinaries": false,
+    "officialVisualAssetsIncluded": false,
+    "productionAccuracyRequiresAuthorizedRealImages": true
+  },
+  "cases": [
+    {
+      "id": "tier-label-coverage",
+      "fixture": "data/recognition-evaluation/tier-label-coverage.json",
+      "authorization": "project_created_synthetic",
+      "assetType": "structured_fixture",
+      "dimensions": ["A_Z", "OTHER", "tier_label_low_confidence"]
+    },
+    {
+      "id": "complete-board",
+      "fixture": "data/recognition-contract/fixtures/complete-board.json",
+      "authorization": "project_created_synthetic",
+      "assetType": "structured_fixture",
+      "dimensions": ["complete_frame", "slot_derivation"]
+    },
+    {
+      "id": "handwritten-price",
+      "fixture": "data/recognition-contract/fixtures/handwritten-price.json",
+      "authorization": "project_created_synthetic",
+      "assetType": "structured_fixture",
+      "dimensions": ["handwritten_price", "local_manual_correction"]
+    },
+    {
+      "id": "partial-board",
+      "fixture": "data/recognition-contract/fixtures/partial-board.json",
+      "authorization": "project_created_synthetic",
+      "assetType": "structured_fixture",
+      "dimensions": ["partial_frame", "retake"]
+    },
+    {
+      "id": "inconsistent-slots",
+      "fixture": "data/recognition-contract/fixtures/inconsistent-slots.json",
+      "authorization": "project_created_synthetic",
+      "assetType": "structured_fixture",
+      "dimensions": ["low_confidence", "slot_inconsistency", "local_manual_correction"]
+    }
+  ]
+}

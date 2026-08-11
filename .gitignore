@@ -1,6 +1,8 @@
 node_modules/
 coverage/
 dist/
+apps/web/.next/
+apps/web/test-results/
 .DS_Store
 project.private.config.json
 services/cloudbase/**/.env*

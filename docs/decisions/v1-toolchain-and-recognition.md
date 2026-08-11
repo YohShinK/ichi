@@ -1,6 +1,6 @@
 # V1 工具链、CloudBase 与识别服务决策
 
-> 状态：AWAITING_REVIEW
+> 状态：APPROVED
 >
 > 日期：2026-08-05
 >
@@ -12,7 +12,7 @@ V1-A 使用 Node.js 24.11、pnpm 11.9.0、TypeScript 6.0.3、Vitest 4.1.10、ESL
 
 微信小程序基础库锁定 3.17.0，开发者工具已在 2.02.2607271 验证。工程绑定用户提供的小程序 AppID；AppSecret 不进入仓库、客户端或开发者工具项目配置，只能在确有服务端调用需求时通过受控环境变量提供。
 
-CloudBase 普通云函数运行时锁定 `Nodejs24.11`，入口保持 CommonJS。V1 云端只允许 `recognize-board` 识别代理，不建立账号、数据库、公共目录或会话同步。
+CloudBase 普通云函数运行时锁定 `Nodejs24.11`，入口保持 CommonJS。V1 云端仍只允许 `recognize-board` 识别代理，不接入真实账号、数据库或会话同步；V1 网页可先搭建账号与贡献 UI 框架，V2 再按批准方案接入后端。
 
 ## 识别候选与边界
 

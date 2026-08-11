@@ -2,6 +2,8 @@
 
 本目录定义识别服务与微信小程序之间的数据边界。识别服务只返回数据、置信度、问题原因和建议人工动作；所有组件、样式和交互仍由小程序包内代码提供。
 
+模型固定提问的识别项目、字段用途，以及“大赏／中赏／小赏”必须由本地计数派生而非模型判断的规则，见 [`docs/decisions/v1-recognition-and-prize-presentation.md`](../../docs/decisions/v1-recognition-and-prize-presentation.md)。
+
 ## 文件
 
 - `schema/recognition-contract.schema.json`：一次识别请求与响应的 JSON Schema；
@@ -28,6 +30,7 @@
 3. Last、Double Chance 和所有辅助区块只保留位置与内容，不参与两项求和。
 4. 手写、缺失或低置信价格只产生价格问题，不使已经可靠的奖级和抽数失效。
 5. 原始图片不进入会话历史、不公开；具体临时保留时长在 V1-04 选择识别服务时锁定。
+6. 普通奖级的标签、总／空／已贴／未知票位、排布、价格、Last 和问题是模型固定输出；票池总数与余票由可靠券位本地求和。模型没有大／中／小赏字段；本地 `derivePrizeClassification` 只在总票位为已核对正整数时派生这些分类。
 
 ## 验证
 

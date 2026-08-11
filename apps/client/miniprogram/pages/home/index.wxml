@@ -1,0 +1,271 @@
+<template name="draft-row">
+  <view class="swipe-row">
+    <button
+      wx:if="{{item.canDelete}}"
+      class="swipe-delete"
+      data-board-id="{{item.boardId}}"
+      catchtap="onDeleteDraft"
+      aria-label="删除这次抽赏草稿"
+    >
+      <image class="icon icon--trash" src="/assets/icons/trash-white.svg" mode="aspectFit" aria-hidden="true" />
+    </button>
+    <view
+      class="draft-card light-capsule swipe-content"
+      style="transform: translateX({{item.swipeX}}px);"
+      data-board-id="{{item.boardId}}"
+      bindtouchstart="onTouchStart"
+      catchtouchmove="onTouchMove"
+      bindtouchend="onTouchEnd"
+      bindtouchcancel="onTouchEnd"
+      bindtap="onOpenDraft"
+      hover-class="draft-card--pressed"
+      role="button"
+      aria-label="继续{{item.title}}"
+    >
+      <view class="draft-copy">
+        <text class="draft-title">{{item.title}}</text>
+        <text class="draft-meta">{{item.meta}}</text>
+        <view wx:if="{{showStatuses}}" class="draft-statuses">
+          <text class="status-pill status-pill--dark">{{item.verificationLabel}}</text>
+          <text class="status-pill">{{item.uploadLabel}}</text>
+        </view>
+      </view>
+      <view class="draft-resume">
+        <text>继续</text>
+        <image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" aria-hidden="true" />
+      </view>
+    </view>
+  </view>
+</template>
+
+<view class="app-shell" style="--top-safe-px: {{topSafePx}}px;">
+  <view
+    wx:if="{{currentView === 'start'}}"
+    class="page page--start"
+    data-testid="page-start"
+  >
+    <view class="import-hero light-capsule">
+      <image
+        class="camera-asset"
+        src="/assets/v1-29/ichi-camera-cutout.png"
+        mode="aspectFit"
+        aria-label="相机图标"
+      />
+      <text class="hero-title">导入版面照片</text>
+      <text class="hero-copy">拍摄或选择一张完整、清楚的兑换进度板照片以建立票池。</text>
+      <view class="action-wrap">
+        <view class="action-glow"></view>
+        <button
+          class="action-button"
+          loading="{{mediaBusy}}"
+          disabled="{{mediaBusy}}"
+          bindtap="onImportBoard"
+          data-testid="import-board"
+        >
+          <image class="icon icon--button" src="/assets/icons/scan-white.svg" mode="aspectFit" aria-hidden="true" />
+          <text>拍摄版面</text>
+        </button>
+      </view>
+    </view>
+
+    <view wx:if="{{drafts.length > 0}}" class="start-drafts" data-testid="start-drafts">
+      <view class="drafts-header">
+        <text>抽赏草稿</text>
+        <text>{{drafts.length}} 份</text>
+      </view>
+      <scroll-view class="draft-list" scroll-y enhanced show-scrollbar="false">
+        <view class="draft-list-inner">
+          <block wx:for="{{drafts}}" wx:key="boardId">
+            <template is="draft-row" data="{{item: item, showStatuses: false}}" />
+          </block>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+
+  <view
+    wx:elif="{{currentView === 'resume'}}"
+    class="page page--resume"
+    data-testid="page-resume"
+  >
+    <view wx:if="{{activeDraft}}" class="resume-card light-capsule">
+      <image class="resume-watermark" src="/assets/icons/clock-counter-clockwise-black.svg" mode="aspectFit" aria-hidden="true" />
+      <text class="eyebrow">找到上次的票池记录</text>
+      <text class="resume-title">本机抽赏草稿</text>
+      <text class="resume-copy">保存时间：{{activeDraft.savedAtLabel}}</text>
+      <view class="resume-stats">
+        <view class="resume-stat">
+          <text class="resume-stat-label">当前余票</text>
+          <text class="resume-stat-value">{{activeDraft.remaining}}</text>
+        </view>
+        <view class="resume-stat">
+          <text class="resume-stat-label">累计花费</text>
+          <text class="resume-stat-value resume-stat-value--accent">¥{{activeDraft.cost}}</text>
+        </view>
+        <view class="resume-stat">
+          <text class="resume-stat-label">待确认</text>
+          <text class="resume-stat-value">{{activeDraft.pendingCount}}抽</text>
+        </view>
+      </view>
+      <view class="resume-actions">
+        <view class="action-wrap">
+          <view class="action-glow"></view>
+          <button class="action-button" bindtap="onContinueDraft">
+            <image class="icon icon--button" src="/assets/icons/play-white.svg" mode="aspectFit" aria-hidden="true" />
+            <text>继续记录抽取</text>
+          </button>
+        </view>
+        <view class="split-actions">
+          <button class="ghost-button" bindtap="onOpenLocalRecords">管理记录</button>
+          <button class="ghost-button" bindtap="onBackToStart">建新票池</button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view
+    wx:elif="{{currentView === 'map-preview'}}"
+    class="page page--map"
+    data-testid="page-map"
+  >
+    <view class="map-hero light-capsule">
+      <image class="map-watermark" src="/assets/v1-29/map-placeholder.svg" mode="aspectFill" aria-hidden="true" />
+      <view class="map-mark">
+        <image class="icon icon--map-hero" src="/assets/icons/map-pin-fill-white.svg" mode="aspectFit" aria-hidden="true" />
+      </view>
+      <text class="hero-title">地图会在 V2 再来</text>
+      <text class="hero-copy map-copy">好版地图会汇总用户核对并贡献的版面记录，帮助你按地点查看值得关注的票池线索与当前版面状态。</text>
+      <view class="map-actions">
+        <view class="action-wrap">
+          <view class="action-glow"></view>
+          <button class="action-button" bindtap="onImportBoard">去拍摄版面</button>
+        </view>
+        <button class="ghost-button" bindtap="onBackToStart">返回票池首页</button>
+      </view>
+    </view>
+  </view>
+
+  <view
+    wx:elif="{{currentView === 'my'}}"
+    class="page page--my"
+    data-testid="page-my"
+  >
+    <view class="profile">
+      <view class="profile-avatar">
+        <image class="profile-avatar-image" src="/assets/v1-29/ichi-avatar.png" mode="aspectFill" aria-label="ICHI 头像" />
+      </view>
+      <view class="profile-copy">
+        <text class="profile-title">ICHI 玩家</text>
+        <text class="profile-id">ID: LOCAL-001</text>
+        <text class="profile-mode">本机模式</text>
+      </view>
+    </view>
+    <view class="menu-card light-capsule">
+      <view class="menu-row">
+        <view class="menu-icon"><image class="icon icon--menu" src="/assets/icons/gear-six-gray.svg" mode="aspectFit" aria-hidden="true" /></view>
+        <text class="menu-label">账号管理</text>
+        <image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" aria-hidden="true" />
+      </view>
+      <view
+        class="menu-row"
+        data-action="local-records"
+        bindtap="onOpenLocalRecords"
+        role="button"
+      >
+        <view class="menu-icon menu-icon--dark"><image class="icon icon--menu" src="/assets/icons/hard-drives-white.svg" mode="aspectFit" aria-hidden="true" /></view>
+        <text class="menu-label">本地记录</text>
+        <image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" aria-hidden="true" />
+      </view>
+      <view class="menu-row">
+        <view class="menu-icon menu-icon--accent"><image class="icon icon--menu" src="/assets/icons/hand-heart-pink.svg" mode="aspectFit" aria-hidden="true" /></view>
+        <text class="menu-label">我的贡献</text>
+        <image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" aria-hidden="true" />
+      </view>
+    </view>
+    <view class="menu-card light-capsule">
+      <view class="menu-row">
+        <view class="menu-icon"><image class="icon icon--menu" src="/assets/icons/bell-gray.svg" mode="aspectFit" aria-hidden="true" /></view>
+        <text class="menu-label">提醒设置</text>
+        <image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" aria-hidden="true" />
+      </view>
+      <view class="menu-row">
+        <view class="menu-icon"><image class="icon icon--menu" src="/assets/icons/shield-check-gray.svg" mode="aspectFit" aria-hidden="true" /></view>
+        <text class="menu-label">隐私与数据</text>
+        <image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" aria-hidden="true" />
+      </view>
+    </view>
+  </view>
+
+  <view
+    wx:elif="{{currentView === 'local-records'}}"
+    class="page page--records"
+    data-testid="page-local-records"
+  >
+    <view class="subpage-header">
+      <button class="back-button" bindtap="onBackToMy" aria-label="返回我的">
+        <image class="icon icon--back" src="/assets/icons/arrow-left-gray.svg" mode="aspectFit" aria-hidden="true" />
+      </button>
+      <text class="subpage-title">本地记录</text>
+    </view>
+    <text class="record-summary">全部有 {{drafts.length}} 个 · 现在已上传有 0 个 · 未上传有 {{drafts.length}} 个</text>
+    <scroll-view class="records-scroll" scroll-y enhanced show-scrollbar="false">
+      <view wx:if="{{drafts.length > 0}}" class="records-list">
+        <block wx:for="{{drafts}}" wx:key="boardId">
+          <template is="draft-row" data="{{item: item, showStatuses: true}}" />
+        </block>
+      </view>
+      <view wx:else class="records-empty light-capsule">
+        <text class="records-empty-title">还没有本机记录</text>
+        <text class="records-empty-copy">暂不分享的抽赏草稿会保存在这里。</text>
+      </view>
+    </scroll-view>
+  </view>
+
+  <view class="bottom-nav light-capsule" data-testid="bottom-nav">
+    <view
+      class="nav-item {{activeTab === 'recognize' ? 'nav-item--active' : ''}}"
+      data-tab="recognize"
+      bindtap="onSelectTab"
+      role="button"
+      aria-label="识别"
+    >
+      <image
+        class="icon icon--nav {{activeTab === 'recognize' ? 'icon--nav-active' : ''}}"
+        src="{{activeTab === 'recognize' ? '/assets/icons/corners-out-white.svg' : '/assets/icons/corners-out-gray.svg'}}"
+        mode="aspectFit"
+        aria-hidden="true"
+      />
+      <text wx:if="{{activeTab === 'recognize'}}" class="nav-label">识别</text>
+    </view>
+    <view
+      class="nav-item {{activeTab === 'map' ? 'nav-item--active' : ''}}"
+      data-tab="map"
+      bindtap="onSelectTab"
+      role="button"
+      aria-label="地图"
+    >
+      <image
+        class="icon icon--nav {{activeTab === 'map' ? 'icon--nav-active' : ''}}"
+        src="{{activeTab === 'map' ? '/assets/icons/map-pin-white.svg' : '/assets/icons/map-pin-gray.svg'}}"
+        mode="aspectFit"
+        aria-hidden="true"
+      />
+      <text wx:if="{{activeTab === 'map'}}" class="nav-label">地图</text>
+    </view>
+    <view
+      class="nav-item {{activeTab === 'my' ? 'nav-item--active' : ''}}"
+      data-tab="my"
+      bindtap="onSelectTab"
+      role="button"
+      aria-label="我的"
+    >
+      <image
+        class="icon icon--nav {{activeTab === 'my' ? 'icon--nav-active' : ''}}"
+        src="{{activeTab === 'my' ? '/assets/icons/user-circle-white.svg' : '/assets/icons/user-circle-gray.svg'}}"
+        mode="aspectFit"
+        aria-hidden="true"
+      />
+      <text wx:if="{{activeTab === 'my'}}" class="nav-label">我的</text>
+    </view>
+  </view>
+</view>

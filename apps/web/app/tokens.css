@@ -1,0 +1,26 @@
+:root {
+  --ichi-ink: #f6f5f2;
+  --ichi-muted: #a7a8ae;
+  --ichi-border: #303136;
+  --ichi-border-soft: #24252a;
+  --ichi-surface: #191a1f;
+  --ichi-surface-raised: #222329;
+  --ichi-surface-subtle: #0f1013;
+  --ichi-ticket: #f4f2ed;
+  --ichi-ticket-ink: #17181b;
+  --ichi-accent: #f0640b;
+  --ichi-accent-dark: #8b0000;
+  --ichi-signal: #4fd4b8;
+  --ichi-warning: #f6bd4b;
+  --ichi-danger: #ff755b;
+  --ichi-space-1: 4px;
+  --ichi-space-2: 8px;
+  --ichi-space-3: 12px;
+  --ichi-space-4: 16px;
+  --ichi-space-5: 24px;
+  --ichi-radius-sm: 10px;
+  --ichi-radius-md: 18px;
+  --ichi-radius-pill: 999px;
+  --ichi-nav-height: 72px;
+  --ichi-shadow-modal: 0 22px 60px rgb(0 0 0 / 48%);
+}

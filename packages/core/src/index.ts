@@ -1,4 +1,5 @@
 export * from "./combinatorics.js";
+export * from "./board-outlook.js";
 export * from "./comparison.js";
 export * from "./constrained-plan.js";
 export * from "./errors.js";

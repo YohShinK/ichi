@@ -1,5 +1,13 @@
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url("/assets/fonts/Montserrat-latin-400-900.woff2") format("woff2");
+}
+
 page {
-  background: #f6f7f8;
-  color: #1f2328;
-  font-family: system-ui, sans-serif;
+  background: #f0f2f5;
+  color: #111111;
+  font-family: "Montserrat", -apple-system, BlinkMacSystemFont, sans-serif;
 }

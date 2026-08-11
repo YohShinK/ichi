@@ -8,6 +8,8 @@ export default tseslint.config(
       "node_modules/**",
       "coverage/**",
       "dist/**",
+      "apps/web/.next/**",
+      "apps/web/next-env.d.ts",
       "canvas/**",
       "product-atlas/**",
     ],
@@ -15,7 +17,7 @@ export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ["**/*.{js,mjs,cjs,ts}"],
+    files: ["**/*.{js,mjs,cjs,ts,tsx}"],
     languageOptions: {
       globals: {
         ...globals.node,

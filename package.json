@@ -12,9 +12,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint apps packages services scripts",
-    "typecheck": "tsc -p tsconfig.json --pretty false",
+    "typecheck": "tsc -p tsconfig.json --pretty false && tsc -p apps/web/tsconfig.json --pretty false",
     "test": "vitest run --passWithNoTests",
     "test:core": "vitest run packages/core",
+    "test:web": "pnpm --filter @ichi/web test:e2e",
     "validate:contracts": "node scripts/validate-board-layout.mjs && node scripts/validate-recognition-contract.mjs && node scripts/validate-render-contract.mjs && node scripts/validate-v1a-baseline.mjs && node scripts/validate-v1c-baseline.mjs && node scripts/validate-workflow.mjs",
     "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm validate:contracts",
     "quality:prove": "node scripts/verify-quality-gate.mjs"

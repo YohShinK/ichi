@@ -1,6 +1,8 @@
 node_modules/
 coverage/
 dist/
+apps/web/.next/
+apps/web/test-results/
 canvas/
 product-atlas/
 docs/

@@ -3,7 +3,11 @@
   "registryId": "v1-saturated-board-components",
   "tierLabels": [
     "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-    "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"
+    "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+    "SP1", "SP2", "SP3", "SP4", "SP5", "SP6", "SP7", "SP8",
+    "SP9", "SP10", "SP11", "SP12", "SP13", "SP14", "SP15", "SP16",
+    "SP17", "SP18", "SP19", "SP20", "SP21", "SP22", "SP23", "SP24",
+    "SP25", "SP26", "SP27", "SP28", "SP29", "SP30", "SP31", "SP32"
   ],
   "tierFallback": {
     "label": "OTHER",
@@ -29,6 +33,13 @@
       "type": "series_identity",
       "renderer": "SeriesIdentity",
       "cardinality": "optional_multiple",
+      "dataOnly": true,
+      "ticketCountRole": "excluded"
+    },
+    {
+      "type": "board_theme",
+      "renderer": "BoardTheme",
+      "cardinality": "optional_single",
       "dataOnly": true,
       "ticketCountRole": "excluded"
     },

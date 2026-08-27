@@ -1,0 +1,63 @@
+[
+  {
+    "id": "golden-1",
+    "name": "世界之外",
+    "filename": "IMG_2329.JPG",
+    "groundTruthSource": "golden-four-board-expectations.json"
+  },
+  {
+    "id": "golden-2",
+    "name": "崩坏：星穹铁道 Vol.3",
+    "filename": "崩铁一番赏_1_风带来故事的种子_来自小红书网页版.jpg",
+    "groundTruthSource": "golden-four-board-expectations.json"
+  },
+  {
+    "id": "golden-3",
+    "name": "明日方舟 / 来份甜点",
+    "filename": "这个一番赏板面可以包吗？_1_熠奈__来自小红书网页版.jpg",
+    "groundTruthSource": "golden-four-board-expectations.json"
+  },
+  {
+    "id": "golden-4",
+    "name": "女神异闻录 / 30周年",
+    "filename": "女神异闻录版面香香！_1_O MiCa一番赏_来自小红书网页版.jpg",
+    "groundTruthSource": "golden-four-board-expectations.json"
+  },
+  {
+    "id": "golden-5",
+    "name": "胜利女神：NIKKE CHAPTER7",
+    "filename": "秋叶原2发捡漏nikke最终赏_1_All is well_来自小红书网页版.jpg",
+    "width": 1080,
+    "height": 1440,
+    "ipName": "胜利女神：NIKKE",
+    "themeName": "CHAPTER7",
+    "tiers": [
+      { "tier": "A", "total": 2, "pasted": 2 },
+      { "tier": "B", "total": 2, "pasted": 2 },
+      { "tier": "C", "total": 1, "pasted": 1 },
+      { "tier": "D", "total": 1, "pasted": 1 },
+      { "tier": "E", "total": 1, "pasted": 1 },
+      { "tier": "F", "total": 5, "pasted": 5 },
+      { "tier": "G", "total": 15, "pasted": 14 },
+      { "tier": "H", "total": 18, "pasted": 17 },
+      { "tier": "I", "total": 13, "pasted": 13 },
+      { "tier": "J", "total": 8, "pasted": 8 },
+      { "tier": "K", "total": 14, "pasted": 14 }
+    ]
+  },
+  {
+    "id": "golden-6",
+    "name": "空位印刷赏级字符反例",
+    "filename": "谁懂！巨人一番赏来啦！_1_黑暗里舞动的少年_来自小红书网页版.jpg",
+    "width": 1080,
+    "height": 1460,
+    "partialGroundTruth": true,
+    "assertions": [
+      {
+        "tier": "A",
+        "pasted": 0,
+        "reason": "空置票位底板印刷的 A 不是后贴实体赏票。"
+      }
+    ]
+  }
+]

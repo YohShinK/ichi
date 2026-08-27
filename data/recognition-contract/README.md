@@ -1,39 +1,17 @@
-# V1 版面识别数据契约
+# Recognition contract
 
-本目录定义识别服务与微信小程序之间的数据边界。识别服务只返回数据、置信度、问题原因和建议人工动作；所有组件、样式和交互仍由小程序包内代码提供。
+生产默认协议为 R2 direct-remaining：`prompt/ichi-board-vlm-r2-direct-remaining-1.0.0.txt` 与 `schema/board-provider-r2-direct-remaining-1.0.0.schema.json` 固定模型只返回身份、视觉赏级、直接 R 和可选可见数字对象。`recognize-board/r2-direct-remaining-resolver.js` 对非 null Provider R（包括 0）优先，否则只按 observation object 数量回退；不执行 T/P/U、序列或方向推理。第一阶段输出 `RecognitionContract 1.0.0` 时 T/P 保持 null。冻结 H0 `hybrid_semantic` 仍是唯一生产回滚，R1 Prompt/Schema/resolver 保留为历史回归；旧 v4 协议、Schema 与 adapter 只用于历史 fixture 迁移。
 
-模型固定提问的识别项目、字段用途，以及“大赏／中赏／小赏”必须由本地计数派生而非模型判断的规则，见 [`docs/decisions/v1-recognition-and-prize-presentation.md`](../../docs/decisions/v1-recognition-and-prize-presentation.md)。
+当前生产候选由三层组成：
 
-## 文件
+1. `prompt/ichi-board-vlm-4.0.0-rc1.txt`：给 `qwen3.7-flash` 的单一语义机器 Prompt；直接要求 IP／原文／主题、价格、视觉顺序 raw tier、容量、`ticketPattern` 及该模式唯一需要的证据。
+2. `schema/board-provider-extraction-4.0.0-rc1.schema.json`：与 Prompt 示例相同形状的 AJV Provider 边界；拒绝额外字段、遗漏的 null、错误类型和数字字符串。
+3. CloudBase `recognize-board` 的 `normalizeExtraction`：逐 raw tier 确定性计算 pasted，再合并 A1/A2 等父字母、按视觉顺序分配 SP1—SP32，并转换成小程序稳定的 RecognitionContract 1.0.0。
 
-- `schema/recognition-contract.schema.json`：一次识别请求与响应的 JSON Schema；
-- `registry/issue-actions.json`：稳定问题原因码及允许的人工动作；
-- `fixtures/complete-board.json`：完整图，抽数与余票可自动推导；
-- `fixtures/partial-board.json`：缺边图，保留草稿但要求重拍；
-- `fixtures/handwritten-price.json`：价格疑似手写，只补价格；
-- `fixtures/inconsistent-slots.json`：券位不守恒，定位到具体奖级修正；
-- `scripts/validate-recognition-contract.mjs`：验证路由、守恒、推导门禁、坐标、原因码和图片边界。
+旧 `ichi-board-vlm-1.x/2.x/3.x`、旧 Provider Schema 与 compact adapter 仅用于历史迁移／回归，不是当前生产请求格式。
 
-## 响应状态
+生产请求固定为 `qwen3.7-flash`、`enable_thinking=false`、`response_format=json_object`、`temperature=0`、`max_pixels=6291456`。照片通过 CloudBase 私有临时 Storage 对象和 5 分钟 HTTPS URL传递；云函数不下载 Buffer、不转 Base64、不把图片或模型原文持久化。
 
-| 状态 | 含义 | 是否可进入用户确认 |
-| --- | --- | --- |
-| `ready_for_confirmation` | 结构完整，自动推导通过 | 可以，但仍需用户确认 |
-| `needs_user_input` | 草稿可用，但至少一个必填字段需要填写或修正 | 修正后可以 |
-| `retake_required` | 图片缺边、模糊或无法证明结构完整 | 不可以，必须重拍或重新选图 |
-| `service_error` | 超时或服务错误 | 不可以，可重试 |
+`totalTickets` 与 pasted 独立：`empty → 0`、`prefix → firstOpen - sequenceStart`、`full → total`、`irregular → pastedDirect`、`unknown → null`。缺少证据保持 `null`，禁止以 total、physical ticket count 或空坐标数组补成全贴。
 
-## 推导与人工动作
-
-1. `totalTickets = sum(tiers[*].slotObservation.totalSlots)`，仅在完整版面、所有普通奖级已检出、一券位一抽已确认、每级券位守恒时自动确认。
-2. `remainingTickets = sum(tiers[*].slotObservation.openSlots)`，还要求没有未知券位状态。
-3. Last、Double Chance 和所有辅助区块只保留位置与内容，不参与两项求和。
-4. 手写、缺失或低置信价格只产生价格问题，不使已经可靠的奖级和抽数失效。
-5. 原始图片不进入会话历史、不公开；具体临时保留时长在 V1-04 选择识别服务时锁定。
-6. 普通奖级的标签、总／空／已贴／未知票位、排布、价格、Last 和问题是模型固定输出；票池总数与余票由可靠券位本地求和。模型没有大／中／小赏字段；本地 `derivePrizeClassification` 只在总票位为已核对正整数时派生这些分类。
-
-## 验证
-
-```bash
-node scripts/validate-recognition-contract.mjs
-```
+赏票送审使用独立的 `ichi-draw-ticket-vlm-1.0.0-rc1.txt` 与 `draw-ticket-provider-extraction-1.0.0-rc1.schema.json`；服务端按 `recordId + boardId + submissionVersion` 做增量、幂等与乱序保护。

@@ -1,0 +1,142 @@
+{
+  "policyVersion": "board-vlm-policy-1.0.0-rc1",
+  "promptVersion": "ichi-board-vlm-3.0.0-rc1",
+  "schemaVersion": "board-provider-extraction-3.0.0-rc1",
+  "modelCandidate": "qwen3.7-flash",
+  "request": {
+    "imageCount": 1,
+    "enableThinking": false,
+    "temperature": 0,
+    "toolsEnabled": false,
+    "webEnabled": false,
+    "maxModelCalls": 1
+  },
+  "ipSelection": {
+    "highConfidence": 0.9,
+    "minimumCandidateConfidence": 0.85,
+    "minimumLeadOverSecondCandidate": 0.1,
+    "singleStrongEvidence": ["explicit_title_text"],
+    "independentEvidenceMinimum": 2,
+    "independentEvidenceMustIncludeOneOf": [
+      "logo_plus_text",
+      "character_or_prize_name_text"
+    ],
+    "otherwise": "needs_user_input"
+  },
+  "boardSelection": {
+    "areaMetric": "perspective_polygon_area_fraction",
+    "centerMetric": "1_minus_normalized_distance_to_image_center",
+    "completenessMetric": "mean_of_frame_and_content_completeness",
+    "weights": {
+      "area": 0.4,
+      "center": 0.35,
+      "completeness": 0.2,
+      "detail": 0.05
+    },
+    "enumScores": {
+      "complete_or_sufficient": 1,
+      "uncertain_or_partially_sufficient": 0.5,
+      "partial_or_insufficient": 0
+    },
+    "minimumAreaFraction": 0.12,
+    "minimumWinningScore": 0.55,
+    "minimumLeadOverSecondCandidate": 0.1,
+    "ambiguous": "retake_or_crop_to_one_board",
+    "selectedButIncomplete": "retake_or_crop_to_complete_board",
+    "modelAndServerSelectionMismatch": "retake_or_crop_to_one_board",
+    "requireAllDetailedBoxesInsideFocusBoard": true,
+    "requirePerspectiveCorners": true
+  },
+  "priceSelection": {
+    "minimumSingleDrawConfidence": 0.85,
+    "requireExactlyOneQualifiedSingleDrawCandidate": true,
+    "otherwise": "needs_user_input"
+  },
+  "slotStateMapping": {
+    "minimumLegendConfidence": 0.8,
+    "unknownWhenLegendBelowThreshold": true,
+    "neverUseColorAlone": true,
+    "sequenceMarkersAreSecondaryEvidenceOnly": true,
+    "minimumSequenceConfidence": 0.85,
+    "requireAtLeastTwoConsistentMarkersForDirection": true,
+    "requireConfirmedSequenceOriginForCountCorroboration": true,
+    "requireVisibleMarkerToSlotAlignment": true,
+    "requireVisibleContiguousFrontierForCountCorroboration": true,
+    "countCorroborationFormula": "frontier_ordinal_minus_confirmed_sequence_origin_ordinal",
+    "neverDeriveCoveredCountFromOneMarkerAlone": true,
+    "sequenceCorroborationCannotOverrideVisibleStateArray": true,
+    "onSequenceStateConflict": "preserve_visible_states_and_require_user_correction"
+  },
+  "blockingImageStates": {
+    "target": ["not_target_board"],
+    "frame": ["partial"],
+    "severity": ["blocking"],
+    "detail": ["insufficient"]
+  },
+  "blockingRecognitionConditions": [
+    "no_tiers",
+    "focus_board_ambiguous",
+    "focus_board_incomplete",
+    "focus_board_too_small",
+    "focus_selection_mismatch",
+    "regular_tier_coverage_not_complete",
+    "one_slot_one_ticket_not_confirmed",
+    "duplicate_a_to_z_or_sp1_to_sp4_label_or_duplicate_normalized_other_label",
+    "unassigned_ticket_area",
+    "unknown_slot_state",
+    "ambiguous_slot_state_legend",
+    "printed_visible_count_conflict",
+    "missing_price",
+    "multiple_single_draw_price_candidates",
+    "invalid_reference",
+    "invalid_box",
+    "schema_failure"
+  ],
+  "issueActions": {
+    "NOT_TARGET_BOARD": "retake_image",
+    "FOCUS_BOARD_AMBIGUOUS": "retake_or_crop_to_one_board",
+    "FOCUS_BOARD_INCOMPLETE": "retake_or_crop_to_complete_board",
+    "FOCUS_BOARD_TOO_SMALL": "retake_or_crop_to_fill_frame",
+    "FOCUS_SELECTION_MISMATCH": "retake_or_crop_to_one_board",
+    "FRAME_PARTIAL": "retake_image",
+    "FRAME_UNCERTAIN": "retake_image",
+    "NO_TIERS": "retake_image",
+    "BLUR_BLOCKING": "retake_image",
+    "GLARE_BLOCKING": "retake_image",
+    "SKEW_BLOCKING": "retake_image",
+    "OCCLUSION_BLOCKING": "retake_image",
+    "DETAIL_INSUFFICIENT": "retake_image",
+    "IP_AMBIGUOUS": "fill_or_confirm_ip",
+    "IP_MISSING": "fill_or_confirm_ip",
+    "TIER_LABEL_LOW_CONFIDENCE": "confirm_tier_label",
+    "TIER_LABEL_DUPLICATE": "correct_tiers",
+    "REGULAR_TIERS_INCOMPLETE": "retake_or_correct_tiers",
+    "TICKET_AREA_OWNER_AMBIGUOUS": "assign_ticket_area",
+    "TICKET_AREA_UNASSIGNED": "assign_ticket_area",
+    "UNKNOWN_SLOT_STATE": "correct_ticket_slots",
+    "SLOT_STATE_LEGEND_AMBIGUOUS": "correct_ticket_slots",
+    "SLOT_SEQUENCE_STATE_CONFLICT": "correct_ticket_slots",
+    "PRINTED_AND_VISIBLE_SLOT_COUNT_CONFLICT": "confirm_ticket_count",
+    "PRICE_MISSING": "fill_price",
+    "PRICE_LOW_CONFIDENCE": "confirm_price",
+    "PRICE_MULTIPLE_CANDIDATES": "confirm_price",
+    "PRICE_HANDWRITTEN": "confirm_price",
+    "UNKNOWN_BLOCK_DETECTED": "review_unknown_block"
+  },
+  "derivedOnlyByServer": [
+    "tierOpenSlots",
+    "tierCoveredSlots",
+    "tierUnknownSlots",
+    "tierVisibleSlotCount",
+    "totalTickets",
+    "remainingTickets",
+    "drawnTickets",
+    "prizeClassification",
+    "workbenchSection",
+    "probability",
+    "lastBuyoutCost",
+    "submissionEligibility"
+  ],
+  "failureFallback": ["user_correction", "retake", "manual_entry"],
+  "secondModelFallback": false
+}

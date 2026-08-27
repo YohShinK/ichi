@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ichi.local/schemas/board-snapshot-1.0.0.json",
+  "title": "ICHI Board Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "ip",
+    "pricePerDraw",
+    "currency",
+    "totalTickets",
+    "remainingTickets",
+    "tiers"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "board-snapshot-1.0.0" },
+    "ip": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "theme": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "pricePerDraw": { "type": "number", "exclusiveMinimum": 0 },
+    "currency": { "const": "CNY" },
+    "totalTickets": { "type": "integer", "minimum": 1 },
+    "remainingTickets": { "type": "integer", "minimum": 0 },
+    "attachedTickets": { "type": "integer", "minimum": 0 },
+    "tiers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["tierId", "total", "remaining"],
+        "properties": {
+          "tierId": { "pattern": "^(?:[A-Z]|SP[1-4])$" },
+          "sourceLabels": { "type": "array", "items": { "type": "string" } },
+          "prizeName": { "type": "string" },
+          "total": { "type": "integer", "minimum": 1 },
+          "remaining": { "type": "integer", "minimum": 0 },
+          "attached": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "issues": { "type": "array", "items": { "type": "object" } }
+  }
+}

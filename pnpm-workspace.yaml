@@ -3,4 +3,8 @@ packages:
   - packages/*
   - services/cloudbase/functions/*
 
+allowBuilds:
+  core-js-pure: false
+  protobufjs: false
+
 minimumReleaseAge: 1440

@@ -3,12 +3,15 @@ import type { MiniProgramStorageDriver } from "./storage.js";
 export const RECOGNITION_VIEW_KEY = "ichi:v1-e-recognition-view:v1";
 export const ACTIVE_DRAFT_BOARD_KEY = "ichi:v1-e-active-draft-board:v1";
 
-export type RecognitionStableView = "start" | "resume";
+export type RecognitionStableView = "start" | "recognition-result" | "draw";
 
 export const readRecognitionStableView = (
   storage: MiniProgramStorageDriver,
-): RecognitionStableView =>
-  storage.getItem(RECOGNITION_VIEW_KEY) === "resume" ? "resume" : "start";
+): RecognitionStableView => {
+  const value = storage.getItem(RECOGNITION_VIEW_KEY);
+  if (value === "resume" || value === "target") return "draw";
+  return value === "recognition-result" || value === "draw" ? value : "start";
+};
 
 export const writeRecognitionStableView = (
   storage: MiniProgramStorageDriver,

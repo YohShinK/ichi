@@ -15,9 +15,12 @@
     "typecheck": "tsc -p tsconfig.json --pretty false && tsc -p apps/web/tsconfig.json --pretty false",
     "test": "vitest run --passWithNoTests",
     "test:core": "vitest run packages/core",
-    "test:web": "pnpm --filter @ichi/web test:e2e",
+    "test:web": "corepack pnpm --filter @ichi/web test:e2e",
+    "validate:v1f": "node scripts/validate-v1f-release.mjs",
+    "cloudbase:build": "node services/cloudbase/deploy/build-functions.mjs",
+    "cloudbase:validate": "corepack pnpm cloudbase:build && node services/cloudbase/deploy/validate.mjs",
     "validate:contracts": "node scripts/validate-board-layout.mjs && node scripts/validate-recognition-contract.mjs && node scripts/validate-render-contract.mjs && node scripts/validate-v1a-baseline.mjs && node scripts/validate-v1c-baseline.mjs && node scripts/validate-workflow.mjs",
-    "quality": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm validate:contracts",
+    "quality": "corepack pnpm format:check && corepack pnpm lint && corepack pnpm typecheck && corepack pnpm test && corepack pnpm validate:contracts",
     "quality:prove": "node scripts/verify-quality-gate.mjs"
   },
   "devDependencies": {

@@ -10,6 +10,7 @@ export default tseslint.config(
       "dist/**",
       "apps/web/.next/**",
       "apps/web/next-env.d.ts",
+      "services/cloudbase/.deploy/**",
       "canvas/**",
       "product-atlas/**",
     ],

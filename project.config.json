@@ -1,5 +1,5 @@
 {
-  "appid": "wx58669d300f6466b1",
+  "appid": "wx4e40b1657ca4563d",
   "projectname": "ichi",
   "compileType": "miniprogram",
   "libVersion": "3.17.0",
@@ -14,9 +14,7 @@
     "minifyWXML": true,
     "uploadWithSourceMap": true,
     "ignoreUploadUnusedFiles": true,
-    "useCompilerPlugins": [
-      "typescript"
-    ],
+    "useCompilerPlugins": ["typescript"],
     "compileWorklet": false,
     "uglifyFileName": false,
     "packNpmManually": false,

@@ -1,271 +1,245 @@
 <template name="draft-row">
   <view class="swipe-row">
-    <button
-      wx:if="{{item.canDelete}}"
-      class="swipe-delete"
-      data-board-id="{{item.boardId}}"
-      catchtap="onDeleteDraft"
-      aria-label="删除这次抽赏草稿"
-    >
+    <button wx:if="{{item.canDelete}}" class="swipe-delete {{swipeX < 0 ? 'swipe-delete--visible' : ''}}" data-board-id="{{item.boardId}}" catchtap="onDeleteDraft" aria-label="删除{{item.title}}">
       <image class="icon icon--trash" src="/assets/icons/trash-white.svg" mode="aspectFit" aria-hidden="true" />
     </button>
-    <view
-      class="draft-card light-capsule swipe-content"
-      style="transform: translateX({{item.swipeX}}px);"
-      data-board-id="{{item.boardId}}"
-      bindtouchstart="onTouchStart"
-      catchtouchmove="onTouchMove"
-      bindtouchend="onTouchEnd"
-      bindtouchcancel="onTouchEnd"
-      bindtap="onOpenDraft"
-      hover-class="draft-card--pressed"
-      role="button"
-      aria-label="继续{{item.title}}"
-    >
+    <view class="draft-card light-capsule swipe-content" style="transform: translateX({{swipeX}}px);" data-board-id="{{item.boardId}}" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd" bindtouchcancel="onTouchEnd" bindtap="onOpenDraft" hover-class="draft-card--pressed" role="button" aria-label="继续{{item.title}}">
+      <image class="draft-watermark" src="/assets/v1-29/ichi-mascot-large-watermark.png" mode="aspectFit" aria-hidden="true" />
       <view class="draft-copy">
         <text class="draft-title">{{item.title}}</text>
-        <text class="draft-meta">{{item.meta}}</text>
+        <text class="record-identity-meta">{{item.identityMeta}}</text>
+        <text class="draft-meta">{{item.statsMeta}}</text>
         <view wx:if="{{showStatuses}}" class="draft-statuses">
-          <text class="status-pill status-pill--dark">{{item.verificationLabel}}</text>
-          <text class="status-pill">{{item.uploadLabel}}</text>
+          <text class="status-pill status-pill--dark">{{item.recordStateLabel}}</text>
         </view>
       </view>
-      <view class="draft-resume">
-        <text>继续</text>
-        <image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" aria-hidden="true" />
+      <view class="draft-resume"><text>继续</text><image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" aria-hidden="true" /></view>
+    </view>
+  </view>
+</template>
+
+<template name="record-row">
+  <view class="swipe-row">
+    <button wx:if="{{item.canDelete}}" class="swipe-delete {{swipeX < 0 ? 'swipe-delete--visible' : ''}}" data-board-id="{{item.boardId}}" catchtap="onDeleteDraft" aria-label="删除{{item.title}}">
+      <image class="icon icon--trash" src="/assets/icons/trash-white.svg" mode="aspectFit" aria-hidden="true" />
+    </button>
+    <view class="draft-card record-row-card light-capsule swipe-content" style="transform: translateX({{swipeX}}px);" data-board-id="{{item.boardId}}" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd" bindtouchcancel="onTouchEnd" bindtap="onOpenDraft">
+      <image class="draft-watermark" src="/assets/v1-29/ichi-mascot-large-watermark.png" mode="aspectFit" aria-hidden="true" />
+      <text class="record-state-badge status-pill {{item.recordStateLabel === '已上传' ? 'status-pill--uploaded' : 'status-pill--dark'}}">{{item.recordStateLabel}}</text>
+      <view class="draft-copy"><text class="draft-title">{{item.title}}</text><text class="record-identity-meta">{{item.identityMeta}}</text><text class="draft-meta">{{item.statsMeta}}</text></view>
+      <view wx:if="{{item.canResume}}" class="draft-resume"><text>继续</text><image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" aria-hidden="true" /></view>
+    </view>
+  </view>
+</template>
+
+<template name="ticket-cover-content">
+  <view class="ticket-cover-accent"></view>
+  <view class="ticket-tier"><text class="ticket-tier-letter">{{prize.tier}}</text><text class="ticket-tier-suffix">賞</text></view>
+  <image class="icon icon--ticket-caret" src="/assets/icons/caret-double-right-gray.svg" mode="aspectFit" aria-hidden="true" />
+</template>
+
+<template name="prize-ticket">
+  <view class="prize-ticket {{prize.remaining === 0 ? 'prize-ticket--empty' : ''}}">
+    <view class="ticket-shell">
+      <view class="ticket-top"><text>引きかえ券</text><text class="ticket-probability">{{prize.probability}}%</text></view>
+      <view class="ticket-opened"><text>OPENED</text></view>
+      <view class="ticket-bottom {{prize.presentation !== 'large' ? 'ticket-bottom--normal' : ''}}">
+        <text class="ticket-left">LEFT <text>{{prize.remaining}}</text></text>
+        <view class="ticket-slots {{prize.presentation !== 'large' ? 'ticket-slots--normal' : ''}}">
+          <view wx:for="{{prize.slots}}" wx:key="id" wx:for-item="slot" class="ticket-slot {{slot.drawn ? 'ticket-slot--drawn' : ''}}"><text wx:if="{{slot.drawn}}">×</text></view>
+        </view>
+      </view>
+    </view>
+    <view class="ticket-peel-track" data-tier="{{prize.tier}}" data-disabled="{{prize.remaining === 0}}" catchtouchstart="onTicketPeelStart" catchtouchmove="onTicketPeelMove" catchtouchend="onTicketPeelEnd" catchtouchcancel="onTicketPeelCancel" role="button" aria-label="撕开{{prize.tier}}赏" aria-disabled="{{prize.remaining === 0}}">
+      <view class="ticket-peel-swiper {{ticketPeelSettling && ticketPeelTier === prize.tier ? 'ticket-peel-swiper--springing' : ''}} {{ticketPeelFading && ticketPeelTier === prize.tier ? 'ticket-peel-swiper--fading' : ''}}" style="right: -{{ticketPeelTier === prize.tier ? ticketPeelProgress : 0}}%;">
+        <view class="ticket-peel-back" style="width: {{ticketPeelTier === prize.tier ? ticketPeelProgress : 0}}%;"></view>
+        <view class="ticket-cover ticket-peel-front" style="left: -{{ticketPeelTier === prize.tier ? ticketPeelProgress : 0}}%;">
+          <template is="ticket-cover-content" data="{{prize: prize}}" />
+        </view>
       </view>
     </view>
   </view>
 </template>
 
-<view class="app-shell" style="--top-safe-px: {{topSafePx}}px;">
-  <view
-    wx:if="{{currentView === 'start'}}"
-    class="page page--start"
-    data-testid="page-start"
-  >
+<view class="app-shell" style="--top-safe-px: {{topSafePx}}px;" bindtap="onDismissDraftSwipe">
+  <view wx:if="{{currentView === 'camera-capture'}}" class="camera-page" data-testid="page-camera-capture">
+    <view class="camera-stage">
+      <image wx:if="{{boardCapturePath}}" class="camera-preview camera-frozen-photo" src="{{boardCapturePath}}" mode="aspectFill" aria-label="已拍摄版面" />
+      <camera wx:elif="{{cameraStatus === 'loading' || cameraStatus === 'ready'}}" class="camera-preview" data-camera-generation="{{cameraGeneration}}" mode="normal" device-position="back" flash="off" resolution="high" bindinitdone="onCameraReady" binderror="onCameraError" aria-label="版面实时取景">
+        <cover-image class="guide-corner guide-corner--tl" src="/assets/icons/camera-corner-tl.png" />
+        <cover-image class="guide-corner guide-corner--tr" src="/assets/icons/camera-corner-tr.png" />
+        <cover-image class="guide-corner guide-corner--bl" src="/assets/icons/camera-corner-bl.png" />
+        <cover-image class="guide-corner guide-corner--br" src="/assets/icons/camera-corner-br.png" />
+        <cover-view class="camera-guide-label">将版面放入框内</cover-view>
+      </camera>
+      <view wx:if="{{boardCapturePath}}" class="camera-frozen-guides" aria-hidden="true"><image class="guide-corner guide-corner--tl" src="/assets/icons/camera-corner-tl.png" /><image class="guide-corner guide-corner--tr" src="/assets/icons/camera-corner-tr.png" /><image class="guide-corner guide-corner--bl" src="/assets/icons/camera-corner-bl.png" /><image class="guide-corner guide-corner--br" src="/assets/icons/camera-corner-br.png" /></view>
+      <view wx:if="{{!boardCapturePath && cameraStatus !== 'loading' && cameraStatus !== 'ready'}}" class="camera-permission-panel">
+        <image class="camera-permission-icon" src="/assets/icons/camera-light.svg" mode="aspectFit" />
+        <text class="camera-permission-title">{{cameraStatus === 'denied' ? '开启相机权限' : '相机暂时不可用'}}</text>
+        <text class="camera-permission-copy">{{cameraError}}</text>
+        <button wx:if="{{cameraStatus === 'denied'}}" class="camera-permission-action" hover-class="none" bindtap="onOpenCameraSettings">前往设置</button>
+        <button wx:else class="camera-permission-action" hover-class="none" bindtap="onRetryCamera">重新尝试</button>
+      </view>
+    </view>
+    <view class="camera-controls">
+      <button class="camera-side" hover-class="none" bindtap="onBackToStart" aria-label="返回导入版面"><image src="/assets/icons/arrow-left-gray.svg" mode="aspectFit" /></button>
+      <button class="camera-shutter {{mediaBusy || pendingBoardCapture ? 'camera-shutter--busy' : ''}}" hover-class="none" disabled="{{mediaBusy || cameraStatus === 'denied' || cameraStatus === 'unavailable'}}" bindtap="onCaptureBoardMedia" aria-label="{{boardCapturePath ? '确认识别这张版面' : '拍摄版面'}}"><view class="camera-shutter-core"><image wx:if="{{boardCapturePath}}" src="/assets/icons/check-white.svg" mode="aspectFit" /></view></button>
+      <button class="camera-side camera-undo-slot" hover-class="none" disabled="{{!boardCapturePath || mediaBusy || recognitionGateBusy}}" bindtap="onUndoBoardCapture" aria-label="撤回并重拍"><image src="/assets/icons/arrow-counter-clockwise-gray.svg" mode="aspectFit" /></button>
+    </view>
+  </view>
+
+  <view wx:elif="{{currentView === 'recognizing'}}" class="fullscreen-state" data-testid="page-recognizing">
+    <view class="recognizing-card light-capsule" aria-live="polite">
+      <view class="recognizing-mark"><canvas type="2d" id="recognition-progress-ring" class="recognizing-ring" aria-label="版面提取进度 {{recognitionProgress}}%"></canvas><image class="recognition-mascot" src="/assets/v1-29/ichi-recognition-mascot.png" mode="aspectFit" aria-label="正在识别版面" /></view>
+      <text class="state-title">正在提取版面</text>
+      <view class="recognition-steps">
+        <view class="recognition-step {{recognitionStage > 0 ? 'recognition-step--done' : recognitionStage === 0 ? 'recognition-step--active' : ''}}"><image wx:if="{{recognitionStage > 0}}" src="/assets/icons/check-circle-black.svg" mode="aspectFit" /><view wx:elif="{{recognitionStage === 0}}" class="recognition-step-indicator recognition-step-indicator--active"><view></view></view><view wx:else class="recognition-step-indicator"></view><text>{{recognitionStage === 0 ? '正在整理照片' : '照片整理完成'}}</text></view>
+        <view class="recognition-step {{recognitionStage > 1 ? 'recognition-step--done' : recognitionStage === 1 ? 'recognition-step--active' : ''}}"><image wx:if="{{recognitionStage > 1}}" src="/assets/icons/check-circle-black.svg" mode="aspectFit" /><view wx:elif="{{recognitionStage === 1}}" class="recognition-step-indicator recognition-step-indicator--active"><view></view></view><view wx:else class="recognition-step-indicator"></view><text>{{recognitionStage > 1 ? '版面已送去清点' : recognitionStage === 1 ? '版面送去清点中' : '版面送去清点'}}</text></view>
+        <view class="recognition-step {{recognitionStage > 2 ? 'recognition-step--done' : recognitionStage === 2 ? 'recognition-step--active' : ''}}"><image wx:if="{{recognitionStage > 2}}" src="/assets/icons/check-circle-black.svg" mode="aspectFit" /><view wx:elif="{{recognitionStage === 2}}" class="recognition-step-indicator recognition-step-indicator--active"><view></view></view><view wx:else class="recognition-step-indicator"></view><text>{{recognitionStage > 2 ? '赏级与余票已核好' : recognitionStage === 2 ? '赏级与余票核算中' : '赏级与余票核算'}}</text></view>
+        <view class="recognition-step {{recognitionStage > 3 ? 'recognition-step--done' : recognitionStage === 3 ? 'recognition-step--active' : ''}}"><image wx:if="{{recognitionStage > 3}}" src="/assets/icons/check-circle-black.svg" mode="aspectFit" /><view wx:elif="{{recognitionStage === 3}}" class="recognition-step-indicator recognition-step-indicator--active"><view></view></view><view wx:else class="recognition-step-indicator"></view><text>{{recognitionStage > 3 ? '版面结果已就绪' : recognitionStage === 3 ? '正在拼出版面结果' : '拼出版面结果'}}</text></view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:elif="{{currentView === 'start'}}" class="page page--start" data-testid="page-start">
     <view class="import-hero light-capsule">
-      <image
-        class="camera-asset"
-        src="/assets/v1-29/ichi-camera-cutout.png"
-        mode="aspectFit"
-        aria-label="相机图标"
-      />
+      <image class="camera-asset" src="/assets/v1-29/ichi-camera-cutout.png" mode="aspectFit" aria-label="相机图标" />
       <text class="hero-title">导入版面照片</text>
-      <text class="hero-copy">拍摄或选择一张完整、清楚的兑换进度板照片以建立票池。</text>
-      <view class="action-wrap">
-        <view class="action-glow"></view>
-        <button
-          class="action-button"
-          loading="{{mediaBusy}}"
-          disabled="{{mediaBusy}}"
-          bindtap="onImportBoard"
-          data-testid="import-board"
-        >
-          <image class="icon icon--button" src="/assets/icons/scan-white.svg" mode="aspectFit" aria-hidden="true" />
-          <text>拍摄版面</text>
+      <text class="hero-copy">拍摄一张完整、清楚的兑换进度板照片。</text>
+      <view class="quota-summary {{accountState === 'unavailable' ? 'quota-summary--unavailable' : ''}}" aria-label="今日版面识别剩余 {{quotaRemaining}} 次，共 {{quotaLimit}} 次">
+        <view class="quota-ring" style="--quota-used: {{quotaUsedPercent}}%;"><view><text>{{quotaRemaining}}</text><text>/{{quotaLimit}}</text></view></view>
+      </view>
+      <view class="import-actions">
+        <view class="action-wrap"><view class="action-glow"></view><button class="action-button import-primary-button" disabled="{{recognitionGateBusy}}" bindtap="onImportBoard" data-flow-mode="assist" data-testid="import-board"><image class="icon icon--button" src="/assets/icons/scan-white.svg" mode="aspectFit" aria-hidden="true" /><text>进入辅助抽赏</text></button></view>
+        <button class="ghost-button import-direct-button" disabled="{{recognitionGateBusy}}" bindtap="onImportBoard" data-flow-mode="direct-upload" data-testid="direct-upload-board"><image class="icon icon--button" src="/assets/icons/arrow-circle-up-black.svg" mode="aspectFit" aria-hidden="true" /><text>仅上传版面</text></button>
+      </view>
+      <text class="recognition-quota-note">每天有 5 次识别版面的权限</text>
+    </view>
+    <view class="start-drafts" data-testid="start-drafts">
+      <view class="drafts-header"><text>抽赏草稿</text><text>{{startDrafts.length}} 份</text></view>
+      <scroll-view wx:if="{{startDrafts.length > 0}}" class="draft-list" scroll-y enhanced="true" bounces="true" enable-flex="true" show-scrollbar="false"><view class="draft-list-inner"><block wx:for="{{startDrafts}}" wx:key="boardId"><template is="draft-row" data="{{item: item, swipeX: item.swipeX, showStatuses: false}}" /></block></view></scroll-view>
+    </view>
+  </view>
+
+  <view wx:elif="{{currentView === 'recognition-result'}}" class="page flow-page" data-testid="page-recognition-result">
+    <view class="flow-header"><button class="flow-back" disabled="{{generationState === 'generating'}}" bindtap="onBackToStart" aria-label="返回导入版面"><image src="/assets/icons/arrow-left-gray.svg" mode="aspectFit" aria-hidden="true" /></button><view><text class="flow-title">识别结果</text><text class="flow-copy">核对每一赏当前的未贴票数</text></view><button class="flow-help" disabled="{{generationState === 'generating'}}" bindtap="onRecognitionWrong">识别有误?</button></view>
+    <scroll-view class="flow-scroll" scroll-y show-scrollbar="false" scroll-top="{{recognitionScrollTop}}" data-scroll-key="recognitionScrollTop" bindscrollend="onRememberScrollEnd">
+      <view class="price-field recognition-text-field recognition-ip-field light-capsule"><text>IP</text><view><view class="recognition-input-shell {{recognitionValidation.ipNameBlocking ? 'is-required-missing' : ''}}"><view class="recognition-input-glow" aria-hidden="true"></view><input class="recognition-ip-main" data-testid="recognition-ip-input" type="text" maxlength="60" placeholder="主 IP" value="{{recognitionIp}}" disabled="{{generationState === 'generating'}}" bindinput="onRecognitionIpInput" aria-label="版面主 IP" aria-invalid="{{recognitionValidation.ipNameBlocking}}" /></view><text class="recognition-ip-divider">/</text><view class="recognition-input-shell"><input class="recognition-theme-input" data-testid="recognition-theme-input" type="text" maxlength="60" placeholder="主题（选填）" value="{{recognitionTheme}}" disabled="{{generationState === 'generating'}}" bindinput="onRecognitionThemeInput" aria-label="版面主题" aria-invalid="false" /></view></view></view>
+      <view class="price-field light-capsule"><text>单抽价格</text><view><view class="recognition-input-shell recognition-input-shell--price {{recognitionValidation.unitPriceBlocking ? 'is-required-missing' : ''}}"><view class="recognition-input-glow" aria-hidden="true"></view><input type="number" value="{{recognitionPrice === null ? '' : recognitionPrice}}" disabled="{{generationState === 'generating'}}" bindinput="onRecognitionPriceInput" aria-label="单抽价格" aria-invalid="{{recognitionValidation.unitPriceBlocking}}" /></view><text>¥</text></view></view>
+      <view wx:if="{{recognitionMode === 'direct-upload'}}" class="price-field recognition-text-field light-capsule"><text>地点与备注</text><view><view class="recognition-input-shell recognition-input-shell--text {{recognitionValidation.locationNoteBlocking ? 'is-required-missing' : ''}}"><view class="recognition-input-glow" aria-hidden="true"></view><input type="text" maxlength="120" placeholder="填写门店、地点或现场备注" value="{{recognitionLocationNote}}" disabled="{{generationState === 'generating'}}" bindinput="onRecognitionLocationInput" aria-label="地点与备注" aria-invalid="{{recognitionValidation.locationNoteBlocking}}" /></view></view></view>
+      <view class="recognition-grid">
+        <view wx:for="{{recognitionValidation.tiers}}" wx:key="id" class="recognition-prize light-capsule">
+          <view class="recognition-prize-head"><text class="recognition-tier">{{item.rawLabel}}</text></view>
+          <view class="field-labels"><text>未贴票数 remainingTickets</text></view>
+          <view class="field-inputs"><view class="recognition-input-shell recognition-input-shell--count {{item.remainingTicketsBlocking ? 'is-required-missing' : ''}}"><view class="recognition-input-glow" aria-hidden="true"></view><input data-testid="recognition-remaining-{{item.tier}}" class="field-input--dark" type="number" placeholder="待确认，可填 0" value="{{item.remainingTickets === null ? '' : item.remainingTickets}}" disabled="{{generationState === 'generating'}}" data-tier="{{item.tier}}" data-field="remainingTickets" bindinput="onRecognitionFieldInput" aria-label="{{item.rawLabel}}未贴票数" aria-invalid="{{item.remainingTicketsBlocking}}" /></view></view>
+        </view>
+      </view>
+      <text wx:if="{{recognitionError}}" class="flow-error">{{recognitionError}}</text>
+      <view wx:if="{{generationState === 'generating'}}" class="generation-status light-capsule" aria-live="polite"><view class="generation-status-dot"></view><text>正在生成版面</text></view>
+    </scroll-view>
+    <view class="fixed-primary"><view class="action-wrap"><view wx:if="{{recognitionValidation.canConfirm && generationState !== 'generating'}}" class="action-glow"></view><button data-testid="recognition-submit" class="action-button recognition-submit" disabled="{{!recognitionValidation.canConfirm || generationState === 'generating'}}" bindtap="onConfirmRecognition">下一步：设定大赏</button></view></view>
+  </view>
+
+  <view wx:elif="{{currentView === 'grand-prize-selection'}}" class="page flow-page" data-testid="page-grand-prize-selection">
+    <view class="flow-header"><button class="flow-back" bindtap="onBackToRecognitionFromGrand" aria-label="返回识别结果"><image src="/assets/icons/arrow-left-gray.svg" mode="aspectFit" aria-hidden="true" /></button><view><text class="flow-title">设定大赏</text><text class="flow-copy">总抽数低于 3 抽的就是大赏</text></view></view>
+    <scroll-view class="flow-scroll" scroll-y show-scrollbar="false">
+      <view class="grand-prize-list">
+        <button wx:for="{{grandPrizeOptions}}" wx:key="id" class="grand-prize-option light-capsule {{item.selected ? 'grand-prize-option--selected' : ''}}" data-tier="{{item.tier}}" bindtap="onToggleGrandPrize" aria-pressed="{{item.selected}}">
+          <view class="grand-prize-check">{{item.selected ? '✓' : ''}}</view><text>{{item.rawLabel}}</text><text>未贴票数 {{item.remainingTickets}}</text>
         </button>
       </view>
-    </view>
-
-    <view wx:if="{{drafts.length > 0}}" class="start-drafts" data-testid="start-drafts">
-      <view class="drafts-header">
-        <text>抽赏草稿</text>
-        <text>{{drafts.length}} 份</text>
-      </view>
-      <scroll-view class="draft-list" scroll-y enhanced show-scrollbar="false">
-        <view class="draft-list-inner">
-          <block wx:for="{{drafts}}" wx:key="boardId">
-            <template is="draft-row" data="{{item: item, showStatuses: false}}" />
-          </block>
-        </view>
-      </scroll-view>
-    </view>
+    </scroll-view>
+    <view class="fixed-primary"><view class="action-wrap"><view class="action-glow"></view><button data-testid="grand-prize-submit" class="action-button recognition-submit" disabled="{{generationState === 'generating'}}" bindtap="onConfirmGrandPrizes">{{generationState === 'generating' ? '正在生成版面' : recognitionMode === 'direct-upload' ? '确认并上传版面' : '确认并进入一番赏版面'}}</button></view></view>
   </view>
 
-  <view
-    wx:elif="{{currentView === 'resume'}}"
-    class="page page--resume"
-    data-testid="page-resume"
-  >
-    <view wx:if="{{activeDraft}}" class="resume-card light-capsule">
-      <image class="resume-watermark" src="/assets/icons/clock-counter-clockwise-black.svg" mode="aspectFit" aria-hidden="true" />
-      <text class="eyebrow">找到上次的票池记录</text>
-      <text class="resume-title">本机抽赏草稿</text>
-      <text class="resume-copy">保存时间：{{activeDraft.savedAtLabel}}</text>
-      <view class="resume-stats">
-        <view class="resume-stat">
-          <text class="resume-stat-label">当前余票</text>
-          <text class="resume-stat-value">{{activeDraft.remaining}}</text>
-        </view>
-        <view class="resume-stat">
-          <text class="resume-stat-label">累计花费</text>
-          <text class="resume-stat-value resume-stat-value--accent">¥{{activeDraft.cost}}</text>
-        </view>
-        <view class="resume-stat">
-          <text class="resume-stat-label">待确认</text>
-          <text class="resume-stat-value">{{activeDraft.pendingCount}}抽</text>
-        </view>
-      </view>
-      <view class="resume-actions">
-        <view class="action-wrap">
-          <view class="action-glow"></view>
-          <button class="action-button" bindtap="onContinueDraft">
-            <image class="icon icon--button" src="/assets/icons/play-white.svg" mode="aspectFit" aria-hidden="true" />
-            <text>继续记录抽取</text>
-          </button>
-        </view>
-        <view class="split-actions">
-          <button class="ghost-button" bindtap="onOpenLocalRecords">管理记录</button>
-          <button class="ghost-button" bindtap="onBackToStart">建新票池</button>
-        </view>
-      </view>
+  <view wx:elif="{{currentView === 'draw'}}" class="page page--draw" data-testid="page-draw">
+    <view class="draw-edge-fade draw-edge-fade--top" aria-hidden="true"></view>
+    <view class="draw-edge-fade draw-edge-fade--bottom" aria-hidden="true"></view>
+    <view wx:if="{{activeDraft}}" class="draw-status light-capsule">
+      <view class="draw-status-remaining"><text class="draw-ip">IP:: {{activeDraft.ipLabel}}</text><text class="draw-status-kicker">剩余抽数</text><view class="draw-status-number {{activeDraft.remaining > 9 ? 'draw-status-number--compact' : ''}}"><text>{{activeDraft.remaining}}</text><text>抽</text></view></view><view class="draw-status-divider"></view><view class="draw-status-buyout"><text class="draw-unit-price">单价: {{activeDraft.ticketPrice}}¥</text><text class="draw-last-label">LAST包套</text><view class="draw-buyout-number"><text>{{activeDraft.buyout}}</text><text>¥</text></view></view>
     </view>
+    <view wx:if="{{toast.visible}}" class="draw-toast" catchtap="onDismissToast" aria-live="polite"><view class="toast-mascot"><image wx:if="{{toast.presentation === 'large'}}" src="/assets/v1-29/ichi-mascot-large.png" mode="aspectFit" aria-hidden="true" /><image wx:elif="{{toast.presentation === 'small'}}" src="/assets/v1-29/ichi-mascot-small.png" mode="aspectFit" aria-hidden="true" /><view wx:else class="toast-face" aria-hidden="true"><view></view><view></view></view></view><view class="toast-copy"><text>成功抽出 <text>{{toast.tier}}赏</text></text><text>{{toast.message}} · 累计 ¥{{toast.cost}}</text></view><view class="toast-remaining"><text>剩</text><text>{{toast.remaining}}</text></view></view>
+    <scroll-view wx:if="{{activeDraft}}" class="draw-scroll" scroll-y show-scrollbar="false" scroll-top="{{drawScrollTop}}" data-scroll-key="drawScrollTop" bindscrollend="onRememberScrollEnd"><view class="draw-content">
+      <view wx:if="{{activeDraft.grandPrizes.length > 0}}" class="draw-section"><view class="draw-section-title draw-section-title--grand"><image class="icon icon--section" src="/assets/icons/crown-pink.svg" mode="aspectFit" /><text>GRAND PRIZES</text></view><view class="draw-prize-grid"><block wx:for="{{activeDraft.grandPrizes}}" wx:key="id" wx:for-item="prize"><template is="prize-ticket" data="{{prize: prize, ticketPeelTier: ticketPeelTier, ticketPeelProgress: ticketPeelProgress, ticketPeelSettling: ticketPeelSettling, ticketPeelFading: ticketPeelFading}}" /></block></view></view>
+      <view wx:if="{{activeDraft.normalPrizes.length > 0}}" class="draw-section"><view class="draw-section-title"><image class="icon icon--section" src="/assets/icons/ticket-black.svg" mode="aspectFit" /><text>NORMAL PRIZES</text></view><view class="draw-prize-grid"><block wx:for="{{activeDraft.normalPrizes}}" wx:key="id" wx:for-item="prize"><template is="prize-ticket" data="{{prize: prize, ticketPeelTier: ticketPeelTier, ticketPeelProgress: ticketPeelProgress, ticketPeelSettling: ticketPeelSettling, ticketPeelFading: ticketPeelFading}}" /></block></view></view>
+    </view></scroll-view>
+    <view class="draw-quick-actions"><button bindtap="onOpenProbability" aria-label="局面可能性"><image class="icon icon--quick" src="/assets/icons/chart-pie-slice-white.svg" mode="aspectFit" /></button><button bindtap="onUndoDraw" aria-label="撤销最近一抽"><image class="icon icon--quick" src="/assets/icons/arrow-u-up-left-white.svg" mode="aspectFit" /></button><button bindtap="onOpenHistory" aria-label="抽取记录"><image class="icon icon--quick" src="/assets/icons/clock-counter-clockwise-white.svg" mode="aspectFit" /></button></view>
+    <view class="draw-stop-wrap"><button class="draw-stop-button {{stopHolding ? 'draw-stop-button--holding' : ''}}" bindtouchstart="onStopTouchStart" bindtouchend="onStopTouchEnd" bindtouchcancel="onStopTouchEnd" aria-label="长按决定收手"><view class="hold-fill"></view><view class="hold-content"><image class="icon icon--stop" src="/assets/icons/hand-palm-black.svg" mode="aspectFit" /><text>决定收手</text></view></button></view>
   </view>
 
-  <view
-    wx:elif="{{currentView === 'map-preview'}}"
-    class="page page--map"
-    data-testid="page-map"
-  >
-    <view class="map-hero light-capsule">
-      <image class="map-watermark" src="/assets/v1-29/map-placeholder.svg" mode="aspectFill" aria-hidden="true" />
-      <view class="map-mark">
-        <image class="icon icon--map-hero" src="/assets/icons/map-pin-fill-white.svg" mode="aspectFit" aria-hidden="true" />
-      </view>
-      <text class="hero-title">地图会在 V2 再来</text>
-      <text class="hero-copy map-copy">好版地图会汇总用户核对并贡献的版面记录，帮助你按地点查看值得关注的票池线索与当前版面状态。</text>
-      <view class="map-actions">
-        <view class="action-wrap">
-          <view class="action-glow"></view>
-          <button class="action-button" bindtap="onImportBoard">去拍摄版面</button>
+  <view wx:elif="{{currentView === 'map-preview'}}" class="page page--map" data-testid="page-map"><view class="map-hero light-capsule"><image class="map-watermark" src="/assets/v1-29/map-placeholder.svg" mode="aspectFill" /><view class="map-mark"><image class="icon icon--map-hero" src="/assets/icons/map-pin-fill-white.svg" mode="aspectFit" /></view><text class="hero-title">地图会在 V2 再来</text><text class="hero-copy map-copy">当前版本不展示门店线索或实时库存判断。我们希望先打磨好核心的核对和记录体验。</text><view class="map-actions"><view class="action-wrap"><view class="action-glow"></view><button class="action-button" bindtap="onImportBoard">去拍摄版面</button></view><button class="ghost-button" bindtap="onBackToStart">返回票池首页</button></view></view></view>
+
+  <view wx:elif="{{currentView === 'my'}}" class="page page--my" data-testid="page-my">
+    <view class="profile"><button class="profile-avatar" bindtap="onOpenWechatProfileAuthorization" aria-label="更新微信头像"><image class="profile-avatar-image" src="{{accountAvatarUrl}}" mode="aspectFill" aria-label="微信头像" /></button><view class="profile-copy profile-copy--interactive" bindtap="onOpenWechatProfileAuthorization" role="button" aria-label="更新微信头像和昵称"><text class="profile-title">{{accountNickname}}</text><text class="profile-id">ID: {{accountIchiId}}</text><text class="profile-mode">{{accountState === 'ready' ? '微信账号' : (accountState === 'unavailable' ? '暂时离线' : '同步中')}}</text></view></view>
+    <view class="menu-card light-capsule"><view class="menu-row" data-view="account" bindtap="onOpenMyPage"><view class="menu-icon"><image class="icon icon--menu" src="/assets/icons/gear-six-gray.svg" mode="aspectFit" /></view><text class="menu-label">账号管理</text><image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" /></view><view class="menu-row" data-action="local-records" bindtap="onOpenLocalRecords"><view class="menu-icon menu-icon--dark"><image class="icon icon--menu" src="/assets/icons/hard-drives-white.svg" mode="aspectFit" /></view><text class="menu-label">我的记录</text><image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" /></view><view class="menu-row" data-view="contributions" bindtap="onOpenMyPage"><view class="menu-icon menu-icon--accent"><image class="icon icon--menu" src="/assets/icons/hand-heart-pink.svg" mode="aspectFit" /></view><text class="menu-label">我上传的版面</text><image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" /></view></view>
+    <view class="menu-card light-capsule"><view class="menu-row" data-view="map-reminder" bindtap="onOpenMyPage"><view class="menu-icon"><image class="icon icon--menu" src="/assets/icons/bell-gray.svg" mode="aspectFit" /></view><text class="menu-label">提醒设置</text><image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" /></view><view class="menu-row" data-view="method" bindtap="onOpenMyPage"><view class="menu-icon"><image class="icon icon--menu" src="/assets/icons/shield-check-gray.svg" mode="aspectFit" /></view><text class="menu-label">隐私与数据</text><image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" /></view></view>
+  </view>
+
+  <view wx:elif="{{currentView === 'account'}}" class="page subpage"><view class="subpage-header"><button class="back-button" bindtap="onBackToMy"><image class="icon icon--back" src="/assets/icons/arrow-left-gray.svg" mode="aspectFit" /></button><text class="subpage-title">账号管理</text></view><view class="account-card light-capsule"><view class="round-symbol"><image src="/assets/icons/lock-key-gray.svg" mode="aspectFit" /></view><text class="card-title">{{accountState === 'ready' ? accountNickname : '账号暂时无法同步'}}</text><text class="account-ichi-id">{{accountState === 'ready' ? accountIchiId : '请检查网络后重试'}}</text><text class="card-copy">微信头像和昵称用于“我的”页面展示；更新展示资料不会改变 ICHI ID、识别额度或本人记录。</text><view class="account-quota"><text>今日版面识别</text><text>{{quotaRemaining}} / {{quotaLimit}} 次可用</text></view><view class="storage-meter {{storageCapacityState === 'near_limit' || storageCapacityState === 'full' ? 'storage-meter--warning' : ''}}"><view><view style="width: {{storagePercent}}%;"></view></view><text wx:if="{{storageCapacityState !== 'unknown'}}">本机空间已使用 {{storagePercent}}%</text><text wx:else>暂时无法读取本机空间状态</text></view></view><view class="subpage-actions"><button class="action-button inline-action" bindtap="onOpenLocalRecords">我的记录</button><button class="ghost-button" bindtap="onBackToMy">返回我的</button></view></view>
+
+  <view wx:elif="{{currentView === 'local-records'}}" class="page page--records" data-testid="page-local-records"><view class="subpage-header"><button class="back-button" bindtap="onBackToMy" aria-label="返回我的"><image class="icon icon--back" src="/assets/icons/arrow-left-gray.svg" mode="aspectFit" aria-hidden="true" /></button><text class="subpage-title">我的记录</text></view><view class="record-summary"><text>本机 {{drafts.length}} 个</text><text>云端 {{cloudRecords.length}} 个</text><text>待上传 {{unuploadedCount}} 个</text></view><scroll-view class="records-scroll" scroll-y enhanced="true" bounces="true" enable-flex="true" show-scrollbar="false" refresher-enabled="true" refresher-threshold="64" refresher-triggered="{{recordsRefreshing}}" scroll-top="{{recordsScrollTop}}" data-scroll-key="recordsScrollTop" bindscrollend="onRememberScrollEnd" bindrefresherrefresh="onRecordsRefresherRefresh"><view class="records-refresh-surface"><view wx:if="{{drafts.length > 0 || cloudRecords.length > 0}}" class="records-list"><block wx:for="{{drafts}}" wx:key="boardId"><template is="record-row" data="{{item: item, swipeX: item.swipeX}}" /></block><view wx:for="{{cloudRecords}}" wx:key="recordId" class="swipe-row"><button class="swipe-delete {{item.swipeX < 0 ? 'swipe-delete--visible' : ''}}" disabled="{{item.isDeleting}}" data-record-id="{{item.recordId}}" data-board-id="{{item.boardId}}" catchtap="onDeleteCloudRecord" aria-label="删除{{item.title}}"><image class="icon icon--trash" src="/assets/icons/trash-white.svg" mode="aspectFit" aria-hidden="true" /></button><view class="draft-card cloud-record-card light-capsule swipe-content" style="transform: translateX({{item.swipeX}}px);" data-board-id="{{item.recordId}}" data-record-id="{{item.recordId}}" data-deleting="{{item.isDeleting}}" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd" bindtouchcancel="onTouchEnd" bindtap="onOpenCloudRecord"><image class="draft-watermark" src="/assets/v1-29/ichi-mascot-large-watermark.png" mode="aspectFit" aria-hidden="true" /><text class="record-state-badge status-pill {{item.recordStateLabel === '已上传' && !item.isDeleting ? 'status-pill--uploaded' : 'status-pill--dark'}}">{{item.isDeleting ? '删除中' : item.recordStateLabel}}</text><view class="draft-copy"><text class="draft-title">{{item.title}}</text><text class="record-identity-meta">{{item.identityMeta}}</text><text class="draft-meta">{{item.statsMeta}}</text></view><view wx:if="{{item.canResume && !item.isDeleting}}" class="draft-resume"><text>继续</text><image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" aria-hidden="true" /></view></view></view></view><view wx:else class="records-empty light-capsule"><text class="records-empty-title">还没有本人记录</text><text class="records-empty-copy">本机草稿和本人私有版面记录会显示在这里。</text></view></view></scroll-view></view>
+
+  <view wx:elif="{{currentView === 'contributions'}}" class="page subpage">
+    <view class="subpage-header"><button class="back-button" bindtap="onBackToMy"><image class="icon icon--back" src="/assets/icons/arrow-left-gray.svg" mode="aspectFit" /></button><text class="subpage-title">我上传的版面</text></view>
+    <view class="record-summary"><text>本机 {{contributions.length}} 个</text><text>云端 {{cloudClues.length}} 个</text></view>
+    <scroll-view class="records-scroll" scroll-y enhanced="true" bounces="true" enable-flex="true" show-scrollbar="false" refresher-enabled="true" refresher-threshold="64" refresher-triggered="{{recordsRefreshing}}" bindrefresherrefresh="onRecordsRefresherRefresh">
+      <view class="records-refresh-surface"><view wx:if="{{contributions.length || cloudClues.length}}" class="records-list">
+        <view wx:for="{{contributions}}" wx:key="boardId" class="swipe-row">
+          <button wx:if="{{item.cloudRecordId}}" class="swipe-delete {{item.swipeX < 0 ? 'swipe-delete--visible' : ''}}" disabled="{{item.isDeleting}}" data-record-id="{{item.cloudRecordId}}" data-board-id="{{item.boardId}}" catchtap="onDeleteCloudRecord" aria-label="删除{{item.title}}"><image class="icon icon--trash" src="/assets/icons/trash-white.svg" mode="aspectFit" /></button>
+          <view class="draft-card contribution-card {{item.verificationAction ? 'contribution-card--action' : ''}} swipe-content light-capsule" style="transform: translateX({{item.swipeX}}px);" data-board-id="{{item.boardId}}" data-deleting="{{item.isDeleting}}" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd" bindtouchcancel="onTouchEnd"><image class="draft-watermark" src="/assets/v1-29/ichi-mascot-large-watermark.png" mode="aspectFit" aria-hidden="true" /><text class="record-state-badge status-pill {{item.recordStateLabel === '已上传' && !item.isDeleting ? 'status-pill--uploaded' : 'status-pill--dark'}}">{{item.isDeleting ? '删除中' : item.recordStateLabel}}</text><view class="draft-copy"><text class="draft-title">{{item.title}}</text><text class="record-identity-meta">{{item.identityMeta}}</text><text class="draft-meta">{{item.statsMeta}}</text></view><button wx:if="{{item.verificationAction === 'retry' && !item.isDeleting}}" class="record-verification-action" data-board-id="{{item.boardId}}" bindtap="onRetryTicketVerification">重新核验</button><button wx:if="{{item.verificationAction === 'reupload' && !item.isDeleting}}" class="record-verification-action" data-board-id="{{item.boardId}}" bindtap="onReuploadTicketEvidence">重新上传</button><button wx:if="{{item.verificationAction === 'edit-note' && !item.isDeleting}}" class="record-verification-action" data-board-id="{{item.boardId}}" bindtap="onEditTicketNote">修改备注</button></view>
         </view>
-        <button class="ghost-button" bindtap="onBackToStart">返回票池首页</button>
-      </view>
-    </view>
-  </view>
-
-  <view
-    wx:elif="{{currentView === 'my'}}"
-    class="page page--my"
-    data-testid="page-my"
-  >
-    <view class="profile">
-      <view class="profile-avatar">
-        <image class="profile-avatar-image" src="/assets/v1-29/ichi-avatar.png" mode="aspectFill" aria-label="ICHI 头像" />
-      </view>
-      <view class="profile-copy">
-        <text class="profile-title">ICHI 玩家</text>
-        <text class="profile-id">ID: LOCAL-001</text>
-        <text class="profile-mode">本机模式</text>
-      </view>
-    </view>
-    <view class="menu-card light-capsule">
-      <view class="menu-row">
-        <view class="menu-icon"><image class="icon icon--menu" src="/assets/icons/gear-six-gray.svg" mode="aspectFit" aria-hidden="true" /></view>
-        <text class="menu-label">账号管理</text>
-        <image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" aria-hidden="true" />
-      </view>
-      <view
-        class="menu-row"
-        data-action="local-records"
-        bindtap="onOpenLocalRecords"
-        role="button"
-      >
-        <view class="menu-icon menu-icon--dark"><image class="icon icon--menu" src="/assets/icons/hard-drives-white.svg" mode="aspectFit" aria-hidden="true" /></view>
-        <text class="menu-label">本地记录</text>
-        <image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" aria-hidden="true" />
-      </view>
-      <view class="menu-row">
-        <view class="menu-icon menu-icon--accent"><image class="icon icon--menu" src="/assets/icons/hand-heart-pink.svg" mode="aspectFit" aria-hidden="true" /></view>
-        <text class="menu-label">我的贡献</text>
-        <image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" aria-hidden="true" />
-      </view>
-    </view>
-    <view class="menu-card light-capsule">
-      <view class="menu-row">
-        <view class="menu-icon"><image class="icon icon--menu" src="/assets/icons/bell-gray.svg" mode="aspectFit" aria-hidden="true" /></view>
-        <text class="menu-label">提醒设置</text>
-        <image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" aria-hidden="true" />
-      </view>
-      <view class="menu-row">
-        <view class="menu-icon"><image class="icon icon--menu" src="/assets/icons/shield-check-gray.svg" mode="aspectFit" aria-hidden="true" /></view>
-        <text class="menu-label">隐私与数据</text>
-        <image class="icon icon--caret" src="/assets/icons/caret-right-gray.svg" mode="aspectFit" aria-hidden="true" />
-      </view>
-    </view>
-  </view>
-
-  <view
-    wx:elif="{{currentView === 'local-records'}}"
-    class="page page--records"
-    data-testid="page-local-records"
-  >
-    <view class="subpage-header">
-      <button class="back-button" bindtap="onBackToMy" aria-label="返回我的">
-        <image class="icon icon--back" src="/assets/icons/arrow-left-gray.svg" mode="aspectFit" aria-hidden="true" />
-      </button>
-      <text class="subpage-title">本地记录</text>
-    </view>
-    <text class="record-summary">全部有 {{drafts.length}} 个 · 现在已上传有 0 个 · 未上传有 {{drafts.length}} 个</text>
-    <scroll-view class="records-scroll" scroll-y enhanced show-scrollbar="false">
-      <view wx:if="{{drafts.length > 0}}" class="records-list">
-        <block wx:for="{{drafts}}" wx:key="boardId">
-          <template is="draft-row" data="{{item: item, showStatuses: true}}" />
-        </block>
-      </view>
-      <view wx:else class="records-empty light-capsule">
-        <text class="records-empty-title">还没有本机记录</text>
-        <text class="records-empty-copy">暂不分享的抽赏草稿会保存在这里。</text>
-      </view>
+        <view wx:for="{{cloudClues}}" wx:key="recordId" class="swipe-row">
+          <button class="swipe-delete {{item.swipeX < 0 ? 'swipe-delete--visible' : ''}}" disabled="{{item.isDeleting}}" data-record-id="{{item.recordId}}" data-board-id="{{item.boardId}}" catchtap="onDeleteCloudRecord" aria-label="删除{{item.title}}"><image class="icon icon--trash" src="/assets/icons/trash-white.svg" mode="aspectFit" /></button>
+          <view class="draft-card contribution-card {{item.verificationAction ? 'contribution-card--action' : ''}} swipe-content light-capsule" style="transform: translateX({{item.swipeX}}px);" data-board-id="{{item.recordId}}" data-deleting="{{item.isDeleting}}" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd" bindtouchcancel="onTouchEnd"><image class="draft-watermark" src="/assets/v1-29/ichi-mascot-large-watermark.png" mode="aspectFit" aria-hidden="true" /><text class="record-state-badge status-pill {{item.recordStateLabel === '已上传' && !item.isDeleting ? 'status-pill--uploaded' : 'status-pill--dark'}}">{{item.isDeleting ? '删除中' : item.recordStateLabel}}</text><view class="draft-copy"><text class="draft-title">{{item.title}}</text><text class="record-identity-meta">{{item.identityMeta}}</text><text class="draft-meta">{{item.statsMeta}}</text></view><button wx:if="{{item.verificationAction === 'retry' && !item.isDeleting}}" class="record-verification-action" data-board-id="{{item.boardId}}" bindtap="onRetryTicketVerification">重新核验</button><button wx:if="{{item.verificationAction === 'reupload' && !item.isDeleting}}" class="record-verification-action" data-board-id="{{item.boardId}}" bindtap="onReuploadTicketEvidence">重新上传</button><button wx:if="{{item.verificationAction === 'edit-note' && !item.isDeleting}}" class="record-verification-action" data-board-id="{{item.boardId}}" bindtap="onEditTicketNote">修改备注</button></view>
+        </view>
+      </view><view wx:else class="records-empty light-capsule"><text class="records-empty-title">还没有已上传的版面</text><text class="records-empty-copy">通过“仅上传版面”或提交赏票核对的记录会显示在这里。</text></view></view>
     </scroll-view>
   </view>
 
-  <view class="bottom-nav light-capsule" data-testid="bottom-nav">
-    <view
-      class="nav-item {{activeTab === 'recognize' ? 'nav-item--active' : ''}}"
-      data-tab="recognize"
-      bindtap="onSelectTab"
-      role="button"
-      aria-label="识别"
-    >
-      <image
-        class="icon icon--nav {{activeTab === 'recognize' ? 'icon--nav-active' : ''}}"
-        src="{{activeTab === 'recognize' ? '/assets/icons/corners-out-white.svg' : '/assets/icons/corners-out-gray.svg'}}"
-        mode="aspectFit"
-        aria-hidden="true"
-      />
-      <text wx:if="{{activeTab === 'recognize'}}" class="nav-label">识别</text>
-    </view>
-    <view
-      class="nav-item {{activeTab === 'map' ? 'nav-item--active' : ''}}"
-      data-tab="map"
-      bindtap="onSelectTab"
-      role="button"
-      aria-label="地图"
-    >
-      <image
-        class="icon icon--nav {{activeTab === 'map' ? 'icon--nav-active' : ''}}"
-        src="{{activeTab === 'map' ? '/assets/icons/map-pin-white.svg' : '/assets/icons/map-pin-gray.svg'}}"
-        mode="aspectFit"
-        aria-hidden="true"
-      />
-      <text wx:if="{{activeTab === 'map'}}" class="nav-label">地图</text>
-    </view>
-    <view
-      class="nav-item {{activeTab === 'my' ? 'nav-item--active' : ''}}"
-      data-tab="my"
-      bindtap="onSelectTab"
-      role="button"
-      aria-label="我的"
-    >
-      <image
-        class="icon icon--nav {{activeTab === 'my' ? 'icon--nav-active' : ''}}"
-        src="{{activeTab === 'my' ? '/assets/icons/user-circle-white.svg' : '/assets/icons/user-circle-gray.svg'}}"
-        mode="aspectFit"
-        aria-hidden="true"
-      />
-      <text wx:if="{{activeTab === 'my'}}" class="nav-label">我的</text>
-    </view>
+  <view wx:elif="{{currentView === 'map-reminder'}}" class="page subpage" data-testid="page-map-reminder"><view class="subpage-header"><button class="back-button" bindtap="onBackToMy"><image class="icon icon--back" src="/assets/icons/arrow-left-gray.svg" mode="aspectFit" /></button><text class="subpage-title">提醒设置</text></view><scroll-view class="method-scroll" scroll-y scroll-top="{{reminderScrollTop}}" data-scroll-key="reminderScrollTop" bindscrollend="onRememberScrollEnd"><view class="method-card light-capsule"><image src="/assets/icons/map-pin-pink.svg" mode="aspectFit" /><view><text>会提醒什么</text><text>当关注地点出现新的、已核对的版面记录或状态更新时，好版地图会整理成可查看的线索。它不是实时库存提醒。</text></view></view><view class="method-card light-capsule"><image src="/assets/icons/bell-pink.svg" mode="aspectFit" /><view><text>当前状态</text><text>V1 先保留这个说明入口。真实提醒设置、账号授权与通知能力将在 V2 的好版地图中接入。</text></view></view><button class="ghost-button subpage-wide-action" bindtap="onBackToMy">返回我的</button></scroll-view></view>
+
+  <view wx:elif="{{currentView === 'method'}}" class="page subpage" data-testid="page-method"><view class="subpage-header"><button class="back-button" bindtap="onBackToMy"><image class="icon icon--back" src="/assets/icons/arrow-left-gray.svg" mode="aspectFit" /></button><text class="subpage-title">隐私与数据</text></view><scroll-view class="method-scroll" scroll-y scroll-top="{{methodScrollTop}}" data-scroll-key="methodScrollTop" bindscrollend="onRememberScrollEnd"><view class="method-card light-capsule"><image src="/assets/icons/calculator-pink.svg" mode="aspectFit" /><view><text>怎么算</text><text>系统基于当前余票，采用超几何分布模型实时计算。不包含玄学或保底暗示。</text></view></view><view class="method-card light-capsule"><image src="/assets/icons/image-pink.svg" mode="aspectFit" /><view><text>照片怎么用</text><text>版面照片和赏票照片都只用于当次识别或核验，终态后删除，不形成长期图片记录。</text></view></view><view class="method-card light-capsule"><image src="/assets/icons/database-pink.svg" mode="aspectFit" /><view><text>记录放在哪里</text><text>待上传草稿保存在当前设备；确认后的结构化版面、位置和核对状态归属您的私有云端账号，V1 不公开地图。</text></view></view><text class="unofficial-note">ICHI 是非官方的记录与计算工具，不代表一番赏品牌方、门店或实时库存。</text><button class="danger-action" bindtap="onClearAllLocalData"><image src="/assets/icons/trash-pink.svg" mode="aspectFit" /><text>删除全部本地数据</text></button><view class="subpage-actions method-actions"><button class="action-button inline-action" bindtap="onBackToStart">返回票池</button><button class="ghost-button" bindtap="onOpenLocalRecords">管理记录</button></view></scroll-view></view>
+
+  <view wx:elif="{{currentView === 'cannot-build-pool'}}" class="page state-page"><view class="state-card state-card--hero exception-card light-capsule"><view class="round-symbol round-symbol--exception"><image src="/assets/icons/warning-white.svg" mode="aspectFit" aria-hidden="true" /></view><text class="state-title">无法建立票池</text><text class="card-copy">{{recognitionError || '可能是识别失败、照片中版面不完整，或识别出的各奖级数量不守恒。'}}</text><view class="state-actions"><view class="action-wrap"><view class="action-glow"></view><button class="action-button" bindtap="onRetryRecognitionGate">重新拍摄版面</button></view></view></view></view>
+
+  <view wx:elif="{{currentView === 'undo-protected'}}" class="page state-page" data-testid="page-undo-protected"><view class="state-card state-card--hero exception-card light-capsule"><view class="round-symbol round-symbol--exception"><image src="/assets/icons/arrow-u-up-left-white.svg" mode="aspectFit" /></view><text class="state-title">无法继续撤销</text><text class="card-copy">为保护已经确认的记录，只能连续撤销最近 50 抽，不能跳过中间轮次。</text><view class="state-actions"><button class="ghost-button" bindtap="onReturnToDraw">回到一番赏版面</button></view></view></view>
+
+  <view wx:elif="{{currentView === 'storage-fallback'}}" class="page state-page" data-testid="page-storage-fallback"><view class="state-card state-card--hero exception-card light-capsule"><view class="round-symbol round-symbol--exception"><image src="/assets/icons/database-white.svg" mode="aspectFit" /></view><text class="state-title">暂时无法读取存储状态</text><text class="card-copy">现有记录没有被删除。可以返回管理本机记录，或回到当前一番赏版面后重试。</text><view class="state-actions"><button class="ghost-button" bindtap="onOpenLocalRecords">管理记录</button><button wx:if="{{activeDraft}}" class="ghost-button" bindtap="onReturnToDraw">回到一番赏版面</button><button wx:else class="ghost-button" bindtap="onBackToMy">返回我的</button></view></view></view>
+
+  <view wx:elif="{{currentView === 'schema-incompatible'}}" class="page state-page"><view class="state-card state-card--hero exception-card light-capsule"><view class="round-symbol round-symbol--exception"><image src="/assets/icons/warning-white.svg" mode="aspectFit" /></view><text class="state-title">本机记录结构不兼容</text><text class="card-copy">检测到无法读取的旧版数据。为避免误改，原数据尚未自动覆盖。</text><view class="state-actions"><button class="ghost-button" bindtap="onRecoverSchema">清除不兼容数据并回首页</button></view></view></view>
+
+  <view wx:elif="{{currentView === 'deleted'}}" class="page state-page"><view class="state-card state-card--hero exception-card light-capsule"><view class="round-symbol round-symbol--exception"><image src="/assets/icons/trash-white.svg" mode="aspectFit" /></view><text class="state-title">记录已清空</text><text class="card-copy">当前设备中的票池、抽取记录和本地草稿已经删除。</text><view class="state-actions"><view class="action-wrap"><view class="action-glow"></view><button class="action-button" bindtap="onBackToStart">建立新的票池</button></view></view></view></view>
+
+  <view wx:if="{{modalView === 'wechat-login'}}" class="modal-layer modal-layer--wechat-login" catchtap="onBlockTap" role="dialog" aria-label="使用微信登录"><view class="modal-card wechat-login-card light-capsule"><button wx:if="{{profileAuthorizationPurpose === 'update'}}" class="wechat-login-back" bindtap="onCloseWechatProfileAuthorization" aria-label="返回我的"><image src="/assets/icons/arrow-left-gray.svg" mode="aspectFit" aria-hidden="true" /></button><button class="wechat-login-avatar" open-type="chooseAvatar" bindchooseavatar="onChooseWechatAvatar" aria-label="微信头像"><image src="{{profileAvatarPath || accountAvatarUrl}}" mode="aspectFill" /></button><text class="state-title">{{profileAuthorizationPurpose === 'first-use' ? '使用微信登录' : '更新微信资料'}}</text><text class="card-copy">{{profileAuthorizationPurpose === 'first-use' ? '授权头像和昵称后，即可建立您的 ICHI 账号。' : '重新授权头像和昵称后，“我的”页面会同步更新。'}}</text><input class="account-profile-nickname" type="nickname" maxlength="32" value="{{profileNicknameDraft}}" placeholder="微信昵称" bindinput="onProfileNicknameInput" aria-label="微信昵称" /><view class="action-wrap"><view wx:if="{{profileAuthorizationReady}}" class="action-glow"></view><button class="action-button" disabled="{{!profileAuthorizationReady}}" bindtap="onAuthorizeWechatProfile">{{profileAuthorizationPurpose === 'first-use' ? '使用微信登录' : '确认更新'}}</button></view></view></view>
+
+  <view wx:if="{{modalView === 'capture-permission-required'}}" class="modal-layer" catchtap="onBlockTap" role="dialog" aria-label="需要拍摄权限"><view class="modal-card modal-card--exception exception-card light-capsule"><view class="round-symbol round-symbol--exception"><image src="/assets/icons/warning-white.svg" mode="aspectFit" /></view><text class="state-title">需要拍摄权限</text><text class="card-copy">拍摄版面需要相机和当前位置。首次允许后，微信会记住授权状态；后续拍摄不会重复询问。</text><view class="state-actions"><button class="ghost-button" bindtap="onOpenCapturePermissionSettings">前往设置</button><button class="text-button" bindtap="onCloseModal">稍后再试</button></view></view></view>
+
+  <view wx:if="{{modalView === 'probability'}}" class="modal-layer" catchtap="onBlockTap" role="dialog" aria-label="局面可能性"><view class="modal-card light-capsule"><view class="modal-head"><text>局面可能性</text><button bindtap="onCloseModal" aria-label="关闭局面可能性"><image src="/assets/icons/x-gray.svg" mode="aspectFit" aria-hidden="true" /></button></view><scroll-view class="modal-scroll" scroll-y><view wx:if="{{outlook.status === 'available'}}"><text class="outlook-window">观察窗口（接下来 {{outlook.windowDraws}} 抽以内）</text><view wx:for="{{outlook.events}}" wx:key="id" class="outlook-event"><text>{{item.label}}</text><text>{{item.percentage}}%</text></view><view class="outlook-cost"><text>观察窗口累计成本</text><text>¥{{outlook.cumulativeCost}}</text></view></view><text wx:else class="card-copy">{{outlook.reason}}</text></scroll-view><text class="modal-disclaimer">结果不保证；停止仍可选</text></view></view>
+
+  <view wx:if="{{modalView === 'history'}}" class="modal-layer" catchtap="onBlockTap" role="dialog" aria-label="抽取记录"><view class="modal-card light-capsule"><view class="modal-head"><text>抽取记录</text><button bindtap="onCloseModal" aria-label="关闭抽取记录"><image src="/assets/icons/x-gray.svg" mode="aspectFit" aria-hidden="true" /></button></view><scroll-view class="modal-scroll" scroll-y><view wx:if="{{activeDraft.historyItems.length}}" class="history-list"><view wx:for="{{activeDraft.historyItems}}" wx:key="id" class="history-row"><view class="history-row-main"><text class="history-index">#{{item.index}}</text><text class="history-tier">{{item.tier}}赏</text></view><view class="history-row-meta"><text class="history-remaining">余 {{item.remaining}}</text><text class="history-cost">¥{{item.cost}}</text></view></view></view><view wx:else class="records-empty"><text class="records-empty-title">还没有抽取记录</text></view></scroll-view></view></view>
+
+  <view wx:if="{{modalView === 'share-decision'}}" class="modal-layer modal-layer--share-decision" catchtap="onBlockTap"><view class="modal-card share-card light-capsule"><view class="round-symbol"><image src="/assets/icons/share-network-black.svg" mode="aspectFit" /></view><text class="state-title">分享本次记录？</text><text class="card-copy">先拍下已抽出的赏票，再和记录核对，为其他玩家提供真实参考。</text><view class="share-actions"><view class="action-wrap"><view class="action-glow"></view><button class="action-button" bindtap="onOpenShareCapture">愿意并拍摄赏票</button></view><button class="ghost-button" bindtap="onContinueDraw">继续抽赏</button><button class="text-button" bindtap="onSaveDraftAndExit">暂不分享并退出</button></view></view></view>
+
+  <view wx:if="{{modalView === 'share-capture'}}" class="share-capture" catchtap="onBlockTap"><button class="flow-back share-back" bindtap="onBackToShareDecision" aria-label="返回分享选择"><image src="/assets/icons/arrow-left-gray.svg" mode="aspectFit" aria-hidden="true" /></button><view class="share-frame"><image wx:if="{{shareImagePath}}" class="share-evidence-photo" src="{{shareImagePath}}" mode="aspectFill" /><camera wx:elif="{{cameraStatus === 'loading' || cameraStatus === 'ready'}}" class="share-camera-preview" data-camera-generation="{{cameraGeneration}}" mode="normal" device-position="back" flash="off" resolution="high" bindinitdone="onCameraReady" binderror="onCameraError" aria-label="赏票实时取景"></camera><view wx:else class="camera-permission-panel camera-permission-panel--share"><image class="camera-permission-icon" src="/assets/icons/camera-light.svg" mode="aspectFit" aria-hidden="true" /><text class="camera-permission-title">{{cameraStatus === 'denied' ? '开启相机权限' : '相机暂时不可用'}}</text><text class="camera-permission-copy">{{cameraError}}</text><button wx:if="{{cameraStatus === 'denied'}}" class="camera-permission-action" hover-class="none" bindtap="onOpenCameraSettings">前往设置</button><button wx:else class="camera-permission-action" hover-class="none" bindtap="onRetryCamera">重新尝试</button></view></view><view class="capture-actions"><view class="capture-action-spacer" aria-hidden="true"></view><button class="capture-button" hover-class="none" disabled="{{mediaBusy || cameraStatus === 'denied' || cameraStatus === 'unavailable' || shareImagePath}}" bindtap="onCaptureEvidence">{{shareImagePath ? '已拍摄' : pendingEvidenceCapture ? '准备拍摄' : '拍摄赏票'}}</button><button class="circle-action capture-undo" disabled="{{!shareImagePath}}" bindtap="onRetakeEvidence" aria-label="撤回已拍摄赏票"><image src="/assets/icons/arrow-counter-clockwise-gray.svg" mode="aspectFit" aria-hidden="true" /></button></view><view class="share-meta"><text>备注（必填）</text><view><input value="{{shareNote}}" bindinput="onShareNoteInput" placeholder="例如：秋叶原本店，A赏已被抽走" aria-label="用户备注" /><button class="share-confirm {{shareReady ? 'share-confirm--ready' : ''}} {{evidenceSubmitting ? 'share-confirm--submitting' : ''}}" disabled="{{!shareReady || evidenceSubmitting}}" bindtap="onSubmitEvidence" aria-label="{{evidenceSubmitting ? '正在上传赏票' : '提交赏票核对'}}"><view wx:if="{{evidenceSubmitting}}" class="share-confirm-spinner" aria-hidden="true"></view><image wx:else src="/assets/icons/check-white.svg" mode="aspectFit" aria-hidden="true" /></button></view></view><text class="share-consent">赏票照片只用于本次核验，核验终态后删除；正式记录只保留结构化结果、位置和你的原文备注。</text></view>
+
+  <view wx:if="{{modalView === 'submitted'}}" class="modal-layer modal-layer--submitted" catchtap="onBlockTap"><view class="modal-card modal-card--submitted share-card light-capsule"><view class="round-symbol"><image src="/assets/icons/check-black.svg" mode="aspectFit" /></view><text class="state-title">已提交</text><text class="card-copy">后台正在核对。本次提交退出后可导入新的版面。</text><view class="share-actions submitted-actions"><view class="action-wrap"><view class="action-glow"></view><button class="action-button" bindtap="onSubmittedExit">退出回首页</button></view><button class="ghost-button" bindtap="onStayOnBoard">留在当前版面</button></view></view></view>
+
+  <view wx:if="{{modalView === 'board-upload-submitted'}}" class="modal-layer modal-layer--submitted" catchtap="onBlockTap"><view class="modal-card modal-card--submitted share-card light-capsule"><view class="round-symbol"><image src="/assets/icons/check-black.svg" mode="aspectFit" /></view><text class="state-title">已提交</text><text class="card-copy">后台正在核对。本次提交退出后可导入新的版面。</text><view class="share-actions submitted-actions submitted-actions--single"><view class="action-wrap"><view class="action-glow"></view><button class="action-button" bindtap="onSubmittedExit">退出回首页</button></view></view></view></view>
+
+  <view wx:if="{{modalView === 'storage-warning'}}" class="modal-layer" catchtap="onBlockTap"><view class="modal-card modal-card--exception exception-card light-capsule"><view class="round-symbol round-symbol--exception"><image src="/assets/icons/warning-white.svg" mode="aspectFit" /></view><text class="state-title">本机空间不足</text><text class="card-copy">这次改动没有安全写入。现有记录未删除，请先管理本地记录后重试。</text><view class="state-actions"><button class="ghost-button" data-view="local-records" bindtap="onOpenMyPage">管理记录</button></view></view></view>
+
+  <view wx:if="{{modalView === 'quota-exhausted'}}" class="modal-layer" catchtap="onBlockTap" role="dialog" aria-label="无法建立票池"><view class="modal-card modal-card--exception exception-card light-capsule"><view class="round-symbol round-symbol--exception"><image src="/assets/icons/warning-white.svg" mode="aspectFit" /></view><text class="state-title">无法建立票池</text><text class="card-copy">今天的 {{quotaLimit}} 次版面识别额度已经用完，今日无法继续拍摄识别。额度会在北京时间次日 00:00 自动恢复；已有草稿仍可继续抽赏。</text><view class="state-actions"><button class="ghost-button" bindtap="onResetQuotaCapture">我知道了</button></view></view></view>
+
+  <view wx:if="{{modalView === 'account-unavailable'}}" class="modal-layer" catchtap="onBlockTap" role="dialog" aria-label="账号暂时无法连接"><view class="modal-card modal-card--exception exception-card light-capsule"><view class="round-symbol round-symbol--exception"><image src="/assets/icons/warning-white.svg" mode="aspectFit" /></view><text class="state-title">账号暂时无法连接</text><text class="card-copy">建立新版面需要先确认微信账号和今日额度。已有本机草稿不受影响。</text><view class="state-actions"><button class="ghost-button" bindtap="onRetryRecognitionGate">重新连接</button><button class="text-button" bindtap="onCloseModal">稍后再试</button></view></view></view>
+
+  <view wx:if="{{modalView === 'delete-uploaded-board'}}" class="modal-layer" catchtap="onBlockTap" role="dialog" aria-label="删除版面线索"><view class="modal-card modal-card--exception exception-card light-capsule"><view class="round-symbol round-symbol--exception"><image src="/assets/icons/warning-white.svg" mode="aspectFit" aria-hidden="true" /></view><text class="state-title">删除版面线索</text><text class="card-copy">删除后，该版面将从“我上传的版面”和“好版地图”中移除，相关上传数据也会从云端删除。此操作无法恢复。</text><view class="state-actions"><view class="action-wrap"><button class="action-button" bindtap="onConfirmDeleteUploadedBoard">删除</button></view><button class="ghost-button" bindtap="onCancelDeleteUploadedBoard">取消</button></view></view></view>
+
+  <view wx:if="{{modalView === 'note-review'}}" class="modal-layer modal-layer--note-review" catchtap="onBlockTap" role="dialog" aria-label="修改备注"><view class="modal-card modal-card--note-review light-capsule"><view class="modal-head"><text>修改备注</text><button bindtap="onCloseModal" aria-label="关闭修改备注"><image src="/assets/icons/x-gray.svg" mode="aspectFit" aria-hidden="true" /></button></view><input class="account-profile-nickname note-review-input" maxlength="300" value="{{shareNote}}" placeholder="填写你的现场备注" bindinput="onReviewNoteInput" aria-label="用户备注" /><text class="card-copy note-review-copy">只会重新核验备注，不会重复地点或照片核验。</text><view class="action-wrap note-review-actions"><view wx:if="{{shareNote && !evidenceSubmitting}}" class="action-glow"></view><button class="action-button" disabled="{{!shareNote || evidenceSubmitting}}" bindtap="onSubmitNoteReview">重新核验备注</button></view></view></view>
+
+  <view wx:if="{{modalView !== 'share-capture'}}" class="bottom-nav light-capsule" data-testid="bottom-nav">
+    <view class="nav-item {{activeTab === 'recognize' ? 'nav-item--active' : ''}}" data-tab="recognize" bindtap="onSelectTab" role="button" aria-label="识别" aria-current="{{activeTab === 'recognize'}}"><image class="icon icon--nav" src="{{activeTab === 'recognize' ? '/assets/icons/corners-out-white.svg' : '/assets/icons/corners-out-gray.svg'}}" mode="aspectFit" aria-hidden="true" /><text wx:if="{{activeTab === 'recognize'}}" class="nav-label">识别</text></view>
+    <view class="nav-item {{activeTab === 'map' ? 'nav-item--active' : ''}}" data-tab="map" bindtap="onSelectTab" role="button" aria-label="地图" aria-current="{{activeTab === 'map'}}"><image class="icon icon--nav" src="{{activeTab === 'map' ? '/assets/icons/map-pin-white.svg' : '/assets/icons/map-pin-gray.svg'}}" mode="aspectFit" aria-hidden="true" /><text wx:if="{{activeTab === 'map'}}" class="nav-label">地图</text></view>
+    <view class="nav-item {{activeTab === 'my' ? 'nav-item--active' : ''}}" data-tab="my" bindtap="onSelectTab" role="button" aria-label="我的" aria-current="{{activeTab === 'my'}}"><image class="icon icon--nav" src="{{activeTab === 'my' ? '/assets/icons/user-circle-white.svg' : '/assets/icons/user-circle-gray.svg'}}" mode="aspectFit" aria-hidden="true" /><text wx:if="{{activeTab === 'my'}}" class="nav-label">我的</text></view>
   </view>
+  <canvas type="2d" id="camera-output-canvas" class="camera-output-canvas" aria-hidden="true"></canvas>
 </view>

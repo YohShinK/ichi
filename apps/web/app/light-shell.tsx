@@ -18,7 +18,6 @@ type View =
   | "camera-capture"
   | "recognizing"
   | "draft"
-  | "target"
   | "draw"
   | "storage"
   | "local-records"
@@ -54,11 +53,12 @@ const initialTiers: Tier[] = [
 ];
 const drawCost = 650;
 const undoLimit = 50;
-const targets = ["A"];
+const targets: string[] = [];
 
 function resolveView(raw: string | null): View {
   if (raw === "source") return "camera-capture";
   if (raw === "confirm") return "draft";
+  if (raw === "target") return "draw";
   if (
     [
       "recognition-failed",
@@ -74,7 +74,6 @@ function resolveView(raw: string | null): View {
     "camera-capture",
     "recognizing",
     "draft",
-    "target",
     "draw",
     "storage",
     "local-records",
@@ -537,8 +536,6 @@ function ShellContent() {
   const params = useSearchParams();
   const view = resolveView(params.get("view"));
   const [tiers, setTiers] = useState<Tier[]>(initialTiers);
-  const [generating, setGenerating] = useState(false);
-  const [targetsSelected, setTargetsSelected] = useState<string[]>(["A"]);
   const navigate = (next: View) => router.push(`/?view=${next}`);
   useEffect(() => {
     if (view !== "recognizing") return;
@@ -553,14 +550,6 @@ function ShellContent() {
     );
     return () => window.clearTimeout(timer);
   }, [view]);
-  useEffect(() => {
-    if (!generating) return;
-    const timer = window.setTimeout(() => {
-      setGenerating(false);
-      navigate("target");
-    }, 1800);
-    return () => window.clearTimeout(timer);
-  }, [generating]);
   const editable = (
     tier: string,
     field: "total" | "remaining",
@@ -701,43 +690,6 @@ function ShellContent() {
                 ))}
               </div>
             </div>
-            <PageButton onClick={() => setGenerating(true)}>
-              确认并生成版面
-            </PageButton>
-            {generating ? (
-              <div className="source-generating">
-                <div>✦</div>
-                <h2>版面已确认</h2>
-                <p>正在将数据排版为一番赏实体视觉...</p>
-                <i />
-              </div>
-            ) : null}
-          </section>
-        ) : null}
-        {view === "target" ? (
-          <section className="source-target">
-            <h1>选择目标奖</h1>
-            <p>关注的奖级将优先在版面中高亮并计算成本。</p>
-            <div>
-              {tiers.map((item) => (
-                <button
-                  key={item.tier}
-                  className={
-                    targetsSelected.includes(item.tier) ? "selected" : ""
-                  }
-                  onClick={() =>
-                    setTargetsSelected((all) =>
-                      all.includes(item.tier)
-                        ? all.filter((tier) => tier !== item.tier)
-                        : [...all, item.tier],
-                    )
-                  }
-                >
-                  {targetsSelected.includes(item.tier) ? "●" : "○"} {item.tier}{" "}
-                  赏
-                </button>
-              ))}
-            </div>
             <PageButton
               onClick={() => {
                 saveDrawBoardCache({
@@ -750,7 +702,7 @@ function ShellContent() {
                 navigate("draw");
               }}
             >
-              进入抽取版面
+              确认并生成版面
             </PageButton>
           </section>
         ) : null}

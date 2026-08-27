@@ -1,10 +1,12 @@
 # V1 工具链、CloudBase 与识别服务决策
 
-> 状态：APPROVED
+> 状态：PARTIALLY SUPERSEDED
 >
 > 日期：2026-08-05
 >
 > 机器可读基线：`data/toolchain-baseline/versions.json`
+
+> 2026-08-19 注：工具链与 CloudBase 运行时部分继续有效；本文件下方旧识别模型、双调用、Base64 请求体和图片体积限制均已由 `memory-bank/tech-stack.md`、`docs/decisions/v1-board-recognition-prompt-contract.md` 与 V1-F 当前方案取代，只保留为历史决策记录。当前照片经私有 `recognition-temp/{jobId}/` 二进制临时对象传输，同步事件只传任务绑定的 `fileID`；低于 `20 MiB` 保留原图，完成后客户端与云函数双删，异常孤儿对象以 COS 最短 `1` 天过期删除兜底。
 
 ## 锁定组合
 
@@ -12,7 +14,7 @@ V1-A 使用 Node.js 24.11、pnpm 11.9.0、TypeScript 6.0.3、Vitest 4.1.10、ESL
 
 微信小程序基础库锁定 3.17.0，开发者工具已在 2.02.2607271 验证。工程绑定用户提供的小程序 AppID；AppSecret 不进入仓库、客户端或开发者工具项目配置，只能在确有服务端调用需求时通过受控环境变量提供。
 
-CloudBase 普通云函数运行时锁定 `Nodejs24.11`，入口保持 CommonJS。V1 云端仍只允许 `recognize-board` 识别代理，不接入真实账号、数据库或会话同步；V1 网页可先搭建账号与贡献 UI 框架，V2 再按批准方案接入后端。
+CloudBase 普通云函数入口保持 CommonJS。原锁定的 `Nodejs24.11` 被目标环境实际创建接口拒绝；用户于 2026-08-18 批准改用平台推荐且实测支持的 `Nodejs20.19`，根仓库与 CI 仍保持 Node 24.11。V1-F 已批准接入真实账号、配额与私有结构化观察，但仍不创建 V2 公共地图或公开写入。
 
 ## 识别候选与边界
 

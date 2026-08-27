@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ichi.local/schema/board-provider-r1-visible-evidence-1.0.0.schema.json",
+  "title": "BoardProviderR1VisibleEvidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ipName", "ipRawText", "themeName", "price", "tiers"],
+  "properties": {
+    "ipName": { "type": ["string", "null"] },
+    "ipRawText": { "type": ["string", "null"] },
+    "themeName": { "type": ["string", "null"] },
+    "price": { "type": ["integer", "null"], "minimum": 1 },
+    "tiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tierCode",
+          "rawLabel",
+          "prizeName",
+          "visibleNumberRuns",
+          "totalTicketsObserved",
+          "pastedTicketsObserved"
+        ],
+        "properties": {
+          "tierCode": { "type": "string", "minLength": 1 },
+          "rawLabel": { "type": ["string", "null"] },
+          "prizeName": { "type": ["string", "null"] },
+          "visibleNumberRuns": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["value", "rawText"],
+                "properties": {
+                  "value": { "type": ["integer", "null"], "minimum": 1 },
+                  "rawText": { "type": ["string", "null"] }
+                }
+              }
+            }
+          },
+          "totalTicketsObserved": {
+            "type": ["integer", "null"],
+            "minimum": 1
+          },
+          "pastedTicketsObserved": {
+            "type": ["integer", "null"],
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

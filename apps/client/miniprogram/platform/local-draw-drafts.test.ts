@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import type { MiniProgramStorageDriver } from "./storage.js";
 import {
+  createRecordCode,
+  deriveRecordCode,
   LOCAL_DRAW_DRAFTS_KEY,
   LocalDrawDraftRepository,
+  RECORD_CODE_PATTERN,
+  inspectLocalDraftStorage,
   summarizeLocalDrawDraft,
   type LocalDrawDraft,
 } from "./local-draw-drafts.js";
@@ -75,10 +79,27 @@ describe("mini-program local draw drafts", () => {
 
     expect(
       repository.deleteIfMutable("uploaded").map((draft) => draft.boardId),
-    ).toEqual(["uploaded", "mutable"]);
+    ).toEqual(["mutable"]);
     expect(
       repository.deleteIfMutable("mutable").map((draft) => draft.boardId),
-    ).toEqual(["uploaded"]);
+    ).toEqual([]);
+  });
+
+  it("keeps a draw with only a legacy uploaded flag in local records", () => {
+    const storage = new FakeStorage();
+    const repository = new LocalDrawDraftRepository(storage);
+    repository.upsert(
+      makeDraft("legacy-draw", {
+        uploadStatus: "uploaded",
+        verificationStatus: "unverified",
+      }),
+    );
+
+    expect(summarizeLocalDrawDraft(repository.readAll()[0]!)).toMatchObject({
+      recordStateLabel: "待上传",
+      canDelete: true,
+    });
+    expect(repository.deleteIfMutable("legacy-draw")).toEqual([]);
   });
 
   it("ignores malformed storage without deleting it silently", () => {
@@ -88,22 +109,216 @@ describe("mini-program local draw drafts", () => {
 
     expect(repository.readAll()).toEqual([]);
     expect(storage.values.get(LOCAL_DRAW_DRAFTS_KEY)).toBe("not-json");
+    expect(inspectLocalDraftStorage("not-json")).toBe("schema-incompatible");
   });
 
-  it("builds the shared start and local-record summary", () => {
-    const summary = summarizeLocalDrawDraft(makeDraft("board-a"));
+  it("does not rewrite a mixed legacy/future payload during migration", () => {
+    const storage = new FakeStorage();
+    const future = {
+      ...makeDraft("future-v2"),
+      schemaVersion: 2,
+      recordCode: "F2TURE",
+    };
+    const legacy = { ...makeDraft("legacy-v0") } as Record<string, unknown>;
+    delete legacy.schemaVersion;
+    const raw = JSON.stringify([legacy, future]);
+    storage.values.set(LOCAL_DRAW_DRAFTS_KEY, raw);
+
+    expect(new LocalDrawDraftRepository(storage).readAll()).toHaveLength(1);
+    expect(storage.values.get(LOCAL_DRAW_DRAFTS_KEY)).toBe(raw);
+    expect(inspectLocalDraftStorage(raw)).toBe("schema-incompatible");
+  });
+
+  it("builds the shared three-line draw-record summary", () => {
+    const summary = summarizeLocalDrawDraft(
+      makeDraft("board-a", {
+        recordType: "draw",
+        recordCode: "A1B2C3",
+        ipName: "葬送的芙莉莲",
+        capturedAt: new Date(2026, 7, 10, 12, 0).valueOf(),
+        submittedAt: new Date(2026, 7, 11, 14, 32).valueOf(),
+      }),
+    );
 
     expect(summary).toMatchObject({
       boardId: "board-a",
-      title: "未分享的抽赏记录",
+      title: "抽赏记录 · A1B2C3",
+      recordType: "draw",
+      recordCode: "A1B2C3",
+      ipLabel: "葬送的芙莉莲",
       remaining: 9,
       total: 12,
       drawCount: 1,
       cost: 700,
+      canResume: true,
       canDelete: true,
-      verificationLabel: "未核对",
-      uploadLabel: "未上传",
+      recordStateLabel: "待上传",
     });
-    expect(summary.meta).toContain("余 9 / 12 · 已抽 1 · 累计 ¥700");
+    expect(summary.createdAtLabel).toBe("8/11 14:32");
+    expect(summary.identityMeta).toBe("IP: 葬送的芙莉莲 · 8/11 14:32");
+    expect(summary.title).not.toContain("葬送的芙莉莲");
+    expect(summary.identityMeta).not.toContain("拍摄");
+    expect(summary.identityMeta).not.toContain("上传");
+    expect(summary.statsMeta).toBe("余 9 / 12 · 已抽 1");
+    expect(summary.statsMeta).not.toContain("累计");
   });
+
+  it("omits draw count and spend from board-upload record summaries", () => {
+    const summary = summarizeLocalDrawDraft(
+      makeDraft("upload-a", {
+        recordType: "board-upload",
+        recordCode: "UP81A2",
+        ipName: "间谍过家家",
+        submittedAt: new Date(2026, 7, 12, 16, 45).valueOf(),
+        history: [],
+        cost: 0,
+      }),
+    );
+
+    expect(summary.title).toBe("仅上传版面 · UP81A2");
+    expect(summary.recordStateLabel).toBe("待上传");
+    expect(summary.createdAtLabel).toBe("8/12 16:45");
+    expect(summary.identityMeta).toBe("IP: 间谍过家家 · 8/12 16:45");
+    expect(summary.title).not.toContain("间谍过家家");
+    expect(summary.identityMeta).not.toContain("拍摄");
+    expect(summary.identityMeta).not.toContain("上传");
+    expect(summary.statsMeta).toBe("余 9 / 12");
+    expect(summary.statsMeta).not.toContain("已抽");
+    expect(summary.statsMeta).not.toContain("累计");
+    expect(summary.canResume).toBe(false);
+  });
+
+  it("marks an empty historical draw as unrecoverable instead of a dead normal card", () => {
+    expect(
+      summarizeLocalDrawDraft(
+        makeDraft("orphan", { recordType: "draw", prizeData: [] }),
+      ),
+    ).toMatchObject({
+      canResume: false,
+      canDelete: true,
+      recordStateLabel: "无法恢复",
+    });
+  });
+
+  it("generates stable uppercase six-character record codes", () => {
+    expect(deriveRecordCode("board-a")).toBe(deriveRecordCode("board-a"));
+    expect(deriveRecordCode("board-a")).not.toBe(deriveRecordCode("board-b"));
+    expect(RECORD_CODE_PATTERN.test(deriveRecordCode("legacy-board"))).toBe(
+      true,
+    );
+    expect(RECORD_CODE_PATTERN.test(createRecordCode("new-board"))).toBe(true);
+    expect(deriveRecordCode("legacy-board")).toMatch(/[A-Z]/);
+    expect(deriveRecordCode("legacy-board")).toMatch(/\d/);
+  });
+
+  it("resolves display-code collisions without changing board identity", () => {
+    const storage = new FakeStorage();
+    storage.values.set(
+      LOCAL_DRAW_DRAFTS_KEY,
+      JSON.stringify([
+        makeDraft("board-first", { recordCode: "A1B2C3", savedAt: 2 }),
+        makeDraft("board-second", { recordCode: "A1B2C3", savedAt: 1 }),
+      ]),
+    );
+    const repository = new LocalDrawDraftRepository(storage);
+    const firstRead = repository.readAll();
+    const secondRead = repository.readAll();
+
+    expect(firstRead.map((draft) => draft.boardId)).toEqual([
+      "board-first",
+      "board-second",
+    ]);
+    expect(new Set(firstRead.map((draft) => draft.recordCode)).size).toBe(2);
+    expect(firstRead.map((draft) => draft.recordCode)).toEqual(
+      secondRead.map((draft) => draft.recordCode),
+    );
+    expect(firstRead[0]?.recordCode).toBe("A1B2C3");
+    expect(firstRead[1]?.recordCode).toMatch(RECORD_CODE_PATTERN);
+    expect(
+      JSON.parse(String(storage.values.get(LOCAL_DRAW_DRAFTS_KEY))),
+    ).toEqual(expect.arrayContaining(firstRead));
+  });
+
+  it("keeps an existing code stable when a new record requests the same code", () => {
+    const storage = new FakeStorage();
+    const repository = new LocalDrawDraftRepository(storage);
+    repository.upsert(
+      makeDraft("board-existing", { recordCode: "A1B2C3", savedAt: 1 }),
+    );
+    repository.upsert(
+      makeDraft("board-new", { recordCode: "A1B2C3", savedAt: 2 }),
+    );
+
+    const byId = new Map(
+      repository.readAll().map((draft) => [draft.boardId, draft.recordCode]),
+    );
+    expect(byId.get("board-existing")).toBe("A1B2C3");
+    expect(byId.get("board-new")).toMatch(RECORD_CODE_PATTERN);
+    expect(byId.get("board-new")).not.toBe("A1B2C3");
+  });
+
+  it("keeps migrated records readable when a best-effort migration write fails", () => {
+    const storage = new FakeStorage();
+    storage.values.set(
+      LOCAL_DRAW_DRAFTS_KEY,
+      JSON.stringify([makeDraft("legacy-without-code")]),
+    );
+    storage.setItem = () => {
+      throw new Error("storage full");
+    };
+
+    const records = new LocalDrawDraftRepository(storage).readAll();
+    expect(records).toHaveLength(1);
+    expect(records[0]?.recordCode).toMatch(RECORD_CODE_PATTERN);
+  });
+
+  it("migrates structurally valid pre-version drafts without losing history", () => {
+    const storage = new FakeStorage();
+    const legacy = { ...makeDraft("legacy-v0") } as Record<string, unknown>;
+    delete legacy.schemaVersion;
+    delete legacy.recordCode;
+    storage.values.set(LOCAL_DRAW_DRAFTS_KEY, JSON.stringify([legacy]));
+
+    const records = new LocalDrawDraftRepository(storage).readAll();
+
+    expect(records).toHaveLength(1);
+    expect(records[0]).toMatchObject({
+      schemaVersion: 1,
+      boardId: "legacy-v0",
+      history: [{ id: "round-1", tier: "G" }],
+    });
+    expect(records[0]?.recordCode).toMatch(RECORD_CODE_PATTERN);
+    expect(
+      inspectLocalDraftStorage(storage.values.get(LOCAL_DRAW_DRAFTS_KEY)),
+    ).toBe("ok");
+  });
+
+  it.each([
+    ["pending", "待核对", undefined],
+    ["verified", "已上传", undefined],
+    ["location-failed", "核验失败", undefined],
+    ["photo-failed", "照片核验失败", "reupload"],
+    ["note-failed", "备注未通过", "edit-note"],
+    ["mismatch", "核验失败", "reupload"],
+    ["invalid-evidence", "核验失败", "reupload"],
+    ["needs-review", "核验异常", "retry"],
+    ["provider-failed", "核验异常", "retry"],
+  ] as const)(
+    "maps %s to the uploaded-board verification UX",
+    (verificationStatus, label, action) => {
+      expect(
+        summarizeLocalDrawDraft(
+          makeDraft(`board-${verificationStatus}`, {
+            verificationStatus,
+            uploadStatus: "uploaded",
+            submissionState: "pending-review",
+            evidenceSubmissionVersion: 1,
+          }),
+        ),
+      ).toMatchObject({
+        recordStateLabel: label,
+        ...(action ? { verificationAction: action } : {}),
+      });
+    },
+  );
 });

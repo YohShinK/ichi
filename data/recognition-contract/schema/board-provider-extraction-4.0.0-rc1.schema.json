@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ichi.example/schema/board-provider-extraction/4.0.0-rc1",
+  "title": "ICHI Board Provider Extraction Draft 4",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocolVersion",
+    "frame",
+    "allRegularTiersDetected",
+    "oneSlotOneTicketConfirmed",
+    "confidence",
+    "ipName",
+    "ipRawText",
+    "themeName",
+    "price",
+    "tiers",
+    "warnings"
+  ],
+  "properties": {
+    "protocolVersion": { "const": "4.0.0-rc1" },
+    "frame": { "enum": ["complete", "partial", "uncertain"] },
+    "allRegularTiersDetected": { "type": "boolean" },
+    "oneSlotOneTicketConfirmed": { "type": "boolean" },
+    "confidence": { "$ref": "#/$defs/confidence" },
+    "ipName": {
+      "description": "Root work, franchise, or IP name only; exclude anniversary, chapter, volume, event, and collection subtitles.",
+      "$ref": "#/$defs/nullableText"
+    },
+    "ipRawText": {
+      "description": "Visible source wording for the IP identity, preserved without business canonicalization.",
+      "$ref": "#/$defs/nullableText"
+    },
+    "themeName": {
+      "description": "Optional distinct anniversary, chapter, series, volume, event, or collection subtitle; never repeat or absorb the root IP.",
+      "$ref": "#/$defs/nullableText"
+    },
+    "price": { "$ref": "#/$defs/price" },
+    "tiers": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/tier" }
+    },
+    "warnings": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "IP_AMBIGUOUS",
+          "IP_MISSING",
+          "PRICE_MISSING",
+          "PRICE_AMBIGUOUS",
+          "TIER_INCOMPLETE",
+          "TICKET_COUNT_UNCERTAIN",
+          "TICKET_COUNT_CONFLICT",
+          "TICKET_PATTERN_EVIDENCE_INVALID",
+          "SLOT_STATE_UNCERTAIN",
+          "DETAIL_INSUFFICIENT"
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "nullableText": {
+      "type": ["string", "null"],
+      "maxLength": 256
+    },
+    "nullableInteger": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "maximum": 200
+    },
+    "nullablePriceAmount": {
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "price": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amount", "currency", "rawText", "confidence", "handwritten"],
+      "properties": {
+        "amount": { "$ref": "#/$defs/nullablePriceAmount" },
+        "currency": { "enum": ["CNY", "JPY", "OTHER", "UNKNOWN"] },
+        "rawText": { "$ref": "#/$defs/nullableText" },
+        "confidence": { "$ref": "#/$defs/confidence" },
+        "handwritten": { "type": ["boolean", "null"] }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sequenceStart", "firstOpen", "pastedDirect"],
+      "properties": {
+        "sequenceStart": { "$ref": "#/$defs/nullableInteger" },
+        "firstOpen": { "$ref": "#/$defs/nullableInteger" },
+        "pastedDirect": { "$ref": "#/$defs/nullableInteger" }
+      }
+    },
+    "tier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rawLabel", "prizeName", "totalTickets", "ticketPattern", "evidence", "confidence"],
+      "properties": {
+        "rawLabel": { "$ref": "#/$defs/nullableText" },
+        "prizeName": { "$ref": "#/$defs/nullableText" },
+        "totalTickets": { "$ref": "#/$defs/nullableInteger" },
+        "ticketPattern": { "enum": ["empty", "prefix", "full", "irregular", "unknown"] },
+        "evidence": { "$ref": "#/$defs/evidence" },
+        "confidence": { "$ref": "#/$defs/confidence" }
+      }
+    }
+  }
+}

@@ -1,0 +1,51 @@
+你会看到一张已经选定的一番赏（Ichiban Kuji）实体版面照片。整张输入图就是目标版面。
+
+请整体理解印刷底图、奖品区、票位、后贴实体赏票/回收票、空票位、编号、剩余数量标识、层叠关系和跨行排列，直接返回当前版面的最终业务事实。不要输出推理、解释、Markdown、坐标或中间视觉证据。
+
+只输出一个 JSON object，结构如下：
+{
+  "ipName": "string|null",
+  "ipRawText": "string|null",
+  "themeName": "string|null",
+  "price": "number|null",
+  "tiers": [
+    {
+      "rawTier": "string",
+      "prizeName": "string|null",
+      "totalTickets": "integer|null",
+      "pastedTickets": "integer|null"
+    }
+  ]
+}
+
+字段规则：
+- ipName：作品/IP 根名称，优先使用中国用户通常使用的成熟中文名称；证据不足时保留可确认的名称，不编造中文名。
+- ipRawText：图片上的 IP/系列原始文字；不清楚则 null。
+- themeName：本次系列、章节、周年或副标题；没有证据则 null，不要重复 ipName。
+- price：单抽价格数值；无法确认则 null。
+- tiers：按版面视觉阅读顺序列出每个独立赏级。rawTier 保留图片上的赏级文字（如 A、A1、SP赏、最终赏）。不要预先合并 A1/A2，也不要自行命名 SP1/SP2。
+- totalTickets：该赏级在这张完整版面中一共有多少张可抽赏票。可综合完整票位、已贴票、裸露编号、剩余数量标识、回收券排列、贴满状态和整体结构判断，但只返回最终整数或 null。
+- pastedTickets：当前真实后贴在版面上的实体赏票/回收票数量。它与 totalTickets 是两个独立判断；知道 totalTickets 不代表知道 pastedTickets。
+
+pastedTickets 的硬规则：
+1. 只计后来实际贴上、覆盖原版面底图的实体纸票/贴纸/回收票。
+2. 奖品标题、说明文字、原版面印刷赏级字母，以及空票位本身印刷的 A/B/C 等字符，都不算已贴票。看到一个 A 不等于已贴一张 A 赏票。
+3. 判断实体票时综合纸票边界、覆盖关系、材质/颜色/阴影/边缘、与周围实体票一致性和整体排列关系，不要机械统计赏级字符。
+4. 日本版面可能层叠贴放长条回收票；若整体结构明确表明 [G][G][G][完整 G 长条] 分别属于四张相互覆盖的实体票，则 pastedTickets=4。此规则只用于能确认的层叠实体票结构，不能推广为任何独立 G 字符都算票。
+5. 同一赏级可能跨多行或多个连续区域；必须查看整个版面后给最终数量，不要只数第一行。
+6. 编号空位版面可结合已贴覆盖关系与后续裸露编号直接判断最终 totalTickets/pastedTickets。
+7. 明确的“あとN枚 / 残りN枚 / 还剩N张”可以辅助最终判断，但不要返回 remaining 或计算过程。
+
+不确定规则：
+- 无法可靠确定 totalTickets 或 pastedTickets 时，对应字段必须为 null。
+- 0 只表示视觉上能够确认一张实体票都没有贴；null 表示未知。
+- 禁止因看到一个赏级字符而猜 pastedTickets=1；禁止把 totalTickets 复制给 pastedTickets；禁止为了 JSON 完整而猜数字。
+- 每个 tier 可以独立为部分结果；一个字段不确定不应阻止返回其他可用赏级。
+
+IP/theme 示例：
+- 火影忍者 疾风传 风影夺还篇 → ipName="火影忍者", themeName="疾风传 风影夺还篇"
+- 明日方舟 来份甜点 → ipName="明日方舟", themeName="来份甜点"
+- Persona 30th Anniversary → ipName="女神异闻录", themeName="30周年"
+- 崩坏：星穹铁道 VOL.3 → ipName="崩坏：星穹铁道", themeName="VOL.3"
+
+只返回 JSON object。

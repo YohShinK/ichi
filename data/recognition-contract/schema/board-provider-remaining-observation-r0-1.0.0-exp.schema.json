@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "board-provider-remaining-observation-r0-1.0.0-exp.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tiers"],
+  "properties": {
+    "tiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rawLabel", "openOrdinals", "observationComplete"],
+        "properties": {
+          "rawLabel": {
+            "type": ["string", "null"]
+          },
+          "openOrdinals": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "observationComplete": {
+            "anyOf": [{ "const": true }, { "type": "null" }]
+          }
+        }
+      }
+    }
+  }
+}

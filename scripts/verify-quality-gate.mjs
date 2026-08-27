@@ -14,7 +14,7 @@ function run(command, args, options = {}) {
   });
 }
 
-const cleanBefore = run("pnpm", ["quality"]);
+const cleanBefore = run("corepack", ["pnpm", "quality"]);
 if (cleanBefore.status !== 0) process.exit(cleanBefore.status ?? 1);
 
 const temporaryDirectory = fs.mkdtempSync(
@@ -34,8 +34,8 @@ try {
   );
 
   const injectedFailure = run(
-    "pnpm",
-    ["exec", "tsc", "-p", temporaryConfig, "--pretty", "false"],
+    "corepack",
+    ["pnpm", "exec", "tsc", "-p", temporaryConfig, "--pretty", "false"],
     { capture: true },
   );
   if (injectedFailure.status === 0) {
@@ -54,7 +54,7 @@ try {
 
 if (process.exitCode) process.exit(process.exitCode);
 
-const cleanAfter = run("pnpm", ["quality"]);
+const cleanAfter = run("corepack", ["pnpm", "quality"]);
 if (cleanAfter.status !== 0) process.exit(cleanAfter.status ?? 1);
 
 console.log(

@@ -4,6 +4,10 @@
   "private": true,
   "main": "index.js",
   "engines": {
-    "node": ">=24.11.0 <25"
+    "node": ">=20.19.0 <21"
+  },
+  "dependencies": {
+    "ajv": "8.17.1",
+    "wx-server-sdk": "4.0.2"
   }
 }

@@ -146,7 +146,6 @@ const bridgeStyle = String.raw`<style id="ichi-v1-29-fixes">
   body[data-ichi-page="start"] #page-start > div:first-child > .btn-wrapper { order: 4; width: 100% !important; max-width: var(--ichi-action-max-width) !important; }
   .ichi-source-camera-icon { display: block; width: 142px; height: 142px; object-fit: contain; }
   .ichi-recognition-mascot { position: relative; z-index: 20; display: block; width: 72px; height: auto; max-height: 64px; object-fit: contain; }
-  .ichi-board-confirmed-mascot { display: block; width: 80px; height: 72px; margin: 0 auto var(--ichi-space-6); object-fit: contain; }
   .ichi-start-drafts { display: flex; min-height: 0; flex: 1 1 auto; flex-direction: column; overflow: hidden; }
   .ichi-start-drafts[hidden] { display: none !important; }
   .ichi-start-drafts-header { display: flex; padding: 0 4px 10px; align-items: center; justify-content: space-between; color: #71717a; font-size: 10px; font-weight: 900; letter-spacing: .12em; }
@@ -320,14 +319,14 @@ const bridgeStyle = String.raw`<style id="ichi-v1-29-fixes">
   body[data-ichi-page="camera-capture"] > nav { display: flex !important; z-index: 110 !important; }
   /* Keep the capture shell outside the source page's padded/animated container. */
   #page-camera-capture { position: fixed !important; inset: 0 !important; width: 100vw !important; height: 100dvh !important; margin: 0 !important; padding: 0 !important; transform: none !important; z-index: 90 !important; }
-  #page-camera-capture > div { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100dvh !important; min-height: 100dvh !important; z-index: 90 !important; }
+  #page-camera-capture > div { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100dvh !important; min-height: 100dvh !important; background: #f0f2f5 !important; z-index: 90 !important; }
   #page-camera-capture > div > div:first-child > a { display: none !important; }
   #page-camera-capture > div > div:first-child > div:nth-child(2) { position: fixed !important; top: auto !important; right: auto !important; bottom: 208px !important; left: 50% !important; display: flex !important; height: 44px !important; padding: 0 18px !important; align-items: center !important; justify-content: center !important; z-index: 101 !important; transform: translateX(-50%) !important; }
   #page-camera-capture > div > div:first-child > div:nth-child(2) > span { display: flex !important; width: 100% !important; align-items: center !important; justify-content: center !important; gap: 8px !important; line-height: 1 !important; }
   #page-camera-capture > div > div:first-child > div:nth-child(2) > span > i { display: block !important; margin: 0 !important; }
-  #page-camera-capture > div > div:nth-child(2) { flex: 0 0 calc(100dvh - 186px) !important; min-height: 0 !important; height: calc(100dvh - 186px) !important; padding-bottom: 0 !important; }
+  #page-camera-capture > div > div:nth-child(2) { position: absolute !important; top: var(--ichi-top-safe-area) !important; right: 0 !important; bottom: 186px !important; left: 0 !important; min-height: 0 !important; height: auto !important; padding-bottom: 0 !important; background: #111 !important; }
   #page-camera-capture > div > div:nth-child(2) > div:first-child { display: none !important; }
-  #page-camera-capture > div > div:nth-child(2) > div:nth-child(2) { position: absolute !important; top: var(--ichi-top-safe-area) !important; right: 20px !important; bottom: 20px !important; left: 20px !important; display: block !important; width: auto !important; height: auto !important; max-width: none !important; aspect-ratio: auto !important; padding: 0 !important; border: 0 !important; box-shadow: none !important; }
+  #page-camera-capture > div > div:nth-child(2) > div:nth-child(2) { position: absolute !important; top: 20px !important; right: 20px !important; bottom: 20px !important; left: 20px !important; display: block !important; width: auto !important; height: auto !important; max-width: none !important; aspect-ratio: auto !important; padding: 0 !important; border: 0 !important; box-shadow: none !important; }
   #page-camera-capture > div > div:nth-child(2) > div:nth-child(2) > div:nth-child(5) { display: none !important; }
   #page-camera-capture > div > div:last-child { position: absolute !important; right: 0; bottom: 86px; left: 0; height: 100px !important; padding: 10px 32px !important; border-radius: 0 !important; background: linear-gradient(180deg, #d9dce1 0%, #ffffff 46%, #f1f2f4 72%, #d9dce1 100%) !important; z-index: 100 !important; }
   #page-camera-capture > div > div:last-child > div.absolute > button { background: #e9ebef !important; border: 0 !important; box-shadow: none !important; }
@@ -360,9 +359,9 @@ const bridgeStyle = String.raw`<style id="ichi-v1-29-fixes">
   body[data-ichi-page="storage"] .ichi-my-subpage-header, body[data-ichi-page="local-records"] .ichi-my-subpage-header, body[data-ichi-page="contributions"] .ichi-my-subpage-header, body[data-ichi-page="map-reminder"] .ichi-my-subpage-header, body[data-ichi-page="method"] .ichi-my-subpage-header { position: relative; z-index: 5; flex: 0 0 52px; margin-bottom: var(--ichi-space-3) !important; background: #f0f2f5; }
   .ichi-my-subpage-stats { display: flex; min-height: 35px; padding: 9px 14px; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 8px; border-radius: 18px; background: rgba(255,255,255,.78); color: #71717a; font-size: 10px; font-weight: 900; line-height: 1.2; white-space: nowrap; }
   body[data-ichi-page="storage"] .ichi-my-subpage-scroll, body[data-ichi-page="local-records"] .ichi-my-subpage-scroll, body[data-ichi-page="contributions"] .ichi-my-subpage-scroll, body[data-ichi-page="map-reminder"] .ichi-my-subpage-scroll, body[data-ichi-page="method"] .ichi-my-subpage-scroll { min-height: 0; padding-bottom: calc(var(--ichi-bottom-nav-clearance) + var(--ichi-space-5)); flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; }
-  body[data-ichi-page="draft"], body[data-ichi-page="target"] { height: 100dvh; overflow: hidden !important; }
-  body[data-ichi-page="draft"] main, body[data-ichi-page="target"] main { height: 100dvh !important; overflow: hidden !important; }
-  body[data-ichi-page="draft"] #pages-container, body[data-ichi-page="target"] #pages-container { height: calc(100dvh - var(--ichi-bottom-nav-clearance)); padding: var(--ichi-top-safe-area) var(--ichi-page-gutter) 0 !important; overflow: hidden !important; }
+  body[data-ichi-page="draft"] { height: 100dvh; overflow: hidden !important; }
+  body[data-ichi-page="draft"] main { height: 100dvh !important; overflow: hidden !important; }
+  body[data-ichi-page="draft"] #pages-container { height: calc(100dvh - var(--ichi-bottom-nav-clearance)); padding: var(--ichi-top-safe-area) var(--ichi-page-gutter) 0 !important; overflow: hidden !important; }
   .ichi-flow-page { display: flex !important; height: 100%; min-height: 0; flex-direction: column; overflow: hidden !important; }
   .ichi-flow-page.hidden { display: none !important; }
   .ichi-flow-header { display: flex; flex: 0 0 52px; align-items: center; gap: var(--ichi-space-3); }
@@ -371,18 +370,13 @@ const bridgeStyle = String.raw`<style id="ichi-v1-29-fixes">
   .ichi-flow-heading h2 { color: #111; font-size: 22px; font-weight: 900; line-height: 1.1; }
   .ichi-flow-heading p { margin-top: 4px; color: #71717a; font-size: 10px; font-weight: 700; }
   .ichi-flow-scroll { min-height: 0; padding: var(--ichi-space-4) 2px calc(var(--ichi-action-height) + var(--ichi-space-6)); flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; }
-  .ichi-prize-form-grid, .ichi-target-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ichi-space-3); }
+  .ichi-prize-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--ichi-space-3); }
   .ichi-prize-form-card { display: flex; min-width: 0; padding: 14px; flex-direction: column; gap: 10px; }
   .ichi-prize-form-card > strong { color: #111; font-size: 20px; font-weight: 900; }
   .ichi-prize-field-labels, .ichi-prize-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
   .ichi-prize-field-labels span { color: #a1a1aa; font-size: 9px; font-weight: 800; line-height: 1.3; text-align: center; }
   .ichi-prize-fields input { width: 100%; min-width: 0; padding: 8px 4px; border: 0; border-radius: 12px; background: #f0f2f5; color: #111; font-size: 13px; font-weight: 900; text-align: center; outline: 0; }
   .ichi-prize-fields input:last-child { background: #111; color: #fff; }
-  .ichi-target-option { display: flex; min-height: 76px; padding: 16px; align-items: center; gap: 12px; border: 1px solid rgba(17,17,17,.05); color: #111; cursor: pointer; }
-  .ichi-target-option[data-selected="true"] { border-color: #e014a0; box-shadow: 0 0 0 2px rgba(224,20,160,.1); }
-  .ichi-target-check { display: flex; width: 24px; height: 24px; flex: 0 0 24px; align-items: center; justify-content: center; border: 2px solid #d4d4d8; border-radius: 50%; background: #f0f2f5; }
-  .ichi-target-option[data-selected="true"] .ichi-target-check { border-color: #111; background: #111; color: #fff; }
-  .ichi-target-name { color: #111; font-size: 18px; font-weight: 900; }
   .ichi-fixed-primary { position: fixed !important; bottom: calc(var(--ichi-bottom-nav-offset) + var(--ichi-bottom-nav-height) + 12px) !important; left: 50% !important; width: min(var(--ichi-action-max-width), calc(100vw - 96px)) !important; margin: 0 !important; transform: translateX(-50%) !important; z-index: 70 !important; }
   #draw-grand-grid, #draw-normal-list { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
   .ichi-prize-ticket { min-width: 0 !important; margin-bottom: 0 !important; }
@@ -447,7 +441,7 @@ const bridgeScript = String.raw`${bridgeStyle}<script>
     likeCount: 0,
     preview: true
   });
-  const recognitionViews = new Set(["start", "draft", "target", "draw", "cannot-build-pool"]);
+  const recognitionViews = new Set(["start", "draft", "draw", "cannot-build-pool"]);
   const recognitionTabViews = new Set([...recognitionViews, "camera-capture", "recognizing"]);
   const modalLayerIds = ["modal-probability", "modal-history", "modal-share-1", "modal-share-2", "overlay-submitted"];
   const scrollPositions = new Map();
@@ -465,6 +459,7 @@ const bridgeScript = String.raw`${bridgeStyle}<script>
   const getRecognitionResumeView = () => {
     try {
       const saved = sessionStorage.getItem(recognitionResumeKey);
+      if (saved === "target") return "draw";
       return saved && recognitionViews.has(saved) ? saved : "start";
     } catch { return "start"; }
   };
@@ -845,7 +840,7 @@ const bridgeScript = String.raw`${bridgeStyle}<script>
     const selected = Array.isArray(window.__ichiSelectedTargetTiers)
       ? window.__ichiSelectedTargetTiers.filter(Boolean)
       : [];
-    return selected.length ? selected : ["A"];
+    return selected;
   };
   const updateBoardOutlook = async () => {
     if (!window.drawEngine) return;
@@ -1206,61 +1201,37 @@ const bridgeScript = String.raw`${bridgeStyle}<script>
     if (!page || !window.drawEngine || page.dataset.ichiDraftReady) return;
     page.dataset.ichiDraftReady = "true";
     page.classList.add("ichi-flow-page");
-    page.innerHTML = '<header class="ichi-flow-header"><a href="#start" class="ichi-flow-back" aria-label="返回导入版面"><i class="ph-bold ph-arrow-left text-[22px]"></i></a><div class="ichi-flow-heading"><h2>识别结果</h2><p>直接核对每一赏的总票数与已贴票数</p></div></header><div class="ichi-flow-scroll"><div id="ichi-prize-form-grid" class="ichi-prize-form-grid"></div></div><div id="ichi-confirm-draft" class="btn-wrapper ichi-fixed-primary"><div class="btn-glow"></div><button class="action-button">确认并生成版面</button></div>';
+    page.innerHTML = '<header class="ichi-flow-header"><a href="#start" class="ichi-flow-back" aria-label="返回导入版面"><i class="ph-bold ph-arrow-left text-[22px]"></i></a><div class="ichi-flow-heading"><h2>识别结果</h2><p>直接核对每一赏的总票数与未贴的票数</p></div></header><div class="ichi-flow-scroll"><div id="ichi-prize-form-grid" class="ichi-prize-form-grid"></div></div><div id="ichi-confirm-draft" class="btn-wrapper ichi-fixed-primary"><div class="btn-glow"></div><button class="action-button">确认并生成版面</button></div>';
     const grid = page.querySelector("#ichi-prize-form-grid");
     window.drawEngine.prizeData.forEach((prize) => {
       const card = document.createElement("article");
       card.className = "ichi-prize-form-card light-capsule";
       card.dataset.tier = prize.id;
       const covered = prize.slots.filter(Boolean).length;
-      card.innerHTML = '<strong>' + prize.id + ' 赏</strong><div class="ichi-prize-field-labels"><span>总票数</span><span>已贴的票数</span></div><div class="ichi-prize-fields"><input type="number" min="1" aria-label="' + prize.id + '赏总票数" value="' + prize.total + '"><input type="number" min="0" aria-label="' + prize.id + '赏已贴的票数" value="' + covered + '"></div>';
+      const remaining = prize.total - covered;
+      card.innerHTML = '<strong>' + prize.id + ' 赏</strong><div class="ichi-prize-field-labels"><span>总票数</span><span>未贴的票数</span></div><div class="ichi-prize-fields"><input type="number" min="1" aria-label="' + prize.id + '赏总票数" value="' + prize.total + '"><input type="number" min="0" aria-label="' + prize.id + '赏未贴的票数" value="' + remaining + '"></div><div class="ichi-prize-derived"><span>已贴的票数</span><b>' + covered + '</b></div>';
       const inputs = card.querySelectorAll("input");
       inputs[0].addEventListener("change", () => {
         const nextTotal = Math.max(1, Number(inputs[0].value) || prize.total);
-        const nextCovered = Math.min(prize.slots.filter(Boolean).length, nextTotal);
+        const nextRemaining = Math.min(Number(inputs[1].value) || 0, nextTotal);
+        const nextCovered = nextTotal - nextRemaining;
         prize.total = nextTotal;
         prize.slots = Array.from({ length: nextTotal }, (_, index) => index < nextCovered);
         prize.type = /^[A-F]$/.test(String(prize.id).toUpperCase()) && nextTotal <= 5 ? "grand" : "normal";
         inputs[0].value = String(nextTotal);
-        inputs[1].value = String(nextCovered);
+        inputs[1].value = String(nextRemaining);
+        card.querySelector(".ichi-prize-derived b").textContent = String(nextCovered);
       });
       inputs[1].addEventListener("change", () => {
-        const nextCovered = Math.max(0, Math.min(Number(inputs[1].value) || 0, prize.total));
+        const nextRemaining = Math.max(0, Math.min(Number(inputs[1].value) || 0, prize.total));
+        const nextCovered = prize.total - nextRemaining;
         prize.slots = Array.from({ length: prize.total }, (_, index) => index < nextCovered);
-        inputs[1].value = String(nextCovered);
+        inputs[1].value = String(nextRemaining);
+        card.querySelector(".ichi-prize-derived b").textContent = String(nextCovered);
       });
       grid.append(card);
     });
     page.querySelector("#ichi-confirm-draft").addEventListener("click", () => window.simulateConfirmDraft());
-  };
-  const connectTargetPage = () => {
-    const page = document.getElementById("page-target");
-    if (!page || !window.drawEngine || page.dataset.ichiTargetReady) return;
-    page.dataset.ichiTargetReady = "true";
-    page.classList.add("ichi-flow-page");
-    const selected = new Set(selectedTargetTiers());
-    window.__ichiSelectedTargetTiers = Array.from(selected);
-    page.innerHTML = '<header class="ichi-flow-header"><a href="#draft" class="ichi-flow-back" aria-label="返回识别结果"><i class="ph-bold ph-arrow-left text-[22px]"></i></a><div class="ichi-flow-heading"><h2>选择目标奖</h2><p>可多选关注的赏级</p></div></header><div class="ichi-flow-scroll"><div id="ichi-target-grid" class="ichi-target-grid"></div></div><div id="ichi-enter-draw" class="btn-wrapper ichi-fixed-primary"><div class="btn-glow"></div><button class="action-button">进入抽取版面</button></div>';
-    const grid = page.querySelector("#ichi-target-grid");
-    const syncSelected = () => { window.__ichiSelectedTargetTiers = Array.from(selected); };
-    window.drawEngine.prizeData.forEach((prize) => {
-      const option = document.createElement("button");
-      option.type = "button";
-      option.className = "ichi-target-option light-capsule";
-      option.dataset.tier = prize.id;
-      option.dataset.selected = selected.has(prize.id) ? "true" : "false";
-      option.setAttribute("aria-pressed", option.dataset.selected);
-      option.innerHTML = '<span class="ichi-target-check">' + (selected.has(prize.id) ? '<i class="ph-bold ph-check text-sm"></i>' : '') + '</span><span class="ichi-target-name">' + prize.id + ' 赏</span>';
-      option.addEventListener("click", () => {
-        if (selected.has(prize.id)) selected.delete(prize.id); else selected.add(prize.id);
-        option.dataset.selected = selected.has(prize.id) ? "true" : "false";
-        option.setAttribute("aria-pressed", option.dataset.selected);
-        option.querySelector(".ichi-target-check").innerHTML = selected.has(prize.id) ? '<i class="ph-bold ph-check text-sm"></i>' : '';
-        syncSelected();
-      });
-      grid.append(option);
-    });
-    page.querySelector("#ichi-enter-draw").addEventListener("click", () => { location.hash = "#draw"; });
   };
   const connectStartPage = () => {
     const page = document.getElementById("page-start");
@@ -1269,6 +1240,8 @@ const bridgeScript = String.raw`${bridgeStyle}<script>
     const importAction = page.querySelector(":scope > div:first-child .btn-wrapper");
     if (!importAction || importAction.dataset.ichiNewBoardReady) return;
     importAction.dataset.ichiNewBoardReady = "true";
+    const importButton = importAction.querySelector("button");
+    importButton?.setAttribute("data-testid", "import-board");
     importAction.addEventListener("click", () => {
       if (!window.drawEngine || !Array.isArray(window.__ichiDefaultPrizeData)) return;
       window.__ichiBoardId = createBoardId();
@@ -1283,17 +1256,42 @@ const bridgeScript = String.raw`${bridgeStyle}<script>
     const page = document.getElementById("page-camera-capture");
     if (!page || page.dataset.ichiCameraReady) return;
     page.dataset.ichiCameraReady = "true";
-    const controls = page.querySelector("div > div:last-child");
-    const buttons = controls && controls.querySelectorAll("button");
-    if (!buttons || buttons.length < 2) return;
+    const shutter =
+      page.querySelector(".source-camera-shutter") ||
+      page.querySelector("a[href='#recognizing']");
+    const controls = shutter?.parentElement;
+    const buttons = controls?.querySelectorAll("button");
+    if (!buttons || buttons.length < 2 || !shutter) return;
     buttons[0].setAttribute("aria-label", "返回");
     buttons[0].onclick = () => { window.parent.location.href = "/?view=start"; };
-    buttons[1].setAttribute("aria-label", "打开相册");
-    const upload = document.createElement("input");
-    upload.type = "file"; upload.accept = "image/*"; upload.hidden = true;
-    upload.onchange = () => { if (upload.files && upload.files.length) window.location.hash = "#recognizing"; };
-    page.append(upload);
-    buttons[1].onclick = () => upload.click();
+    const undo = buttons[1];
+    const shutterFace = shutter.firstElementChild;
+    const syncCaptureState = (frozen) => {
+      page.dataset.ichiCaptureState = frozen ? "frozen" : "live";
+      shutter.dataset.ichiCaptureState = frozen ? "frozen" : "live";
+      shutter.setAttribute("aria-label", frozen ? "确认识别这张版面" : "拍摄版面");
+      undo.disabled = !frozen;
+      undo.setAttribute("aria-disabled", String(!frozen));
+      if (shutterFace) {
+        shutterFace.innerHTML = frozen
+          ? '<i class="ph-bold ph-check text-2xl text-white" aria-hidden="true"></i>'
+          : "";
+      }
+    };
+    shutter.classList.add("source-camera-shutter");
+    shutter.setAttribute("role", "button");
+    shutter.setAttribute("data-testid", "board-camera-shutter");
+    shutter.addEventListener("click", (event) => {
+      event.preventDefault();
+      if (page.dataset.ichiCaptureState === "frozen") {
+        window.location.hash = "#recognizing";
+        return;
+      }
+      syncCaptureState(true);
+    });
+    undo.setAttribute("aria-label", "撤回并重拍");
+    undo.onclick = () => syncCaptureState(false);
+    syncCaptureState(false);
   };
   const connectShareCapture = () => {
     const modal = document.getElementById("modal-share-2");
@@ -1359,7 +1357,7 @@ const bridgeScript = String.raw`${bridgeStyle}<script>
       const retake = document.createElement("button");
       retake.type = "button";
       retake.className = "ichi-share-retake";
-      retake.setAttribute("aria-label", "重拍赏票");
+      retake.setAttribute("aria-label", "撤回已拍摄赏票");
       retake.innerHTML = '<i class="ph-bold ph-arrow-counter-clockwise text-xl"></i>';
       retake.addEventListener("click", (event) => {
         event.preventDefault();
@@ -1490,7 +1488,6 @@ const bridgeScript = String.raw`${bridgeStyle}<script>
     connectStartPage();
     connectCamera();
     connectDraftPage();
-    connectTargetPage();
     connectRecognitionNavigation();
     connectRecordPages();
     connectMySubpages();
@@ -1580,6 +1577,14 @@ export async function GET(request: Request) {
   const html = source
     .replace("</head>", `${bridgeStyle}</head>`)
     .replace("<body ", `<body data-ichi-page="${initialView}" `)
+    .replace(
+      /<div id="generating-overlay"[\s\S]*?<section id="page-draw"/u,
+      '<section id="page-draw"',
+    )
+    .replace(
+      /function simulateConfirmDraft\(\) \{[\s\S]*?\n {8}\}\n\n {8}function submitShare/u,
+      "function simulateConfirmDraft() { window.__ichiSelectedTargetTiers = []; window.location.hash = '#draw'; }\n\n        function submitShare",
+    )
     .replace("const drawEngine = {", "window.drawEngine = {")
     .replaceAll("toFixed(1)", "toFixed(3)")
     .replace("ph-user-astronaut", "ph-user-circle")
@@ -1591,10 +1596,6 @@ export async function GET(request: Request) {
     .replace(
       '<div class="relative z-20 w-14 h-14 bg-black rounded-[50%] rounded-bl-sm transform -rotate-[15deg] shadow-lg flex items-center justify-center">\n                                <i class="ph-fill ph-scan text-white text-xl transform rotate-[15deg]"></i>\n                            </div>',
       '<img src="/v1-29/ichi-recognition-mascot.png" alt="正在识别版面" class="ichi-recognition-mascot" />',
-    )
-    .replace(
-      '<div class="w-16 h-16 bg-black rounded-[50%] rounded-bl-sm transform -rotate-[15deg] shadow-lg flex items-center justify-center mb-6 animate-bounce">\n                    <i class="ph-bold ph-magic-wand text-white text-2xl transform rotate-[15deg]"></i>\n                </div>',
-      '<img src="/v1-29/ichi-board-confirmed-mascot.png" alt="版面已确认" class="ichi-board-confirmed-mascot animate-bounce" />',
     )
     .replace(
       /<!-- 新吉祥物：源自赏票结构的迷你票根小精灵 -->[\s\S]*?<div class="flex-grow flex flex-col justify-center overflow-hidden">/,

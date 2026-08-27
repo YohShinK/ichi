@@ -1,0 +1,38 @@
+{
+  "$schema": "https://static.cloudbase.net/cli/cloudbaserc.schema.json",
+  "version": "2.0",
+  "envId": "cloud1-d7gxqfwv783a1f131",
+  "functions": [
+    {
+      "name": "get-my-records",
+      "runtime": "Nodejs20.19",
+      "timeout": 20,
+      "memorySize": 256,
+      "handler": "index.main"
+    },
+    {
+      "name": "finalize-draw-update",
+      "runtime": "Nodejs20.19",
+      "timeout": 20,
+      "memorySize": 256,
+      "handler": "index.main"
+    },
+    {
+      "name": "recognize-draw-tickets",
+      "runtime": "Nodejs20.19",
+      "timeout": 60,
+      "memorySize": 512,
+      "handler": "index.main",
+      "envVariables": {
+        "PRIZE_TICKET_LOCATION_RADIUS_METERS": "200"
+      }
+    },
+    {
+      "name": "bind-wechat-profile",
+      "runtime": "Nodejs20.19",
+      "timeout": 20,
+      "memorySize": 256,
+      "handler": "index.main"
+    }
+  ]
+}

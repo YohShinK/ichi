@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ichi.example/schema/board-provider-hybrid-semantic/1.0.0-exp",
+  "title": "ICHI Hybrid Semantic Provider Experiment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ipName", "ipRawText", "themeName", "price", "tiers"],
+  "properties": {
+    "ipName": { "type": ["string", "null"] },
+    "ipRawText": { "type": ["string", "null"] },
+    "themeName": { "type": ["string", "null"] },
+    "price": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+    "tiers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/tier" }
+    }
+  },
+  "$defs": {
+    "tier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rawLabel",
+        "prizeName",
+        "totalTickets",
+        "pastedTickets"
+      ],
+      "properties": {
+        "rawLabel": { "type": ["string", "null"] },
+        "prizeName": { "type": ["string", "null"] },
+        "totalTickets": { "type": ["integer", "null"], "minimum": 0 },
+        "pastedTickets": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    }
+  }
+}

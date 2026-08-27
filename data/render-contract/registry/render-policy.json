@@ -33,6 +33,7 @@
     "prize_tier": "PrizeTier",
     "board_title": "BoardTitle",
     "series_identity": "SeriesIdentity",
+    "board_theme": "BoardTheme",
     "price": "Price",
     "ticket_total": "TicketTotal",
     "last_prize": "LastPrize",

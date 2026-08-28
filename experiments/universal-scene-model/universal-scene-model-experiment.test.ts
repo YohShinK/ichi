@@ -53,13 +53,49 @@ describe("universal scene model A/B isolation", () => {
     expect(experiment.experimentalPrompt).not.toContain("Pokémon 30th");
   });
 
-  it("binds the five supplied originals and exact board totals", () => {
+  it("binds the five benchmark manifest entries and exact board totals", () => {
     expect(groundTruth).toHaveLength(5);
-    for (const board of groundTruth) {
-      expect(
-        fs.existsSync(path.join("/Users/cunfu/Downloads", board.filename)),
-      ).toBe(true);
-    }
+    expect(
+      groundTruth.map(({ caseId, filename, width, height }) => ({
+        caseId,
+        filename,
+        width,
+        height,
+      })),
+    ).toEqual([
+      {
+        caseId: "case-1-nikke",
+        filename: "秋叶原2发捡漏nikke最终赏_1_All is well_来自小红书网页版.jpg",
+        width: 1080,
+        height: 1440,
+      },
+      {
+        caseId: "case-2-pokemon",
+        filename:
+          "宝可梦30周年一番赏更新！_1_英俊的马铃薯_来自小红书网页版.jpg",
+        width: 1080,
+        height: 1920,
+      },
+      {
+        caseId: "case-3-snow-miku",
+        filename: "回归初心_1_YFW_来自小红书网页版.jpg",
+        width: 1080,
+        height: 1440,
+      },
+      {
+        caseId: "case-4-attack-on-titan",
+        filename:
+          "谁懂！巨人一番赏来啦！_1_黑暗里舞动的少年_来自小红书网页版.jpg",
+        width: 1080,
+        height: 1460,
+      },
+      {
+        caseId: "case-5-world-beyond",
+        filename: "IMG_2329.JPG",
+        width: 3002,
+        height: 3353,
+      },
+    ]);
     const nikke = groundTruth[0];
     expect(
       nikke.tiers.reduce(

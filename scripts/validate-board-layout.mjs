@@ -19,10 +19,15 @@ const errors = [];
 const expectedLetters = Array.from({ length: 26 }, (_, index) =>
   String.fromCharCode(65 + index),
 );
+const expectedTierLabels = [
+  ...expectedLetters,
+  ...Array.from({ length: 32 }, (_, index) => `SP${index + 1}`),
+];
 const expectedComponents = [
   "prize_tier",
   "board_title",
   "series_identity",
+  "board_theme",
   "price",
   "ticket_total",
   "last_prize",
@@ -54,8 +59,12 @@ if (schema.$id !== "https://ichi.example/schema/board-layout/1.0.0") {
 if (schema.properties?.schemaVersion?.const !== registry.schemaVersion) {
   errors.push("schema and registry versions differ");
 }
-if (JSON.stringify(registry.tierLabels) !== JSON.stringify(expectedLetters)) {
-  errors.push("tierLabels must contain A through Z exactly once and in order");
+if (
+  JSON.stringify(registry.tierLabels) !== JSON.stringify(expectedTierLabels)
+) {
+  errors.push(
+    "tierLabels must contain A through Z and SP1 through SP32 exactly once in order",
+  );
 }
 
 const componentTypes = registry.components.map((component) => component.type);
@@ -136,9 +145,9 @@ if (Object.values(registry.security).some((value) => value !== false)) {
 const schemaTierLabels = schema.$defs?.tier?.properties?.label?.enum ?? [];
 if (
   JSON.stringify(schemaTierLabels) !==
-  JSON.stringify([...expectedLetters, "OTHER"])
+  JSON.stringify([...expectedTierLabels, "OTHER"])
 ) {
-  errors.push("schema tier label enum must match A-Z plus OTHER");
+  errors.push("schema tier label enum must match A-Z, SP1-SP32 and OTHER");
 }
 const schemaBlockTypes =
   schema.$defs?.block?.properties?.componentType?.enum ?? [];

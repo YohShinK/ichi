@@ -1,0 +1,384 @@
+[
+  {
+    "id": "golden-1",
+    "filename": "IMG_2329.JPG",
+    "width": 3002,
+    "height": 3353,
+    "byteLength": 2292391,
+    "ipName": "世界之外",
+    "ipRawText": "一番赏 世界之外Vol.2 此间即无间",
+    "themeName": "此间即无间",
+    "price": 58,
+    "tiers": [
+      {
+        "rawTier": "SP赏",
+        "normalizedTier": "SP1",
+        "total": 2,
+        "pattern": "full",
+        "sequenceStart": 1,
+        "firstOpen": null,
+        "pasted": 2,
+        "remaining": 0
+      },
+      {
+        "rawTier": "SP赏",
+        "normalizedTier": "SP2",
+        "total": 2,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 2,
+        "pasted": 1,
+        "remaining": 1
+      },
+      {
+        "rawTier": "SP赏",
+        "normalizedTier": "SP3",
+        "total": 2,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 2,
+        "pasted": 1,
+        "remaining": 1
+      },
+      {
+        "rawTier": "SP赏",
+        "normalizedTier": "SP4",
+        "total": 2,
+        "pattern": "full",
+        "sequenceStart": 1,
+        "firstOpen": null,
+        "pasted": 2,
+        "remaining": 0
+      },
+      {
+        "rawTier": "A赏",
+        "normalizedTier": "A",
+        "total": 16,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 12,
+        "pasted": 11,
+        "remaining": 5
+      },
+      {
+        "rawTier": "B赏",
+        "normalizedTier": "B",
+        "total": 8,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 6,
+        "pasted": 5,
+        "remaining": 3
+      },
+      {
+        "rawTier": "C赏",
+        "normalizedTier": "C",
+        "total": 12,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 8,
+        "pasted": 7,
+        "remaining": 5
+      },
+      {
+        "rawTier": "D赏",
+        "normalizedTier": "D",
+        "total": 16,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 14,
+        "pasted": 13,
+        "remaining": 3
+      },
+      {
+        "rawTier": "E赏",
+        "normalizedTier": "E",
+        "total": 16,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 13,
+        "pasted": 12,
+        "remaining": 4
+      }
+    ]
+  },
+  {
+    "id": "golden-2",
+    "filename": "崩铁一番赏_1_风带来故事的种子_来自小红书网页版.jpg",
+    "width": 1080,
+    "height": 1919,
+    "byteLength": 600859,
+    "ipName": "崩坏：星穹铁道",
+    "ipRawText": "崩坏：星穹铁道 VOL.3",
+    "themeName": "Vol.3",
+    "price": 85,
+    "tiers": [
+      {
+        "rawTier": "A赏",
+        "normalizedTier": "A",
+        "total": 2,
+        "pattern": "empty",
+        "sequenceStart": 1,
+        "firstOpen": null,
+        "pasted": 0,
+        "remaining": 2
+      },
+      {
+        "rawTier": "B赏",
+        "normalizedTier": "B",
+        "total": 2,
+        "pattern": "empty",
+        "sequenceStart": 1,
+        "firstOpen": null,
+        "pasted": 0,
+        "remaining": 2
+      },
+      {
+        "rawTier": "C赏",
+        "normalizedTier": "C",
+        "total": 2,
+        "pattern": "empty",
+        "sequenceStart": 1,
+        "firstOpen": null,
+        "pasted": 0,
+        "remaining": 2
+      },
+      {
+        "rawTier": "D赏",
+        "normalizedTier": "D",
+        "total": 6,
+        "pattern": "empty",
+        "sequenceStart": 1,
+        "firstOpen": null,
+        "pasted": 0,
+        "remaining": 6
+      },
+      {
+        "rawTier": "E赏",
+        "normalizedTier": "E",
+        "total": 8,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 3,
+        "pasted": 2,
+        "remaining": 6
+      },
+      {
+        "rawTier": "F赏",
+        "normalizedTier": "F",
+        "total": 13,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 3,
+        "pasted": 2,
+        "remaining": 11
+      },
+      {
+        "rawTier": "G赏",
+        "normalizedTier": "G",
+        "total": 26,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 7,
+        "pasted": 6,
+        "remaining": 20
+      },
+      {
+        "rawTier": "H赏",
+        "normalizedTier": "H",
+        "total": 13,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 4,
+        "pasted": 3,
+        "remaining": 10
+      }
+    ]
+  },
+  {
+    "id": "golden-3",
+    "filename": "这个一番赏板面可以包吗？_1_熠奈__来自小红书网页版.jpg",
+    "width": 1080,
+    "height": 1631,
+    "byteLength": 503927,
+    "ipName": "明日方舟",
+    "ipRawText": "一番赏 明日方舟",
+    "themeName": "来份甜点",
+    "price": 58,
+    "tiers": [
+      {
+        "rawTier": "A赏",
+        "normalizedTier": "A",
+        "total": 2,
+        "pattern": "full",
+        "sequenceStart": 1,
+        "firstOpen": null,
+        "pasted": 2,
+        "remaining": 0
+      },
+      {
+        "rawTier": "B赏",
+        "normalizedTier": "B",
+        "total": 2,
+        "pattern": "full",
+        "sequenceStart": 1,
+        "firstOpen": null,
+        "pasted": 2,
+        "remaining": 0
+      },
+      {
+        "rawTier": "C赏",
+        "normalizedTier": "C",
+        "total": 2,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 2,
+        "pasted": 1,
+        "remaining": 1
+      },
+      {
+        "rawTier": "D赏",
+        "normalizedTier": "D",
+        "total": 2,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 2,
+        "pasted": 1,
+        "remaining": 1
+      },
+      {
+        "rawTier": "E赏",
+        "normalizedTier": "E",
+        "total": 16,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 16,
+        "pasted": 15,
+        "remaining": 1
+      },
+      {
+        "rawTier": "F赏",
+        "normalizedTier": "F",
+        "total": 16,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 14,
+        "pasted": 13,
+        "remaining": 3
+      },
+      {
+        "rawTier": "G赏",
+        "normalizedTier": "G",
+        "total": 16,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 15,
+        "pasted": 14,
+        "remaining": 2
+      },
+      {
+        "rawTier": "H赏",
+        "normalizedTier": "H",
+        "total": 16,
+        "pattern": "full",
+        "sequenceStart": 1,
+        "firstOpen": null,
+        "pasted": 16,
+        "remaining": 0
+      }
+    ]
+  },
+  {
+    "id": "golden-4",
+    "filename": "女神异闻录版面香香！_1_O MiCa一番赏_来自小红书网页版.jpg",
+    "width": 1080,
+    "height": 1920,
+    "byteLength": 497511,
+    "ipName": "女神异闻录",
+    "ipRawText": "一番赏 女神异闻录30周年",
+    "themeName": "30周年",
+    "price": null,
+    "tiers": [
+      {
+        "rawTier": "A赏",
+        "normalizedTier": "A",
+        "total": 2,
+        "pattern": "empty",
+        "sequenceStart": 1,
+        "firstOpen": null,
+        "pasted": 0,
+        "remaining": 2
+      },
+      {
+        "rawTier": "B赏",
+        "normalizedTier": "B",
+        "total": 2,
+        "pattern": "empty",
+        "sequenceStart": 1,
+        "firstOpen": null,
+        "pasted": 0,
+        "remaining": 2
+      },
+      {
+        "rawTier": "C赏",
+        "normalizedTier": "C",
+        "total": 2,
+        "pattern": "empty",
+        "sequenceStart": 1,
+        "firstOpen": null,
+        "pasted": 0,
+        "remaining": 2
+      },
+      {
+        "rawTier": "D赏",
+        "normalizedTier": "D",
+        "total": 3,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 2,
+        "pasted": 1,
+        "remaining": 2
+      },
+      {
+        "rawTier": "E赏",
+        "normalizedTier": "E",
+        "total": 6,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 3,
+        "pasted": 2,
+        "remaining": 4
+      },
+      {
+        "rawTier": "F赏",
+        "normalizedTier": "F",
+        "total": 16,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 2,
+        "pasted": 1,
+        "remaining": 15
+      },
+      {
+        "rawTier": "G赏",
+        "normalizedTier": "G",
+        "total": 16,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 5,
+        "pasted": 4,
+        "remaining": 12
+      },
+      {
+        "rawTier": "H赏",
+        "normalizedTier": "H",
+        "total": 24,
+        "pattern": "prefix",
+        "sequenceStart": 1,
+        "firstOpen": 2,
+        "pasted": 1,
+        "remaining": 23
+      }
+    ]
+  }
+]

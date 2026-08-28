@@ -1,0 +1,225 @@
+{
+  "version": "v1-cloudbase-resources-1.0.0",
+  "environmentId": "cloud1-d7gxqfwv783a1f131",
+  "publicCollections": [],
+  "storageBusinessPrefixes": [],
+  "storagePrivatePrefixes": [
+    {
+      "prefix": "profile-avatars/",
+      "purpose": "owner-scoped profile avatar only",
+      "publicRead": false,
+      "persistReference": true,
+      "deleteOnCompletion": false,
+      "lifecycleMaxAgeHours": null,
+      "maxObjectBytes": 2097152
+    }
+  ],
+  "storageSecurityRule": {
+    "targetCustomRule": {
+      "read": "auth != null && /^profile-avatars\\//.test(resource.path) && resource.openid == auth.openid",
+      "write": "auth != null && auth.loginType != 'ANONYMOUS' && resource.openid == auth.openid && (/^profile-avatars\\//.test(resource.path) || /^recognition-temp\\//.test(resource.path))"
+    },
+    "deployment": {
+      "state": "DEPLOYED_READ_BACK_VERIFIED",
+      "deployedAt": "2026-08-28",
+      "actualAcl": "CUSTOM",
+      "actualAclDescription": "Custom security rules",
+      "clientScope": "MINIPROGRAM_OPENID_ONLY",
+      "serverBypassVerified": true
+    }
+  },
+  "storageTemporaryPrefixes": [
+    {
+      "prefix": "recognition-temp/",
+      "purpose": "single-recognition transport only",
+      "publicRead": false,
+      "persistReference": false,
+      "deleteOnCompletion": true,
+      "lifecycleMaxAgeHours": 24,
+      "maxObjectBytes": 20971520
+    }
+  ],
+  "storageLifecycleEnforcement": {
+    "applicationCleanup": "DEPLOYED",
+    "platformLifecycleTargetHours": 24,
+    "platformLifecycleReadBack": "VERIFIED",
+    "mode": "PLATFORM_LIFECYCLE",
+    "ruleId": "ichi-v1-recognition-temp-expire-24h",
+    "prefix": "recognition-temp/",
+    "expirationDays": 1,
+    "profileAvatarsExcluded": true,
+    "remainingGap": null
+  },
+  "collections": [
+    {
+      "name": "accounts",
+      "indexes": [
+        {
+          "name": "status_updatedAt",
+          "unique": false,
+          "keys": { "status": 1, "updatedAt": -1 }
+        }
+      ]
+    },
+    {
+      "name": "wechatIdentities",
+      "indexes": [
+        { "name": "accountId", "unique": true, "keys": { "accountId": 1 } }
+      ]
+    },
+    {
+      "name": "profiles",
+      "indexes": [
+        {
+          "name": "canonicalIchiId",
+          "unique": true,
+          "keys": { "canonicalIchiId": 1 }
+        }
+      ]
+    },
+    {
+      "name": "ichiIds",
+      "indexes": [
+        {
+          "name": "accountId_state",
+          "unique": false,
+          "keys": { "accountId": 1, "state": 1 }
+        }
+      ]
+    },
+    {
+      "name": "accountRoles",
+      "indexes": [
+        {
+          "name": "accountId_role",
+          "unique": true,
+          "keys": { "accountId": 1, "role": 1 }
+        }
+      ]
+    },
+    {
+      "name": "dailyQuotas",
+      "indexes": [
+        {
+          "name": "dateKey_updatedAt",
+          "unique": false,
+          "keys": { "dateKey": 1, "updatedAt": 1 }
+        }
+      ]
+    },
+    {
+      "name": "recognitionJobs",
+      "indexes": [
+        {
+          "name": "owner_createdAt",
+          "unique": false,
+          "keys": { "ownerAccountId": 1, "createdAt": -1 }
+        },
+        {
+          "name": "status_leaseExpiresAt",
+          "unique": false,
+          "keys": { "status": 1, "leaseExpiresAt": 1 }
+        }
+      ]
+    },
+    {
+      "name": "observationCandidates",
+      "indexes": [
+        {
+          "name": "owner_updatedAt",
+          "unique": false,
+          "keys": { "ownerAccountId": 1, "updatedAt": -1 }
+        },
+        {
+          "name": "owner_status_observedAt",
+          "unique": false,
+          "keys": { "ownerAccountId": 1, "status": 1, "observedAt": -1 }
+        },
+        {
+          "name": "v2Eligibility_observedAt",
+          "unique": false,
+          "keys": { "v2Eligibility": 1, "observedAt": -1 }
+        },
+        {
+          "name": "schema_ip_createdAt",
+          "unique": false,
+          "keys": { "schemaVersion": 1, "ipName": 1, "createdAt": -1 }
+        }
+      ]
+    },
+    {
+      "name": "drawSubmissions",
+      "indexes": [
+        {
+          "name": "owner_createdAt",
+          "unique": false,
+          "keys": { "ownerAccountId": 1, "createdAt": -1 }
+        },
+        {
+          "name": "record_createdAt",
+          "unique": false,
+          "keys": { "recordId": 1, "createdAt": -1 }
+        }
+      ]
+    },
+    {
+      "name": "recordCodes",
+      "indexes": [
+        { "name": "recordId", "unique": true, "keys": { "recordId": 1 } }
+      ]
+    },
+    {
+      "name": "deletionJobs",
+      "indexes": [
+        {
+          "name": "status_nextAttemptAt",
+          "unique": false,
+          "keys": { "status": 1, "nextAttemptAt": 1 }
+        }
+      ]
+    },
+    { "name": "systemSettings", "indexes": [] },
+    {
+      "name": "auditEvents",
+      "indexes": [
+        {
+          "name": "subject_createdAt",
+          "unique": false,
+          "keys": { "subjectType": 1, "subjectId": 1, "createdAt": -1 }
+        },
+        {
+          "name": "actor_createdAt",
+          "unique": false,
+          "keys": { "actorAccountId": 1, "createdAt": -1 }
+        }
+      ]
+    }
+  ],
+  "permission": "ADMINONLY",
+  "seeds": {
+    "systemSettings": [
+      {
+        "_id": "recognition",
+        "enabled": true,
+        "dailyAccountLimit": 5,
+        "model": "qwen3.7-flash",
+        "promptVersion": "ichi-board-vlm-3.0.0-rc1",
+        "schemaVersion": "board-provider-extraction-3.0.0-rc1",
+        "normalizationVersion": "tier-normalization-1.0.0"
+      }
+    ],
+    "ichiIds": [
+      {
+        "_id": "ICHI-001",
+        "state": "reserved",
+        "purpose": "founder"
+      }
+    ],
+    "reservedIchiIdRange": {
+      "from": 1,
+      "to": 999,
+      "founder": "ICHI-001",
+      "allocationRule": "server-enforced; materialize on assignment"
+    }
+  }
+}

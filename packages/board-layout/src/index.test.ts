@@ -15,12 +15,45 @@ describe("derivePrizePresentation", () => {
     );
   });
 
-  it("keeps G through Z and OTHER compact regardless of ticket count", () => {
+  it("keeps G through Z compact regardless of ticket count", () => {
     expect(derivePrizePresentation({ label: "G", totalSlots: 1 })).toBe(
       "small",
     );
-    expect(derivePrizePresentation({ label: "OTHER", totalSlots: 1 })).toBe(
+    expect(derivePrizePresentation({ label: "G2", totalSlots: 1 })).toBe(
       "small",
+    );
+  });
+
+  it("normalizes numbered variants for every single-letter regular tier", () => {
+    expect(derivePrizePresentation({ label: "A2", totalSlots: 4 })).toBe(
+      "large",
+    );
+    expect(derivePrizePresentation({ label: "B12", totalSlots: 6 })).toBe(
+      "medium",
+    );
+    expect(derivePrizePresentation({ label: "F3", totalSlots: 10 })).toBe(
+      "small",
+    );
+  });
+
+  it("classifies sequential SP1-SP32 and confirmed special labels by verified ticket count", () => {
+    expect(derivePrizePresentation({ label: "SP1", totalSlots: 4 })).toBe(
+      "large",
+    );
+    expect(derivePrizePresentation({ label: "SP2", totalSlots: 6 })).toBe(
+      "medium",
+    );
+    expect(derivePrizePresentation({ label: "SP4", totalSlots: 10 })).toBe(
+      "small",
+    );
+    expect(derivePrizePresentation({ label: "SP32", totalSlots: 6 })).toBe(
+      "medium",
+    );
+    expect(derivePrizePresentation({ label: "SECRET", totalSlots: 10 })).toBe(
+      "small",
+    );
+    expect(derivePrizePresentation({ label: "OTHER", totalSlots: 1 })).toBe(
+      "large",
     );
   });
 

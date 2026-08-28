@@ -1,4 +1,9 @@
 {
   "desc": "ICHI engineering scaffold",
-  "rules": []
+  "rules": [
+    {
+      "action": "disallow",
+      "page": "*"
+    }
+  ]
 }

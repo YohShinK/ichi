@@ -1,0 +1,54 @@
+You are observing one complete real-world Ichiban Kuji prize board. Return only one JSON object. Do not output reasoning, explanations, Markdown, coordinates, or intermediate evidence.
+
+<scene_model>
+This is a real-world Ichiban Kuji prize board. Understand the physical ticket structure before extracting counts.
+
+Distinguish:
+1. original printed board content;
+2. physical prize/return tickets attached later;
+3. open or uncovered ticket positions;
+4. printed number/status text.
+
+Only attached physical tickets count as pasted tickets. Printed tier letters, prize text, labels, or placeholders on the original board are not pasted tickets by themselves.
+
+In the ticket-return area, black/dark ticket-shaped strips are attached physical tickets, not empty positions.
+
+Tickets may overlap. A later ticket can cover most of an earlier one, leaving only its tier tab or part of its letter visible. Each separately identifiable underlying physical ticket counts as one pasted ticket, and the final fully visible ticket in the overlap run also counts as one.
+
+Ticket areas may run horizontally, vertically, across rows or columns, or continue in multiple sections. Orientation changes layout, not meaning. Inspect the complete tier area.
+
+Open positions may be represented by numbered slots, あとN枚/残りN枚, printed placeholders, or other uncovered board areas.
+
+Distinct physical tier areas must remain separate tier items even when their visible rawLabel text is identical. Do not merge visually separate tiers.
+
+Use only visible evidence. Do not infer price, total size, or tier quantities from typical Ichiban Kuji conventions. If uncertain, return null instead of guessing.
+</scene_model>
+
+Extract only these visual facts:
+{
+  "ipName": "string|null",
+  "ipRawText": "string|null",
+  "themeName": "string|null",
+  "price": "number|null",
+  "tiers": [
+    {
+      "rawLabel": "string|null",
+      "prizeName": "string|null",
+      "totalTickets": "integer|null",
+      "pastedTickets": "integer|null"
+    }
+  ]
+}
+
+Field rules:
+- ipName is the root work/franchise name. ipRawText preserves visible identity text. themeName is the edition, chapter, anniversary, volume, or subtitle and must not merely repeat ipName.
+- price is the visible single-draw numeric price. Return null when absent or unreliable.
+- tiers lists every visually distinct tier area in visual reading order. Preserve the visible rawLabel exactly enough to distinguish A, A1, A2, D1, SP賞, and other labels. Do not merge A1/A2, assign parent tiers, or invent SP1/SP2 numbering.
+- Distinct physical tier areas remain separate array items even when rawLabel is identical, including multiple SP賞 areas.
+- Do not include Last One/final prizes, Double Chance, instructions, titles, or status labels in tiers.
+- totalTickets is the total ticket capacity of that visual tier area. pastedTickets is the number of physical tickets attached later in that area. Judge them independently.
+- null means unknown. 0 means visibly confirmed zero. Never replace unknown with 0, copy totalTickets into pastedTickets, calculate remaining tickets, or output whole-board sums.
+- 全X種, 全X款, and other variant counts describe prize variants, not ticket capacity.
+- Use only the complete board image. Do not guess from typical prices, usual 60/70/80-ticket boards, prize rarity, or usual tier quantities.
+
+The JSON object must contain exactly the five root fields shown above. Each tier item must contain exactly the four tier fields shown above. Return JSON only.

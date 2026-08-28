@@ -20,6 +20,9 @@
     "draftId": { "type": "string", "minLength": 1 },
     "image": { "$ref": "#/$defs/imageMetadata" },
     "completeness": { "$ref": "#/$defs/completeness" },
+    "ipName": { "type": ["string", "null"] },
+    "ipRawText": { "type": ["string", "null"] },
+    "themeName": { "type": ["string", "null"] },
     "price": { "$ref": "#/$defs/price" },
     "tiers": {
       "type": "array",
@@ -137,10 +140,10 @@
         "confidence"
       ],
       "properties": {
-        "totalSlots": { "type": "integer", "minimum": 0 },
-        "openSlots": { "type": "integer", "minimum": 0 },
-        "coveredSlots": { "type": "integer", "minimum": 0 },
-        "unknownSlots": { "type": "integer", "minimum": 0 },
+        "totalSlots": { "type": ["integer", "null"], "minimum": 0 },
+        "openSlots": { "type": ["integer", "null"], "minimum": 0 },
+        "coveredSlots": { "type": ["integer", "null"], "minimum": 0 },
+        "unknownSlots": { "type": ["integer", "null"], "minimum": 0 },
         "arrangement": {
           "type": "object",
           "additionalProperties": false,
@@ -173,7 +176,11 @@
         "label": {
           "enum": [
             "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
-            "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "OTHER"
+            "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
+            "SP1", "SP2", "SP3", "SP4", "SP5", "SP6", "SP7", "SP8",
+            "SP9", "SP10", "SP11", "SP12", "SP13", "SP14", "SP15", "SP16",
+            "SP17", "SP18", "SP19", "SP20", "SP21", "SP22", "SP23", "SP24",
+            "SP25", "SP26", "SP27", "SP28", "SP29", "SP30", "SP31", "SP32", "OTHER"
           ]
         },
         "rawLabel": { "type": "string", "minLength": 1 },
@@ -181,7 +188,11 @@
         "origin": { "$ref": "#/$defs/origin" },
         "confidence": { "$ref": "#/$defs/confidence" },
         "layout": { "$ref": "#/$defs/layoutEnvelope" },
-        "slotObservation": { "$ref": "#/$defs/slotObservation" }
+        "slotObservation": { "$ref": "#/$defs/slotObservation" },
+        "totalTickets": { "type": ["integer", "null"], "minimum": 0 },
+        "pastedTickets": { "type": ["integer", "null"], "minimum": 0 },
+        "remainingTickets": { "type": ["integer", "null"], "minimum": 0 },
+        "countConflict": { "type": "boolean" }
       }
     },
     "block": {
@@ -201,6 +212,7 @@
           "enum": [
             "board_title",
             "series_identity",
+            "board_theme",
             "price",
             "ticket_total",
             "last_prize",

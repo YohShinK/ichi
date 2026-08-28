@@ -150,22 +150,33 @@ for (const key of [
 const provider = versions.recognitionProvider;
 if (provider.clientTimeoutMs <= provider.providerTimeoutMs)
   fail("client timeout must exceed provider timeout");
-if (provider.model !== "qwen3.5-flash")
-  fail("recognition model must match the user-selected qwen3.5-flash");
-if (provider.ocrSupplementModel !== "qwen3.5-ocr")
-  fail("low-confidence text must use the approved OCR supplement");
-if (provider.ocrSupplementTrigger !== "low_confidence_text_crop_only")
-  fail("OCR supplement scope is too broad");
+if (provider.model !== "qwen3.7-flash")
+  fail("recognition model must match the approved qwen3.7 Flash alias");
+if (
+  provider.promptVersion !== "ichi-board-vlm-4.0.3-rc1" ||
+  provider.schemaVersion !== "board-provider-extraction-4.0.0-rc1" ||
+  provider.policyVersion !== "board-vlm-policy-1.0.0-rc1"
+)
+  fail("recognition machine protocol versions must remain locked together");
+if (
+  "ocrSupplementModel" in provider ||
+  "ocrSupplementTrigger" in provider ||
+  "maxOcrSupplementAttempts" in provider
+)
+  fail("the approved recognition path must not contain a second OCR model");
 if (provider.ichiImagePersistence !== "none")
   fail("ICHI recognition images must not persist");
-if (
-  provider.maxPrimaryAttempts !== 1 ||
-  provider.maxOcrSupplementAttempts !== 1 ||
-  provider.maxTotalModelCalls !== 2
-)
+if (provider.maxPrimaryAttempts !== 1 || provider.maxTotalModelCalls !== 1)
   fail("recognition call limits are wrong");
-if (provider.maxOutputTokens > 4096)
-  fail("recognition output token cap is too high");
+if (
+  provider.imageTransport !==
+    "cloudbase_private_temp_url_to_provider_image_url" ||
+  provider.performanceTargetImageBytes !== 8 * 1024 * 1024 ||
+  provider.providerHardImageBytes !== 20 * 1024 * 1024 ||
+  provider.modelMaxPixels !== 6291456 ||
+  provider.maxOutputTokens !== null
+)
+  fail("recognition transport and rc2 performance limits do not match");
 if (provider.costCeilingCnyPerBoard > 0.03)
   fail("recognition cost ceiling exceeds the approved cap");
 if (provider.providerUsesCallDataForTraining !== false)

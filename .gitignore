@@ -7,3 +7,4 @@ apps/web/test-results/
 project.private.config.json
 services/cloudbase/**/.env*
 !services/cloudbase/**/.env.example
+services/cloudbase/.deploy/

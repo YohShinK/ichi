@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ichi.local/schemas/board-record-r2-1.0.0.json",
+  "title": "ICHI R2 Board Record Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "recognitionVersion",
+    "ipName",
+    "pricePerDraw",
+    "currency",
+    "tiers"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "board-record-r2-1.0.0" },
+    "recognitionVersion": { "const": "R2" },
+    "ipName": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "themeName": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "pricePerDraw": { "type": "number", "exclusiveMinimum": 0 },
+    "currency": { "const": "CNY" },
+    "tiers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tierCode",
+          "rawLabel",
+          "remainingTickets",
+          "isGrandPrize"
+        ],
+        "properties": {
+          "tierCode": { "pattern": "^(?:[A-Z]|SP(?:[1-9]|[12][0-9]|3[0-2]))$" },
+          "rawLabel": { "type": "string", "minLength": 1, "maxLength": 60 },
+          "remainingTickets": { "type": "integer", "minimum": 0 },
+          "isGrandPrize": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

@@ -17,6 +17,15 @@ export type PrizePresentationInput = {
 
 const LARGE_PRIZE_LABELS = new Set(["A", "B", "C", "D", "E", "F"]);
 
+const usesCountBasedPresentation = (label: string): boolean =>
+  LARGE_PRIZE_LABELS.has(label) ||
+  (label.length > 0 && !/^[A-Z]$/u.test(label) && label !== "UNKNOWN");
+
+const normalizeTierLabel = (label: string): string => {
+  const normalized = label.trim().toUpperCase();
+  return /^([A-Z])[0-9]+$/u.exec(normalized)?.[1] ?? normalized;
+};
+
 /**
  * Derives local display and reminder labels for a verified prize tier.
  * Recognition never supplies these conclusions: an invalid ticket count must
@@ -30,8 +39,8 @@ export function derivePrizeClassification({
     return null;
   }
 
-  const normalizedLabel = label.trim().toUpperCase();
-  if (!LARGE_PRIZE_LABELS.has(normalizedLabel)) {
+  const normalizedLabel = normalizeTierLabel(label);
+  if (!usesCountBasedPresentation(normalizedLabel)) {
     return { presentation: "small" };
   }
   if (totalSlots <= 5) {

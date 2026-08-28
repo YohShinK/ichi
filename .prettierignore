@@ -14,3 +14,5 @@ README.md
 apps/client/miniprogram/**/*.wxml
 apps/client/miniprogram/**/*.wxss
 pnpm-lock.yaml
+tmp/
+artifacts/r1-provider-1.1-pokemon-smoke/

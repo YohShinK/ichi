@@ -28,14 +28,32 @@ class FakeStorage implements MiniProgramStorageDriver {
 describe("recognition navigation state", () => {
   it("defaults unknown and transient values to start", () => {
     const storage = new FakeStorage();
-    storage.values.set(RECOGNITION_VIEW_KEY, "camera-capture");
-    expect(readRecognitionStableView(storage)).toBe("start");
+    for (const transient of ["camera-capture", "board-correction"]) {
+      storage.values.set(RECOGNITION_VIEW_KEY, transient);
+      expect(readRecognitionStableView(storage)).toBe("start");
+    }
   });
 
   it("restores the last stable recognition view", () => {
     const storage = new FakeStorage();
-    writeRecognitionStableView(storage, "resume");
-    expect(readRecognitionStableView(storage)).toBe("resume");
+    writeRecognitionStableView(storage, "draw");
+    expect(readRecognitionStableView(storage)).toBe("draw");
+    writeRecognitionStableView(storage, "recognition-result");
+    expect(readRecognitionStableView(storage)).toBe("recognition-result");
+    storage.values.set(RECOGNITION_VIEW_KEY, "cannot-build-pool");
+    expect(readRecognitionStableView(storage)).toBe("start");
+  });
+
+  it("migrates the removed resume interstitial directly to draw", () => {
+    const storage = new FakeStorage();
+    storage.values.set(RECOGNITION_VIEW_KEY, "resume");
+    expect(readRecognitionStableView(storage)).toBe("draw");
+  });
+
+  it("migrates the removed target-tier interstitial directly to draw", () => {
+    const storage = new FakeStorage();
+    storage.values.set(RECOGNITION_VIEW_KEY, "target");
+    expect(readRecognitionStableView(storage)).toBe("draw");
   });
 
   it("persists and clears the active draft identity separately", () => {

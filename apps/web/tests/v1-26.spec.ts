@@ -5,7 +5,6 @@ const views = [
   "camera-capture",
   "recognizing",
   "draft",
-  "target",
   "draw",
   "storage",
   "local-records",
@@ -45,8 +44,28 @@ test("source navigation synchronizes to the ICHI URL", async ({ page }) => {
   await expect(
     shell.getByRole("heading", { name: "导入版面照片" }),
   ).toBeVisible();
-  await shell.getByRole("button", { name: "拍摄版面", exact: true }).click();
+  await shell.getByTestId("import-board").click();
   await expect(page).toHaveURL(/view=camera-capture/);
+
+  const camera = shell.locator("#page-camera-capture");
+  const shutter = shell.getByTestId("board-camera-shutter");
+  const undo = shell.getByRole("button", { name: "撤回并重拍" });
+  await expect(camera).toHaveAttribute("data-ichi-capture-state", "live");
+  await expect(shutter).toHaveAccessibleName("拍摄版面");
+  await expect(undo).toBeDisabled();
+
+  await shutter.click();
+  await expect(camera).toHaveAttribute("data-ichi-capture-state", "frozen");
+  await expect(shutter).toHaveAccessibleName("确认识别这张版面");
+  await expect(undo).toBeEnabled();
+
+  await undo.click();
+  await expect(camera).toHaveAttribute("data-ichi-capture-state", "live");
+  await expect(shutter).toHaveAccessibleName("拍摄版面");
+
+  await shutter.click();
+  await shutter.click();
+  await expect(page).toHaveURL(/view=recognizing/);
 });
 
 test("recognition navigation restores the latest stable recognition page", async ({
@@ -91,9 +110,9 @@ test("recognition navigation restores the latest stable recognition page", async
     .locator("#nav-btn-camera")
     .evaluate((element: HTMLAnchorElement) => element.click());
   await expect(page).toHaveURL(/view=draw/);
-  expect(await shell.locator("body").evaluate(() => window.scrollY)).toBe(
-    savedScroll,
-  );
+  await expect
+    .poll(() => shell.locator("body").evaluate(() => window.scrollY))
+    .toBe(savedScroll);
 });
 
 test("transient capture and recognizing views return to the import page", async ({
@@ -131,9 +150,7 @@ test("transient capture and recognizing views return to the import page", async 
   ).toBeVisible();
 });
 
-test("recognition, correction, target and board pages remain reachable", async ({
-  page,
-}) => {
+test("recognition result proceeds directly to the board", async ({ page }) => {
   const shell = page.frameLocator(iframe);
   await gotoView(page, "recognizing");
   await expect(
@@ -143,19 +160,13 @@ test("recognition, correction, target and board pages remain reachable", async (
   await expect(shell.getByRole("heading", { name: "识别结果" })).toBeVisible();
   await expect(shell.locator(".ichi-prize-form-card")).toHaveCount(6);
   await expect(shell.getByLabel("A赏总票数")).toBeVisible();
-  await expect(shell.getByLabel("A赏已贴的票数")).toBeVisible();
+  await expect(shell.getByLabel("A赏未贴的票数")).toBeVisible();
   await expect(
     shell.getByRole("button", { name: "确认并生成版面" }),
   ).toBeVisible();
-  await gotoView(page, "target");
-  await expect(
-    shell.getByRole("heading", { name: "选择目标奖" }),
-  ).toBeVisible();
-  await expect(shell.locator(".ichi-target-option")).toHaveCount(6);
-  const bTarget = shell.locator('.ichi-target-option[data-tier="B"]');
-  await bTarget.click();
-  await expect(bTarget).toHaveAttribute("aria-pressed", "true");
-  await gotoView(page, "draw");
+  await shell.getByRole("button", { name: "确认并生成版面" }).click();
+  await expect(page).toHaveURL(/view=draw/);
+  await expect(shell.locator("#page-target")).toHaveCount(0);
   await expect(shell.locator("#draw-remaining")).toBeVisible();
 });
 
@@ -169,7 +180,7 @@ test("route changes keep one page visible and do not reload the source shell", a
       window as typeof window & { __ichiRouteMarker?: string }
     ).__ichiRouteMarker = "preserved";
   });
-  for (const view of ["target", "map-preview", "my", "start"]) {
+  for (const view of ["map-preview", "my", "start"]) {
     await shell
       .locator(`#desktop-nav-links a[href="#${view}"]`)
       .evaluate((element: HTMLAnchorElement) => element.click());
@@ -231,32 +242,15 @@ test("recognizing progress panel uses the shared visual center", async ({
   expect(Math.abs(position.centerY - position.expectedY)).toBeLessThan(1);
 });
 
-test("board confirmation overlay uses the pencil mascot", async ({ page }) => {
+test("board confirmation has no target or generating interstitial", async ({
+  page,
+}) => {
   await gotoView(page, "draft");
   const shell = page.frameLocator(iframe);
   await shell.getByRole("button", { name: "确认并生成版面" }).click();
-  const overlay = shell.locator("#generating-overlay");
-  await expect(overlay).toBeVisible();
-  await expect(
-    overlay.getByRole("heading", { name: "版面已确认" }),
-  ).toBeVisible();
-  const mascot = overlay.getByRole("img", { name: "版面已确认" });
-  await expect(mascot).toBeVisible();
-  await expect(mascot).toHaveAttribute(
-    "src",
-    "/v1-29/ichi-board-confirmed-mascot.png",
-  );
-  await expect(overlay.locator(".ph-magic-wand")).toHaveCount(0);
-  const mascotState = await mascot.evaluate((element: HTMLImageElement) => ({
-    animationName: getComputedStyle(element).animationName,
-    complete: element.complete,
-    naturalWidth: element.naturalWidth,
-  }));
-  expect(mascotState.complete).toBe(true);
-  expect(mascotState.naturalWidth).toBe(895);
-  expect(mascotState.animationName).not.toBe("none");
-  await expect(page).toHaveURL(/view=target/);
-  await expect(overlay).toBeHidden();
+  await expect(page).toHaveURL(/view=draw/);
+  await expect(shell.locator("#generating-overlay")).toHaveCount(0);
+  await expect(shell.locator("#page-target")).toHaveCount(0);
 });
 
 test("draw controls preserve their source positions and callbacks", async ({
@@ -389,7 +383,7 @@ test("prize peel curls toward the viewer and flies outward", async ({
   expect(peelState.endTransform).toContain("scale(1.2)");
 });
 
-test("each draw re-evaluates reminders and allows unexpected grand prizes", async ({
+test("each draw re-evaluates reminders without requiring a target tier", async ({
   page,
 }) => {
   await gotoView(page, "draw");
@@ -401,7 +395,8 @@ test("each draw re-evaluates reminders and allows unexpected grand prizes", asyn
     };
     bridgeWindow.handleDraw(0, 0);
   });
-  await expect(message).toContainText("一发入魂");
+  await expect(message).toContainText("意外之喜");
+  await expect(message).toContainText("累计 ¥650");
   await shell.locator("body").evaluate(() => {
     const bridgeWindow = window as typeof window & {
       handleDraw: (prizeIndex: number, slotIndex: number) => void;
@@ -546,7 +541,7 @@ test("outlook and history share the visual-center modal geometry", async ({
     "#modal-probability > .ichi-workspace-modal-card",
   );
   await expect(outlook).toBeVisible();
-  await expect(outlook).toContainText("3 抽内至少一张目标");
+  await expect(outlook).not.toContainText("3 抽内至少一张目标");
   await expect(outlook).toContainText("3 抽内至少一张大赏");
   await expect(outlook).toContainText("3 抽内至少一张非小赏");
   await expect(outlook).toContainText("3 抽内两张或以上小赏");
@@ -636,11 +631,15 @@ test("share capture and submitted overlays follow the blocking modal lifecycle",
   await share.getByRole("button", { name: "愿意并拍摄赏票" }).click();
   const capture = shell.locator("#modal-share-2");
   await expect(capture).toBeVisible();
-  await expect(capture.getByRole("button", { name: "拍摄赏票" })).toBeVisible();
+  await expect(
+    capture.getByRole("button", { name: "拍摄赏票", exact: true }),
+  ).toBeVisible();
   await expect(
     capture.getByRole("button", { name: "返回分享选择" }),
   ).toBeVisible();
-  await expect(capture.getByRole("button", { name: "重拍赏票" })).toBeVisible();
+  await expect(
+    capture.getByRole("button", { name: "撤回已拍摄赏票" }),
+  ).toBeVisible();
   const confirmShare = capture.getByRole("button", {
     name: "确认地点与备注并提交",
   });
@@ -650,14 +649,12 @@ test("share capture and submitted overlays follow the blocking modal lifecycle",
     "background-color",
     "rgb(233, 235, 239)",
   );
-  await expect(capture.getByRole("button", { name: "拍摄赏票" })).toHaveCSS(
-    "background-color",
-    "rgb(233, 235, 239)",
-  );
-  await expect(capture.getByRole("button", { name: "重拍赏票" })).toHaveCSS(
-    "background-color",
-    "rgb(233, 235, 239)",
-  );
+  await expect(
+    capture.getByRole("button", { name: "拍摄赏票", exact: true }),
+  ).toHaveCSS("background-color", "rgb(233, 235, 239)");
+  await expect(
+    capture.getByRole("button", { name: "撤回已拍摄赏票" }),
+  ).toHaveCSS("background-color", "rgb(233, 235, 239)");
   const captureFrame = capture.locator(".ichi-share-camera-frame");
   const captureAction = capture.locator(".ichi-share-capture-action-panel");
   const captureMeta = capture.locator(".ichi-share-meta");
@@ -686,7 +683,7 @@ test("share capture and submitted overlays follow the blocking modal lifecycle",
     .locator(".ichi-share-capture-action-row")
     .boundingBox();
   const retakeBox = await capture
-    .getByRole("button", { name: "重拍赏票" })
+    .getByRole("button", { name: "撤回已拍摄赏票" })
     .boundingBox();
   expect(navBox).not.toBeNull();
   expect(captureActionBox).not.toBeNull();
@@ -710,14 +707,16 @@ test("share capture and submitted overlays follow the blocking modal lifecycle",
   }
   await noteInput.fill("秋叶原本店，A赏已被抽走");
   await expect(confirmShare).toBeDisabled();
-  await capture.getByRole("button", { name: "拍摄赏票" }).click();
+  await capture.getByRole("button", { name: "拍摄赏票", exact: true }).click();
   await expect(confirmShare).toBeEnabled();
   await expect(confirmShare).toHaveCSS("background-color", "rgb(17, 17, 17)");
   await expect(confirmShare).not.toHaveCSS("box-shadow", "none");
-  await capture.getByRole("button", { name: "重拍赏票" }).click();
+  await capture.getByRole("button", { name: "撤回已拍摄赏票" }).click();
   await expect(confirmShare).toBeDisabled();
-  await expect(capture.getByRole("button", { name: "拍摄赏票" })).toBeVisible();
-  await capture.getByRole("button", { name: "拍摄赏票" }).click();
+  await expect(
+    capture.getByRole("button", { name: "拍摄赏票", exact: true }),
+  ).toBeVisible();
+  await capture.getByRole("button", { name: "拍摄赏票", exact: true }).click();
   await expect(confirmShare).toBeEnabled();
   await confirmShare.click();
   const submitted = shell.locator("#overlay-submitted");

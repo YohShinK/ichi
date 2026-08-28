@@ -7,7 +7,7 @@
       "mediaType": "image/jpeg",
       "width": 1080,
       "height": 1080,
-      "acquisition": "album"
+      "acquisition": "camera"
     },
     "localeHints": ["zh-CN"]
   },

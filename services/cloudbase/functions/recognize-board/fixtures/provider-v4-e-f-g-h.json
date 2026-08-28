@@ -1,0 +1,68 @@
+{
+  "protocolVersion": "4.0.0-rc1",
+  "frame": "complete",
+  "allRegularTiersDetected": true,
+  "oneSlotOneTicketConfirmed": true,
+  "confidence": 0.96,
+  "ipName": "明日方舟",
+  "ipRawText": "明日方舟",
+  "themeName": "来份甜点",
+  "price": {
+    "amount": 790,
+    "currency": "JPY",
+    "rawText": "1回790円",
+    "confidence": 0.94,
+    "handwritten": false
+  },
+  "tiers": [
+    {
+      "rawLabel": "E赏",
+      "prizeName": "E赏奖品",
+      "totalTickets": 8,
+      "ticketPattern": "prefix",
+      "evidence": {
+        "sequenceStart": 1,
+        "firstOpen": 3,
+        "pastedDirect": null
+      },
+      "confidence": 0.95
+    },
+    {
+      "rawLabel": "F賞",
+      "prizeName": "F賞奖品",
+      "totalTickets": 13,
+      "ticketPattern": "prefix",
+      "evidence": {
+        "sequenceStart": 1,
+        "firstOpen": 3,
+        "pastedDirect": null
+      },
+      "confidence": 0.95
+    },
+    {
+      "rawLabel": "G赏",
+      "prizeName": "G赏奖品",
+      "totalTickets": 26,
+      "ticketPattern": "prefix",
+      "evidence": {
+        "sequenceStart": 1,
+        "firstOpen": 7,
+        "pastedDirect": null
+      },
+      "confidence": 0.95
+    },
+    {
+      "rawLabel": "H赏",
+      "prizeName": "H赏奖品",
+      "totalTickets": 13,
+      "ticketPattern": "prefix",
+      "evidence": {
+        "sequenceStart": 1,
+        "firstOpen": 4,
+        "pastedDirect": null
+      },
+      "confidence": 0.95
+    }
+  ],
+  "warnings": []
+}

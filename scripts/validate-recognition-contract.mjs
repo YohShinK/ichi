@@ -69,6 +69,11 @@ if (
     "recognition response must reference the versioned board layout schema id",
   );
 }
+const acquisitionSchema =
+  contractSchema.$defs?.request?.properties?.image?.properties?.acquisition;
+if (acquisitionSchema?.const !== "camera") {
+  errors.push("recognition request image acquisition must be camera-only");
+}
 
 const registryCodes = registry.issues.map((issue) => issue.code);
 const registryActions = registry.actions;
@@ -110,6 +115,9 @@ for (const { name, value: exchange } of fixtures) {
   }
   if (!Array.isArray(request.localeHints) || request.localeHints.length === 0) {
     addError(name, "at least one locale hint is required");
+  }
+  if (request.image?.acquisition !== "camera") {
+    addError(name, "request image acquisition must be camera");
   }
   if (
     response.imageHandling?.retention !== "ephemeral" ||
@@ -166,9 +174,7 @@ for (const { name, value: exchange } of fixtures) {
     addError(name, "retake_required requires a blocking retake_image action");
   }
   if (
-    ["ready_for_confirmation", "needs_user_input", "retake_required"].includes(
-      response.status,
-    ) &&
+    ["ready_for_confirmation", "needs_user_input"].includes(response.status) &&
     !response.draft
   ) {
     addError(name, `${response.status} must preserve a structured draft`);
@@ -245,12 +251,21 @@ for (const { name, value: exchange } of fixtures) {
   let unknownSlots = 0;
   draft.tiers.forEach((tier, index) => {
     const slots = tier.slotObservation;
-    totalSlots += slots.totalSlots;
-    remainingSlots += slots.openSlots;
-    unknownSlots += slots.unknownSlots;
+    const countsComplete = [
+      slots.totalSlots,
+      slots.openSlots,
+      slots.coveredSlots,
+      slots.unknownSlots,
+    ].every((value) => Number.isSafeInteger(value));
+    if (Number.isSafeInteger(slots.totalSlots)) totalSlots += slots.totalSlots;
+    if (Number.isSafeInteger(slots.openSlots))
+      remainingSlots += slots.openSlots;
+    if (Number.isSafeInteger(slots.unknownSlots))
+      unknownSlots += slots.unknownSlots;
     if (
+      !countsComplete ||
       slots.openSlots + slots.coveredSlots + slots.unknownSlots !==
-      slots.totalSlots
+        slots.totalSlots
     ) {
       inconsistentTierIndexes.push(index);
     }

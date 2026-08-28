@@ -1,0 +1,65 @@
+{
+  "version": "v1-cloudbase-deploy-1.0.0",
+  "environmentId": "cloud1-d7gxqfwv783a1f131",
+  "appId": "wx4e40b1657ca4563d",
+  "runtime": "Nodejs20.19",
+  "handler": "index.main",
+  "dependencyLayer": {
+    "name": "ichi-node-deps_cloud1-d7gxqfwv783a1f131",
+    "version": 1
+  },
+  "timeoutSeconds": 60,
+  "requiredSecrets": [
+    "IDENTITY_HMAC_KEY",
+    "DASHSCOPE_API_KEY",
+    "DASHSCOPE_WORKSPACE_ID"
+  ],
+  "requiredConfiguration": ["PRIZE_TICKET_LOCATION_RADIUS_METERS"],
+  "openApiPermissions": {
+    "bind-wechat-profile": ["security.msgSecCheck"],
+    "recognize-draw-tickets": ["security.msgSecCheck"]
+  },
+  "functions": [
+    "bootstrap-account",
+    "get-my-profile",
+    "bind-wechat-profile",
+    "get-quota-status",
+    "assign-special-ichi-id",
+    "reserve-recognition",
+    "release-recognition",
+    "get-recognition-job",
+    "finalize-board-observation",
+    "finalize-draw-update",
+    "get-my-records",
+    "delete-my-record",
+    "delete-my-account",
+    "release-stuck-reservations",
+    "reconcile-stuck-jobs",
+    "retry-deletions",
+    "prepare-v2-backfill"
+  ],
+  "existingFunctions": ["recognize-board", "recognize-draw-tickets"],
+  "deferredFunctions": [],
+  "triggers": [
+    {
+      "function": "release-stuck-reservations",
+      "name": "every-5-minutes",
+      "config": "0 */5 * * * * *"
+    },
+    {
+      "function": "reconcile-stuck-jobs",
+      "name": "every-10-minutes",
+      "config": "0 */10 * * * * *"
+    },
+    {
+      "function": "prepare-v2-backfill",
+      "name": "hourly-private-report",
+      "config": "0 0 * * * * *"
+    },
+    {
+      "function": "retry-deletions",
+      "name": "daily-deletion-retry",
+      "config": "0 20 3 * * * *"
+    }
+  ]
+}

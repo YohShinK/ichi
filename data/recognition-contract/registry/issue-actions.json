@@ -10,6 +10,8 @@
     { "code": "TIER_LABEL_OTHER", "defaultAction": "confirm_tier_label", "blocking": true },
     { "code": "TIER_SLOT_LOW_CONFIDENCE", "defaultAction": "correct_tier_slots", "blocking": true },
     { "code": "TIER_SLOT_COUNT_INCONSISTENT", "defaultAction": "correct_tier_slots", "blocking": true },
+    { "code": "TICKET_COUNT_CONFLICT", "defaultAction": "correct_tier_slots", "blocking": true },
+    { "code": "NO_TIERS", "defaultAction": "retake_image", "blocking": true },
     { "code": "UNKNOWN_SLOT_STATE", "defaultAction": "correct_tier_slots", "blocking": true },
     { "code": "PRICE_MISSING", "defaultAction": "fill_price", "blocking": true },
     { "code": "PRICE_LOW_CONFIDENCE", "defaultAction": "confirm_price", "blocking": true },

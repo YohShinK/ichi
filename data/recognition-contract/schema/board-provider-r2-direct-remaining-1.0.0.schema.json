@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ichi.local/schema/board-provider-r2-direct-remaining-1.0.0.schema.json",
+  "title": "BoardProviderR2DirectRemaining",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ipName",
+    "themeName",
+    "tiers"
+  ],
+  "properties": {
+    "ipName": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "themeName": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "tiers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "tierCode",
+          "rawLabel",
+          "visibleNumberRuns",
+          "remainingTickets"
+        ],
+        "properties": {
+          "tierCode": {
+            "type": "string",
+            "minLength": 1
+          },
+          "rawLabel": {
+            "type": ["string", "null"],
+            "minLength": 1
+          },
+          "visibleNumberRuns": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "value",
+                  "rawText"
+                ],
+                "properties": {
+                  "value": {
+                    "type": ["integer", "null"],
+                    "minimum": 1
+                  },
+                  "rawText": {
+                    "type": ["string", "null"],
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          },
+          "remainingTickets": {
+            "type": ["integer", "null"],
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

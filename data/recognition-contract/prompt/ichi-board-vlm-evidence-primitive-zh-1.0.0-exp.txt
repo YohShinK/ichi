@@ -1,0 +1,41 @@
+你正在观察一张完整的现实一番赏版面。只返回一个 JSON object。不要输出推理、解释、Markdown、坐标或中间过程。
+
+先理解物理场景：区分原始印刷底板、后来贴上的实体赏票、尚未贴票而露出的票位，以及编号／剩余数量／状态文字。只有后来贴上的实体赏票才算已贴票；底板印刷的赏级字母、名称、奖品文字或占位内容都不能单独算票。在赏票贴付／回收区域内，黑色或深色的票状长条是已贴实体票，不是空位；不要把其他黑色图案或背景当票。
+
+实体票可叠贴：前票可能只露出赏级票头、字母或部分字母，每个可独立确认的底层票头算一张，叠贴段末端完整长票也算一张。票栏可横向、纵向、换行、换列或分成多个连续段；方向只是布局。必须检查该赏级完整票栏。多个物理上独立的赏级区域即使 rawLabel 相同也必须分别返回。
+
+只使用本图证据。不得根据一番赏常见价格、60／70／80 总抽数、赏级数量、稀有度或惯例猜测。全X種／全X款是奖品款式数，不是票数。不可靠时返回 null。
+
+输出形状必须严格为：
+{
+  "ipName": "string|null",
+  "ipRawText": "string|null",
+  "themeName": "string|null",
+  "price": "number|null",
+  "tiers": [{
+    "rawLabel": "string|null",
+    "prizeName": "string|null",
+    "totalTickets": "integer|null",
+    "stateEvidence": {
+      "remainingLabel": "string|null",
+      "firstOpenOrdinal": "integer|null",
+      "openCount": "integer|null",
+      "pastedCount": "integer|null"
+    }
+  }]
+}
+
+字段规则：
+- ipName 是作品／IP 根名称；ipRawText 保留可见原文；themeName 是篇章、系列、周年、Vol 或副标题，不要重复 ipName。
+- price 只取图中可见的单抽价格数值。
+- tiers 按视觉阅读顺序保留每个独立原始赏级。不要合并 A1/A2、D1/D2，不要计算 parent tier，不要自行命名 SP1/SP2。不要包含最终赏、Double Chance、标题或状态标签。
+- totalTickets 是该原始赏级的总容量，必须从完整票栏视觉读取；未知为 null。
+
+每个 tier 的 stateEvidence 四个字段都必须出现，并且最多只能有一个非 null。严格按以下优先级选择最强且可直接读出的证据：
+1. remainingLabel：该赏级明确可见的“あとN枚／残りN枚／还剩N张／剩余N张”等剩余标签，保留完整原文；
+2. firstOpenOrdinal：仅当编号明确从 1 开始，且实体票形成无缺口连续前缀时，返回第一个未贴位置的序号；
+3. openCount：能直接数清该赏级全部未贴／开放位置时返回数量；
+4. pastedCount：以上均不可用，但能直接数清全部已贴实体票时返回数量；
+5. 都不能可靠确认时四个字段全为 null。
+
+不要返回 route、pastedTickets、remainingTickets、ticketPattern、countMode、sequenceStart、pastedDirect、confidence、warnings、frame、bbox、segment、reasoning 或整板合计。不要自行做加减法。JSON 根对象和 tier item 不得包含任何额外字段。只返回 JSON。

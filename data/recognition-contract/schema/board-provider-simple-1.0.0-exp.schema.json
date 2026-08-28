@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ichi.example/schema/board-provider-simple/1.0.0-exp",
+  "title": "ICHI Simple Semantic Board Provider Experiment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tiers"],
+  "properties": {
+    "ipName": { "type": ["string", "null"] },
+    "ipRawText": { "type": ["string", "null"] },
+    "themeName": { "type": ["string", "null"] },
+    "price": { "type": ["number", "null"], "exclusiveMinimum": 0 },
+    "tiers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/tier" }
+    }
+  },
+  "$defs": {
+    "tier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rawTier"],
+      "properties": {
+        "rawTier": { "type": "string", "minLength": 1 },
+        "prizeName": { "type": ["string", "null"] },
+        "totalTickets": { "type": ["integer", "null"], "minimum": 0 },
+        "pastedTickets": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    }
+  }
+}

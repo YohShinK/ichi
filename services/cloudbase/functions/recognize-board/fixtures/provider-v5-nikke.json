@@ -1,0 +1,164 @@
+{
+  "protocolVersion": "5.0.0-rc1",
+  "frame": "complete",
+  "allRegularTiersDetected": true,
+  "oneSlotOneTicketConfirmed": true,
+  "confidence": 0.95,
+  "ipName": "胜利女神：NIKKE",
+  "ipRawText": "勝利の女神：NIKKE CHAPTER7",
+  "themeName": "CHAPTER7",
+  "boardCountStyle": "overlap_return_stickers",
+  "price": {
+    "amount": null,
+    "currency": "UNKNOWN",
+    "rawText": null,
+    "confidence": 0.2,
+    "handwritten": null
+  },
+  "tiers": [
+    {
+      "rawLabel": "A赏",
+      "prizeName": null,
+      "countMode": "pasted_full",
+      "evidence": {
+        "totalCount": null,
+        "sequenceStartOrdinal": null,
+        "firstOpenOrdinal": null,
+        "pastedCount": 2,
+        "remainingCount": null
+      },
+      "confidence": 0.95
+    },
+    {
+      "rawLabel": "B赏",
+      "prizeName": null,
+      "countMode": "pasted_full",
+      "evidence": {
+        "totalCount": null,
+        "sequenceStartOrdinal": null,
+        "firstOpenOrdinal": null,
+        "pastedCount": 2,
+        "remainingCount": null
+      },
+      "confidence": 0.95
+    },
+    {
+      "rawLabel": "C赏",
+      "prizeName": null,
+      "countMode": "pasted_full",
+      "evidence": {
+        "totalCount": null,
+        "sequenceStartOrdinal": null,
+        "firstOpenOrdinal": null,
+        "pastedCount": 1,
+        "remainingCount": null
+      },
+      "confidence": 0.95
+    },
+    {
+      "rawLabel": "D赏",
+      "prizeName": null,
+      "countMode": "pasted_full",
+      "evidence": {
+        "totalCount": null,
+        "sequenceStartOrdinal": null,
+        "firstOpenOrdinal": null,
+        "pastedCount": 1,
+        "remainingCount": null
+      },
+      "confidence": 0.95
+    },
+    {
+      "rawLabel": "E赏",
+      "prizeName": null,
+      "countMode": "pasted_full",
+      "evidence": {
+        "totalCount": null,
+        "sequenceStartOrdinal": null,
+        "firstOpenOrdinal": null,
+        "pastedCount": 1,
+        "remainingCount": null
+      },
+      "confidence": 0.95
+    },
+    {
+      "rawLabel": "F赏",
+      "prizeName": null,
+      "countMode": "pasted_full",
+      "evidence": {
+        "totalCount": null,
+        "sequenceStartOrdinal": null,
+        "firstOpenOrdinal": null,
+        "pastedCount": 5,
+        "remainingCount": null
+      },
+      "confidence": 0.95
+    },
+    {
+      "rawLabel": "G赏",
+      "prizeName": null,
+      "countMode": "pasted_plus_remaining",
+      "evidence": {
+        "totalCount": null,
+        "sequenceStartOrdinal": null,
+        "firstOpenOrdinal": null,
+        "pastedCount": 14,
+        "remainingCount": 1
+      },
+      "confidence": 0.95
+    },
+    {
+      "rawLabel": "H赏",
+      "prizeName": null,
+      "countMode": "pasted_plus_remaining",
+      "evidence": {
+        "totalCount": null,
+        "sequenceStartOrdinal": null,
+        "firstOpenOrdinal": null,
+        "pastedCount": 17,
+        "remainingCount": 1
+      },
+      "confidence": 0.95
+    },
+    {
+      "rawLabel": "I赏",
+      "prizeName": null,
+      "countMode": "pasted_full",
+      "evidence": {
+        "totalCount": null,
+        "sequenceStartOrdinal": null,
+        "firstOpenOrdinal": null,
+        "pastedCount": 13,
+        "remainingCount": null
+      },
+      "confidence": 0.95
+    },
+    {
+      "rawLabel": "J赏",
+      "prizeName": null,
+      "countMode": "pasted_full",
+      "evidence": {
+        "totalCount": null,
+        "sequenceStartOrdinal": null,
+        "firstOpenOrdinal": null,
+        "pastedCount": 8,
+        "remainingCount": null
+      },
+      "confidence": 0.95
+    },
+    {
+      "rawLabel": "K赏",
+      "prizeName": null,
+      "countMode": "pasted_full",
+      "evidence": {
+        "totalCount": null,
+        "sequenceStartOrdinal": null,
+        "firstOpenOrdinal": null,
+        "pastedCount": 14,
+        "remainingCount": null
+      },
+      "confidence": 0.95
+    }
+  ],
+  "warnings": []
+}

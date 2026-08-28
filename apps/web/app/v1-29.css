@@ -96,7 +96,6 @@ body {
 }
 .source-start h1,
 .source-draft h1,
-.source-target h1,
 .source-list h1,
 .source-my h1,
 .source-recognizing h1 {
@@ -107,7 +106,6 @@ body {
   letter-spacing: -0.06em;
 }
 .source-start > p,
-.source-target > p,
 .source-draft p,
 .source-list > p {
   color: #71717a;
@@ -488,80 +486,6 @@ body {
 .source-editor-card input + input {
   background: #111;
   color: #fff;
-}
-.source-generating {
-  position: fixed;
-  z-index: 100;
-  inset: 0;
-  display: grid;
-  place-content: center;
-  text-align: center;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-}
-.source-generating div {
-  font-size: 60px;
-  color: #fff;
-  background: #111;
-  width: 80px;
-  height: 80px;
-  border-radius: 50% 50% 50% 10%;
-  display: grid;
-  place-items: center;
-  margin: auto;
-  animation: source-bounce 0.8s infinite alternate;
-}
-.source-generating h2 {
-  margin: 20px 0 4px;
-  font-size: 24px;
-}
-.source-generating p {
-  margin: 0;
-  color: #71717a;
-}
-.source-generating i {
-  display: block;
-  width: 190px;
-  height: 6px;
-  margin: 25px auto;
-  background: #111;
-  border-radius: 99px;
-  animation: source-load 1s infinite;
-}
-@keyframes source-bounce {
-  to {
-    transform: translateY(-9px);
-  }
-}
-@keyframes source-load {
-  50% {
-    transform: scaleX(0.45);
-    opacity: 0.3;
-  }
-}
-.source-target > div {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 13px;
-  margin: 28px 0 36px;
-}
-.source-target > div button {
-  min-height: 72px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 24px;
-  color: #111;
-  background: rgba(255, 255, 255, 0.85);
-  font-weight: 900;
-  font-size: 18px;
-  text-align: left;
-  padding: 18px;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-}
-.source-target > div button.selected {
-  color: #fff;
-  background: #111;
-  border-color: #111;
 }
 .source-status {
   position: sticky;

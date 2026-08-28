@@ -305,6 +305,7 @@ const callProvider = async ({
   const timeout = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS);
   const startedAt = Date.now();
   try {
+    if (metrics) metrics.providerStage = "REQUEST_STARTED";
     const result = await fetchImpl(providerUrl(workspaceId, region), {
       method: "POST",
       headers: {
@@ -332,14 +333,18 @@ const callProvider = async ({
       }),
       signal: controller.signal,
     });
+    if (metrics) {
+      metrics.providerStage = "HTTP_RESPONSE";
+      metrics.providerHttpStatus = result.status;
+    }
     if (!result.ok)
       throw Object.assign(new Error("provider_http"), {
         code: "PRIZE_TICKET_PROVIDER_FAILED",
       });
     const payload = await result.json();
     if (metrics) {
+      metrics.providerStage = "RESPONSE_BODY_PARSED";
       metrics.providerLatencyMs = Date.now() - startedAt;
-      metrics.providerHttpStatus = result.status;
       metrics.providerRequestId =
         typeof payload?.id === "string" ? payload.id : null;
     }
@@ -348,12 +353,15 @@ const callProvider = async ({
       typeof content === "string" && content.trim(),
       "PRIZE_TICKET_SCHEMA_INVALID",
     );
+    if (metrics) metrics.providerStage = "CONTENT_PRESENT";
     const output = JSON.parse(content);
+    if (metrics) metrics.providerStage = "OUTPUT_JSON_PARSED";
     domain.assert(
       validateProviderOutput(output),
       "PRIZE_TICKET_SCHEMA_INVALID",
     );
     if (metrics) {
+      metrics.providerStage = "AJV_PASSED";
       metrics.providerAjvPass = true;
       metrics.providerRawTicketCount = output.tickets.length;
       metrics.providerEvidenceType = output.evidenceType;
@@ -438,7 +446,7 @@ const main = async (event = {}, runtime = {}) => {
         "RECORD_NOT_FOUND",
       );
       domain.assert(fresh.status !== "deleting", "RECORD_DELETED");
-      if (version < Number(fresh.latestPrizeTicketSubmissionVersion || 0))
+      if (version < Number(fresh.publishedSubmissionVersion || 0))
         return { superseded: true };
       const previous =
         version > 1
@@ -536,8 +544,12 @@ const main = async (event = {}, runtime = {}) => {
       );
       domain.assert(authoritative, "AUTHORITATIVE_DRAW_RECORD_UNAVAILABLE");
       domain.assert(
-        version === Number(fresh.latestPrizeTicketSubmissionVersion || 0) + 1,
+        version === 1 || Boolean(previous),
         "SUBMISSION_VERSION_GAP",
+      );
+      domain.assert(
+        version > Number(fresh.publishedSubmissionVersion || 0),
+        "SUBMISSION_SUPERSEDED",
       );
       const timestamp = nowIso();
       await tx
@@ -592,21 +604,6 @@ const main = async (event = {}, runtime = {}) => {
             deadlineAt: new Date(Date.now() + 50 * 60 * 1000).toISOString(),
             nextAttemptAt: new Date(Date.now() + 50 * 60 * 1000).toISOString(),
             attempts: 0,
-            updatedAt: timestamp,
-          },
-        });
-      await tx
-        .collection("observationCandidates")
-        .doc(recordId)
-        .update({
-          data: {
-            latestPrizeTicketSubmissionVersion: version,
-            currentVerificationVersion: version,
-            prizeTicketVerificationStatus:
-              locationReview.status === "LOCATION_PASSED"
-                ? "PHOTO_PENDING"
-                : locationReview.status,
-            userNote,
             updatedAt: timestamp,
           },
         });
@@ -687,7 +684,7 @@ const main = async (event = {}, runtime = {}) => {
           freshSubmission?.locationReview?.status === "LOCATION_PASSED" &&
             freshSubmission?.photoReview?.status === "PHOTO_PASSED" &&
             freshObservation?.status !== "deleting" &&
-            Number(freshObservation?.latestPrizeTicketSubmissionVersion) ===
+            Number(freshObservation?.publishedSubmissionVersion || 0) <=
               version,
           "SUBMISSION_SUPERSEDED",
         );
@@ -712,19 +709,6 @@ const main = async (event = {}, runtime = {}) => {
               updatedAt: nowIso(),
             },
           });
-        await tx
-          .collection("observationCandidates")
-          .doc(recordId)
-          .update({
-            data: {
-              userNote,
-              verificationStatus: "NOTE_PENDING",
-              prizeTicketVerificationStatus: "NOTE_PENDING",
-              approvedAt: null,
-              status: "private_saved",
-              updatedAt: nowIso(),
-            },
-          });
       });
       const noteReview = await reviewUserNote({
         cloud,
@@ -732,6 +716,7 @@ const main = async (event = {}, runtime = {}) => {
         userNote,
         runtime,
       });
+      metrics.providerStage = "NOTE_REVIEWED";
       const status =
         noteReview.status === "NOTE_PASSED" ? "APPROVED" : noteReview.status;
       const timestamp = nowIso();
@@ -743,6 +728,7 @@ const main = async (event = {}, runtime = {}) => {
         status,
         reasonCode: noteReview.reasonCode || null,
       };
+      metrics.providerStage = "PUBLICATION_TRANSACTION_STARTED";
       await db.runTransaction(async (tx) => {
         const fresh = await getDocument(tx, "observationCandidates", recordId);
         const freshSubmission = await getDocument(
@@ -752,7 +738,7 @@ const main = async (event = {}, runtime = {}) => {
         );
         domain.assert(
           fresh?.status !== "deleting" &&
-            Number(fresh?.latestPrizeTicketSubmissionVersion) === version &&
+            Number(fresh?.publishedSubmissionVersion || 0) <= version &&
             freshSubmission?.userNoteHash === requestedNoteHash,
           "SUBMISSION_SUPERSEDED",
         );
@@ -770,25 +756,27 @@ const main = async (event = {}, runtime = {}) => {
               updatedAt: timestamp,
             },
           });
-        await tx
-          .collection("observationCandidates")
-          .doc(recordId)
-          .update({
-            data: {
-              userNote,
-              verificationStatus: status,
-              prizeTicketVerificationStatus: status,
-              ...(status === "APPROVED"
-                ? {
-                    latestVerifiedPrizeTicketSubmissionVersion: version,
-                    status: "uploaded",
-                    approvedAt: timestamp,
-                  }
-                : {}),
-              updatedAt: timestamp,
-            },
-          });
+        if (
+          status === "APPROVED" &&
+          version >= Number(fresh.publishedSubmissionVersion || 0)
+        )
+          await tx
+            .collection("observationCandidates")
+            .doc(recordId)
+            .update({
+              data: {
+                verificationStatus: "APPROVED",
+                prizeTicketVerificationStatus: "APPROVED",
+                latestVerifiedPrizeTicketSubmissionVersion: version,
+                publishedSubmissionVersion: version,
+                publicationState: "current",
+                status: "uploaded",
+                approvedAt: timestamp,
+                updatedAt: timestamp,
+              },
+            });
       });
+      metrics.providerStage = "RESULT_PERSISTED";
       terminalCompleted = true;
       return response(result);
     }
@@ -909,7 +897,9 @@ const main = async (event = {}, runtime = {}) => {
       providerLatencyMs: metrics.providerLatencyMs || 0,
     });
     const observed = observedFromTickets(provider);
+    metrics.providerStage = "NORMALIZED";
     const reconciliation = exactReconcile(expected, observed);
+    metrics.providerStage = "RECONCILED";
     const photoReview = {
       status:
         reconciliation.status === "VERIFIED" ? "PHOTO_PASSED" : "PHOTO_FAILED",
@@ -929,6 +919,7 @@ const main = async (event = {}, runtime = {}) => {
             runtime,
           })
         : null;
+    metrics.providerStage = "NOTE_REVIEWED";
     const gateStatus =
       photoReview.status === "PHOTO_FAILED"
         ? "PHOTO_FAILED"
@@ -953,6 +944,7 @@ const main = async (event = {}, runtime = {}) => {
       mismatches: reconciliation.mismatches,
     };
     let returnedResult = result;
+    metrics.providerStage = "PUBLICATION_TRANSACTION_STARTED";
     await db.runTransaction(async (tx) => {
       const fresh = await getDocument(tx, "observationCandidates", recordId);
       if (!fresh || fresh.status === "deleting") {
@@ -969,8 +961,13 @@ const main = async (event = {}, runtime = {}) => {
           });
         return;
       }
+      const newerAttempt = await getDocument(
+        tx,
+        "drawSubmissions",
+        `prize-ticket:${recordId}:${boardId}:${version + 1}`,
+      );
       const status =
-        Number(fresh.latestPrizeTicketSubmissionVersion) > version
+        Number(fresh.publishedSubmissionVersion || 0) > version || newerAttempt
           ? "SUPERSEDED"
           : gateStatus;
       returnedResult = { ...result, status };
@@ -998,33 +995,34 @@ const main = async (event = {}, runtime = {}) => {
               ajvPass: metrics.providerAjvPass === true,
               rawTicketCount: metrics.providerRawTicketCount || 0,
               evidenceType: metrics.providerEvidenceType || null,
+              stage: metrics.providerStage,
             },
             completedAt: nowIso(),
             verifiedAt: photoReview.status === "PHOTO_PASSED" ? nowIso() : null,
             approvedAt: status === "APPROVED" ? nowIso() : null,
           },
         });
-      if (Number(fresh.latestPrizeTicketSubmissionVersion) === version)
+      if (
+        status === "APPROVED" &&
+        version >= Number(fresh.publishedSubmissionVersion || 0)
+      )
         await tx
           .collection("observationCandidates")
           .doc(recordId)
           .update({
             data: {
-              ...(status === "APPROVED"
-                ? {
-                    latestVerifiedPrizeTicketSubmissionVersion: version,
-                    status: "uploaded",
-                    approvedAt: nowIso(),
-                  }
-                : {}),
-              currentVerificationVersion: version,
-              verificationStatus: status,
-              prizeTicketVerificationStatus: status,
-              userNote: activeSubmission.userNote,
+              latestVerifiedPrizeTicketSubmissionVersion: version,
+              publishedSubmissionVersion: version,
+              publicationState: "current",
+              status: "uploaded",
+              verificationStatus: "APPROVED",
+              prizeTicketVerificationStatus: "APPROVED",
+              approvedAt: nowIso(),
               updatedAt: nowIso(),
             },
           });
     });
+    metrics.providerStage = "RESULT_PERSISTED";
     terminalCompleted = true;
     return response({
       ...returnedResult,
@@ -1035,13 +1033,14 @@ const main = async (event = {}, runtime = {}) => {
         ajvPass: metrics.providerAjvPass === true,
         rawTicketCount: metrics.providerRawTicketCount || 0,
         evidenceType: metrics.providerEvidenceType || null,
+        stage: metrics.providerStage,
       },
     });
   } catch (error) {
     const code =
       error?.name === "AbortError"
         ? "PRIZE_TICKET_PROVIDER_FAILED"
-        : error?.code || "PRIZE_TICKET_PROVIDER_FAILED";
+        : error?.code || error?.errCode || "PRIZE_TICKET_PROVIDER_FAILED";
     if (claimed) {
       try {
         await db.runTransaction(async (tx) => {
@@ -1050,32 +1049,20 @@ const main = async (event = {}, runtime = {}) => {
             .doc(`prize-ticket:${recordId}:${boardId}:${version}`)
             .update({
               data: {
-                status: "PHOTO_FAILED",
-                imageFileId: null,
+                status: "PROVIDER_FAILED",
                 errorCode: code,
+                providerDiagnostics: {
+                  requestId: metrics.providerRequestId || null,
+                  latencyMs: metrics.providerLatencyMs || 0,
+                  httpStatus: metrics.providerHttpStatus || null,
+                  ajvPass: metrics.providerAjvPass === true,
+                  rawTicketCount: metrics.providerRawTicketCount || 0,
+                  evidenceType: metrics.providerEvidenceType || null,
+                  stage: metrics.providerStage || "BEFORE_PROVIDER_REQUEST",
+                },
                 updatedAt: nowIso(),
               },
             });
-          const fresh = await getDocument(
-            tx,
-            "observationCandidates",
-            recordId,
-          );
-          if (
-            fresh?.status !== "deleting" &&
-            Number(fresh?.latestPrizeTicketSubmissionVersion) === version
-          )
-            await tx
-              .collection("observationCandidates")
-              .doc(recordId)
-              .update({
-                data: {
-                  currentVerificationVersion: version,
-                  verificationStatus: "PHOTO_FAILED",
-                  prizeTicketVerificationStatus: "PHOTO_FAILED",
-                  updatedAt: nowIso(),
-                },
-              });
         });
       } catch {
         // The immutable processing record is recoverable by the same-version retry.
@@ -1088,14 +1075,14 @@ const main = async (event = {}, runtime = {}) => {
       submissionVersion: version,
       providerLatencyMs: metrics.providerLatencyMs || 0,
       providerHttpStatus: metrics.providerHttpStatus || null,
+      providerStage: metrics.providerStage || "BEFORE_PROVIDER_REQUEST",
     });
-    if (claimed) terminalCompleted = true;
     if (claimed)
       return response({
         recordId,
         boardId,
         submissionVersion: version,
-        status: "PHOTO_FAILED",
+        status: "PROVIDER_FAILED",
         expected: { total: 0, tierCounts: {} },
         observed: { total: 0, tierCounts: {}, unknownTickets: 0 },
         mismatches: [],
@@ -1107,6 +1094,7 @@ const main = async (event = {}, runtime = {}) => {
           ajvPass: metrics.providerAjvPass === true,
           rawTicketCount: metrics.providerRawTicketCount || 0,
           evidenceType: metrics.providerEvidenceType || null,
+          stage: metrics.providerStage || "BEFORE_PROVIDER_REQUEST",
         },
       });
     return failure(code);

@@ -106,10 +106,9 @@ const parseRecord = (value: unknown): CloudRecordSummary | null => {
     return null;
   }
   const latestSubmission = record.latestPrizeTicketSubmission;
-  const snapshot =
-    latestSubmission?.finalSnapshot ??
-    record.finalSnapshot ??
-    record.initialSnapshot;
+  // Attempt payloads are never publication payloads. Only the server-approved
+  // observation snapshot may drive MY_UPLOADS / MAP content.
+  const snapshot = record.finalSnapshot ?? record.initialSnapshot;
   const initialSnapshot = record.initialSnapshot ?? snapshot;
   const isR2 = snapshot?.schemaVersion === "board-record-r2-1.0.0";
   const ipName = isR2 ? snapshot?.ipName : snapshot?.ip;

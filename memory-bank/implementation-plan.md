@@ -1,5 +1,15 @@
 # ICHI Implementation Plan
 
+2026-08-29 V1.0.0 最终冻结门 `COMPLETED`：用户真机确认原 `recordId`、原 submission v3 与原 `imageFileId` 的 same-version retry 已直接进入 `APPROVED`，未重新上传、未创建新 submissionVersion、未重复 draw 或 quota；DRAW SESSION blocker 未再复现，用户据此明确批准 V1.0.0 完全冻结。当前只允许组装并人工审阅 staged release candidate，不再开发功能，不解锁 V2，不执行 commit、push、tag、微信上传、提审或发布。微信开发者工具的组件按需注入与随包图片／音频累计大小两项均为非阻塞建议，V1.0.0 `SHIP_AS_IS`，优化任务 `DEFER_TO_1_0_1`。
+
+2026-08-29 V1 DRAW_SESSION_EXIT + PHOTO_VERIFICATION_END_TO_END_CLOSURE 工作集 `READY_FOR_DRAW_SESSION_AND_PHOTO_TRUE_DEVICE_RETEST`：生产只读取证确认最新两条真实 PHOTO_FAILED 分别是不同 Board 的 version 1 与 version 5，且连同同一 Board 的四次前序重传形成六次连续 `PRIZE_TICKET_PROVIDER_FAILED`；全部 LOCATION PASS、当前版本 image 路径正确、authoritative version 一致并保存 `A1/B2/C1/D1` 五条 draw events。生产在更早同模型/Prompt/Schema 下对相同五票计数已有 HTTP 200、AJV PASS、VERIFIED 对照。根因是技术失败 catch 被错误终态化并即时删除 evidence，不是 draw、boundary、stable P1、schema normalize 或照片 mismatch。红灯已锁定 503 被写 PHOTO_FAILED、HTTP 状态丢失和删除图片；最小修复后同一 submission/image 为 PROVIDER_FAILED 可重试，技术 checkpoint 持久化，正确五票 fixture PASS、错误赏级 fixture FAIL。最新定向 10 文件／213 项与整库 56 文件／539 项及全部静态门通过；只部署 `recognize-draw-tickets`，最终线上配置 6 键恢复、运行状态与反向 7 文件树 hash 核对通过。停止自动工作，等待一条高价值真机链。
+
+2026-08-29 V1 DRAW_SESSION_EXIT + PHOTO_VERIFICATION_END_TO_END_CLOSURE 历史阻塞快照 `BLOCKED_PRODUCTION_EVIDENCE`（已由上方取证结论解除）：ACTIVE_DRAW 的 late cloud refresh 红灯已精确复现，最小修复为恢复链保留 active `boardId`；自动组合用例覆盖两抽持久化、云刷新不退出、重建页面、再抽两次、NEW upload 的四条 authoritative events，以及同一 record/board/version/image verify identity。此时尚缺的两条生产 PHOTO 证据现已取得，不再是当前阻塞。
+
+2026-08-28 V1 CURRENT_PUBLICATION_ARCHITECTURE_CLOSURE 工作集 `AWAITING_REVIEW`：完成 B1／S1…／P1 三层领域矩阵、所有创建／重传／刷新／删除／重启链路审计；以红灯回归锁定 owner+board 最多 0/1 个 current P1、成功重传覆盖同一 P1、失败 attempt 隔离、版本单调与迟到结果抑制、B1-only 本机删除、P1 删除当前设备级联、网络／404 保留 B1、pending marker 崩溃恢复和墓碑禁止惰性复活。自动门覆盖定向 152 项、整库 56 文件／534 项、TypeScript、ESLint、Prettier、contracts/workflow、V1-F preflight、19 函数 CloudBase build/static validation、Next production build、Playwright 26/26、冻结三 SHA 与差异检查。生产只部署四个受影响函数并完成反向哈希核对；只读盘点显示 5 条历史 P1 全部 deleting、active duplicate=0，故无需迁移。下一状态仅为 `READY_FOR_V1_PUBLICATION_ARCHITECTURE_TRUE_DEVICE_RETEST`；不解锁 V2 MAP，不上传／发布微信客户端，不 commit/push/merge/tag。
+
+2026-08-28 V1 MY_RECORDS_PROJECTION_OWNERSHIP_CLOSURE 历史工作集：其中 MY_RECORDS local-only、Local Board repository-only 删除和 quota 优化继续有效；“MY_UPLOADS observation-only、同 Board 多 Observation”验收目标已由上方 Current Publication 工作集正式取代，不再作为待验收行为。
+
 2026-08-28 V1 Closure Storage 最终权限 + orphan-proofing 工作集 `PASS`：生产 `CUSTOM` rule 和只作用于 `recognition-temp/` 的 COS 1 天 Expiration 均已应用并读回；客户端权限矩阵、服务端绕过边界、头像排除、24 小时 orphan 分类与未知头像保护已进入自动门。应用层即时删除与既有 maintenance 补偿不变，未新增 scheduler。Storage 专项无剩余 implementation gap，后续只随 V1-F 总区块执行用户真机／人工验收和发布门。
 
 2026-08-28 V1 Closure Storage 专项工作集：只审计并收口 `profile-avatars/`、`recognition-temp/`、头像／版面／赏票生命周期、遗留 orphan 和生产 Storage 权限。先建立只读对象—数据库—代码—Golden 来源分类，再只删除证据闭合的对象；当前头像保持长期资产。发现真实缺口时只复用现有 `deletionJobs`、`reconcile-stuck-jobs` 与 `retry-deletions`，不新增 scheduler，不修改冻结 R2／H0、LOCATION／PHOTO／文本安全／draw 语义。自动门覆盖活动头像保护、替换／绑定失败／账号删除、赏票终态与到期补偿、orphan 分类、完整回归和部署反向核验；只部署直接受影响函数。应用层、遗留对象、生产客户端权限与平台 1 天 lifecycle 均已完成并读回，专项最终状态 `PASS`。
@@ -17,6 +27,8 @@
 > 版本：1.31
 >
 > 本计划只包含任务、验证和验收，不包含实现代码。
+
+2026-08-29 V1-43K fresh failure closure：技术异常与业务照片失败分流已在真机确认；最新 fresh failure 的 Provider HTTP 200、JSON/AJV 和五票结构化内容均成功，真实 blocker 位于已批准结果写入 P1 的 observation 大字段回归。自动收口改为小型 published-version pointer + 精确 approved-submission 读取投影，并保留 same-version 原图重核验；新增生产等价 `-502001` 约束、失败 attempt 不覆盖 current publication、正确／错误照片和技术重试回归。当前为 `AWAITING_REVIEW`，仅待用户在证据 retention 窗口内点击“重新核验当前照片”；不得自动调用 Provider、重新上传或创建新 submission version。
 
 ## 0. 执行协议
 
@@ -337,3 +349,7 @@ V1-43G 的当前图片边界同样已收口：客户端约 8 MiB 为性能目标
 - 证据、身份、审核、冲突和回退可运行；
 - 公共观察可追溯且不泄露敏感信息；
 - 用户通过 V3-30 开放门。
+2026-08-28 V1 release blocker 工作集：只修复“删除 APPROVED Observation 后 Local Board 无法再次上传”和“NEW upload 继承上一笔备注”。采用 Local Board `boardId` + 1:N 独立 Observation 模型；删除后保留本机 Board 与最近 stale reference，真正 NEW upload 才 owner-scoped 惰性确认／建立新 Observation，同一来源请求确定性幂等，遇到既有 submission 或删除墓碑继续派生下一身份，不复活任何旧 record、不重复 quota、draw event 或 remaining decrement。自动门覆盖 valid/null/stale reference、连续删除墓碑、跨 owner、六位码非安全身份、重复请求、Local Board 持久化、不可变初始 snapshot、完整 draw batch、NEW_UPLOAD 空备注与 NOTE_FAILED 原文保留；不新增 collection、长期 anchor、recovery document，不实现 V2 canonicalization。
+2026-08-28 V1 UPLOAD_STUCK_PENDING 工作集：只纠正客户端六位 display code validator 与正式 `^[A-Z0-9]{6}$` 契约的漂移，确保服务端全字母／全数字合法码不会使版本化 Local Board draft 在 submit 后读回丢失，且 NEW Observation 的 submit 与 verify 使用同一 `recordId/boardId/submissionVersion`。自动门覆盖 Storage 读回、后台 verify 连续调用、PHOTO/NOTE/APPROVED 既有终态、失败状态映射和全量回归；不改服务端生成算法、不调用 Provider、不部署 CloudBase。
+2026-08-28 V1 BOARD / OBSERVATION LIFECYCLE CLOSURE 工作集：锁定 `DELETE_OBSERVATION ≠ DELETE_LOCAL_BOARD`，上传列表只按 `recordId` 消除同一 Observation 的本机／云端重复，同一 `boardId` 的多条 Observation 分别保留；本机删除不得调用云端删除，云端删除不得移除本机 Board。自动门覆盖 APPROVED 与 LOCATION/PHOTO/NOTE FAILED、重启 hydrate、基线/history/remaining 保留、继续两次 draw、fresh O2、O1 不复活、O2 submit/verify 同身份、NEW note 空值、NOTE_FAILED 原文、三类六位码和全量回归；不新增后端资源、不部署、不实现 V2。
+2026-08-28 V1 Local Board 删除 UI 回归工作集：只恢复“我的记录”既有 swipe 垃圾桶入口，把 Local Board summary 的删除资格从 submission state 解耦，确保 unbound/bound/stale 三态都能调用 repository-only delete；自动门锁定按钮条件、手势位移、本机 Storage 删除、零 `delete-my-record` 调用和云 Observation 继续展示。不改 WXML 交互、后端、Storage/ACL、冻结 R2 或 V2。

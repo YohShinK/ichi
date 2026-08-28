@@ -3,6 +3,7 @@ import { getWxStorageDriver } from "./storage.js";
 import type {
   CloudRecognitionSourcePath,
   ConfirmedBoardSnapshot,
+  InitialCloudBoardSnapshot,
 } from "./cloud-recognition-task.js";
 
 export const LOCAL_DRAW_DRAFTS_KEY = "ichi:v1-e-local-draw-drafts:v1";
@@ -23,7 +24,7 @@ export type UploadStatus = "not-uploaded" | "uploaded";
 export type LocalRecordType = "draw" | "board-upload";
 export type LocalSubmissionState = "local" | "pending-review" | "uploaded";
 
-export const RECORD_CODE_PATTERN = /^(?=.*[A-Z])(?=.*\d)[A-Z0-9]{6}$/;
+export const RECORD_CODE_PATTERN = /^[A-Z0-9]{6}$/;
 
 export interface LegacyLocalPrizeState {
   readonly id: string;
@@ -75,6 +76,10 @@ export interface LocalDrawDraft {
   readonly recordType?: LocalRecordType;
   readonly recordCode?: string;
   readonly cloudRecordId?: string;
+  readonly pendingCloudDeletion?: {
+    readonly recordId: string;
+    readonly requestedAt: number;
+  };
   readonly capturedAt?: number;
   readonly submittedAt?: number;
   readonly targetTiers?: readonly string[];
@@ -184,6 +189,73 @@ export const currentRemainingForPrize = (
   return Math.max(0, prize.initialRemainingTickets - drawn);
 };
 
+export const toInitialCloudSnapshot = (
+  draft: LocalDrawDraft,
+): InitialCloudBoardSnapshot => {
+  const ipName = draft.ipName?.trim();
+  const unitPrice = draft.unitPrice;
+  if (!ipName || !Number.isSafeInteger(unitPrice) || Number(unitPrice) <= 0)
+    throw new Error("LOCAL_BOARD_ORIGIN_INVALID");
+  if (draft.schemaVersion === "board-record-r2-1.0.0") {
+    const tiers = draft.prizeData.map((prize) => {
+      if (!isR2LocalPrizeState(prize))
+        throw new Error("LOCAL_BOARD_ORIGIN_INVALID");
+      return {
+        tierCode: prize.tier,
+        rawLabel: prize.rawLabel,
+        remainingTickets: prize.initialRemainingTickets,
+        isGrandPrize: prize.isGrandPrize,
+      };
+    });
+    if (!tiers.length) throw new Error("LOCAL_BOARD_ORIGIN_INVALID");
+    return {
+      schemaVersion: "board-record-r2-1.0.0",
+      recognitionVersion: "R2",
+      ipName,
+      ...(draft.themeName?.trim() ? { themeName: draft.themeName.trim() } : {}),
+      pricePerDraw: Number(unitPrice),
+      currency: "CNY",
+      tiers,
+    };
+  }
+  const drawsByTier = draft.history.reduce<Record<string, number>>(
+    (counts, event) => {
+      counts[event.tier] = (counts[event.tier] || 0) + 1;
+      return counts;
+    },
+    {},
+  );
+  const tiers = draft.prizeData.map((prize) => {
+    if (isR2LocalPrizeState(prize))
+      throw new Error("LOCAL_BOARD_ORIGIN_INVALID");
+    const initialRemaining = prize.remaining + (drawsByTier[prize.tier] || 0);
+    if (initialRemaining > prize.total)
+      throw new Error("LOCAL_BOARD_ORIGIN_INVALID");
+    return {
+      tierId: prize.tier,
+      sourceLabels: [prize.tier],
+      total: prize.total,
+      remaining: initialRemaining,
+      attached: prize.total - initialRemaining,
+    };
+  });
+  if (!tiers.length) throw new Error("LOCAL_BOARD_ORIGIN_INVALID");
+  const totalTickets = tiers.reduce((sum, tier) => sum + tier.total, 0);
+  const remainingTickets = tiers.reduce((sum, tier) => sum + tier.remaining, 0);
+  return {
+    schemaVersion: "board-snapshot-1.0.0",
+    ip: ipName,
+    ...(draft.themeName?.trim() ? { theme: draft.themeName.trim() } : {}),
+    pricePerDraw: Number(unitPrice),
+    currency: "CNY",
+    totalTickets,
+    remainingTickets,
+    attachedTickets: totalTickets - remainingTickets,
+    tiers,
+    issues: [],
+  };
+};
+
 const isHistoryItem = (value: unknown): value is LocalDrawHistoryItem =>
   isRecord(value) &&
   typeof value.id === "string" &&
@@ -247,6 +319,11 @@ export const isLocalDrawDraft = (value: unknown): value is LocalDrawDraft => {
     (value.cloudRecordId === undefined ||
       (typeof value.cloudRecordId === "string" &&
         /^record_[a-f0-9]{32}$/u.test(value.cloudRecordId))) &&
+    (value.pendingCloudDeletion === undefined ||
+      (isRecord(value.pendingCloudDeletion) &&
+        typeof value.pendingCloudDeletion.recordId === "string" &&
+        /^record_[a-f0-9]{32}$/u.test(value.pendingCloudDeletion.recordId) &&
+        isNonNegativeFinite(value.pendingCloudDeletion.requestedAt))) &&
     (value.capturedAt === undefined || isNonNegativeFinite(value.capturedAt)) &&
     (value.submittedAt === undefined ||
       isNonNegativeFinite(value.submittedAt)) &&
@@ -551,7 +628,7 @@ export const summarizeLocalDrawDraft = (
     identityMeta: `IP: ${ipLabel} · ${createdAtLabel}`,
     statsMeta,
     canResume,
-    canDelete: submissionState === "local",
+    canDelete: true,
     recordStateLabel,
     ...(recordType === "draw" &&
     (draft.verificationStatus === "photo-failed" ||

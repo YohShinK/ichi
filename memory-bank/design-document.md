@@ -1,16 +1,26 @@
 # ICHI Product Design Document
 
+2026-08-29 V1 PHOTO 技术失败语义：LOCATION 已通过后，Provider HTTP／网络／超时、响应解析、Provider Schema 或服务端暂时异常都属于可重试的 `PROVIDER_FAILED`，不得伪装成表示照片事实不匹配的 `PHOTO_FAILED`。同一 submissionVersion 的 evidence 在既有临时保留窗内必须继续可用于明确的“重新核验”；只有 Provider 成功返回且 schema/normalize 完成后的实体证据无效、未知或 expected-vs-observed exact reconciliation 不一致，才进入对应 PHOTO 业务失败。技术失败不发布、覆盖或删除 Current P1，也不得放宽赏级与实体票精确核验。
+
+2026-08-28 V1 Current Publication 最终契约（取代本文较早的“同一 Board 多 Observation”临时规则）：产品固定为 Local Board、Upload Submission、Current Cloud Publication 三层。`MY_RECORDS` 只投影当前设备 Storage 中以 `boardId` 为身份的 Local Board；`MY_UPLOADS` 与未来 MAP 只投影本人每个 `ownerAccountId + boardId` 最多一条当前云端发布，以稳定 `recordId` 为身份；`drawSubmissions` 与单调 `submissionVersion` 只表达上传尝试。第一次上传建立 P1，后续完整通过 LOCATION／PHOTO／NOTE 的上传只原子更新同一 P1；PENDING、FAILED、Provider／网络异常和迟到旧版本均不得覆盖、隐藏或删除上一版可信 P1。服务端负责 one-current 唯一性，客户端去重只作防御。
+
+删除 Local Board 只删除本机 repository 对象，P1 继续存在；从 `MY_UPLOADS` 明确确认“删除版面线索”后，服务端删除／撤回 P1 及关联上传数据，当前设备只有取得明确删除受理回执后才级联删除对应 Local Board。随机 404、网络失败或未知响应不得删除本机 Board；崩溃恢复使用可持久化 pending marker 重试同一 owner-scoped 删除。显式删除墓碑不得被旧 submission、刷新或 lazy recovery 复活。
+
+新版面入口在账号资料已就绪时必须先使用页面内最近一次权威额度快照：已知 `remaining=0` 时立即显示耗尽态，不重复执行账号 bootstrap、资料读取、记录列表读取、位置或相机门禁；已知可用时只调用 `get-quota-status` 做最小服务端预检，再进入位置／相机门。页面 `onShow` 与用户关闭额度耗尽提示后必须重新读取权威额度，使跨日或管理端合法重置后的旧零值失效；最终预占和扣减仍由 `reserve-recognition`／finalize 服务端事务裁决，客户端快拒绝不替代服务端权威。
+
 > 状态：APPROVED
 >
-> 版本：1.34
+> 版本：1.37
 >
-> 更新日期：2026-08-27
+> 更新日期：2026-08-29
 >
 > 本文件是产品范围、行为与验收的长期事实源。
 
+2026-08-28 历史说明：较早的“每次成功上传建立独立 Observation、同一 `boardId` 多条记录全部进入 MY_UPLOADS、云端删除后保留 B1 并 lazy recovery”规则已正式废止；本文件只以上方 Current Publication 最终契约为当前行为。仍保留的兼容点只有 NEW upload 备注为空、同一次 NOTE_FAILED attempt 保留原文、never-uploaded／非显式删除的 legacy stale reference 不误删 B1。
+
 2026-08-28 V1-F 记录列表刷新规则：“我的记录”和“我上传的版面”在每次进入时重新读取本机与云端事实；两页即使记录不足一屏或为空，也保持上下边界均可越界后回弹的滚动区域。只有用户在列表顶部继续下拉超过阈值时执行一次互斥刷新，完成后回弹到顶部；列表底部继续上滑只提供越界回弹，不触发刷新。刷新期间不得重复发起同类请求，不得改变记录状态语义或覆盖滑动删除身份。
 
-2026-08-27 V1-F 上线收口规则：第一版生产赏票位置核验半径批准为 `200m`，只允许通过线上 `recognize-draw-tickets` 的 `PRIZE_TICKET_LOCATION_RADIUS_METERS=200` 环境配置提供；源码不得硬编码，配置缺失或非法仍 fail closed。小程序“我上传的版面”必须只按服务端 machine-readable verification status 映射失败体验：`LOCATION_FAILED` 显示“核验失败”且无操作，`PHOTO_FAILED` 显示“照片核验失败”并只允许“重新上传”，`NOTE_FAILED` 显示“备注未通过”并只允许“修改备注”；不得通过 message 文本猜测。PHOTO replacement 继承 LOCATION PASS，NOTE retry 继承 LOCATION/PHOTO PASS；APPROVED 与全部 PENDING 状态不显示失败操作。修改备注弹窗采用紧凑自适应高度，输入框必须在弹窗内水平居中且不溢出，说明文字位于输入框下方，重新核验操作与说明保持清晰的垂直间距；操作按钮与其居中的光晕容器必须使用相同宽度，不得因通用固定按钮宽度向任一侧溢出。
+2026-08-27 V1-F 上线收口规则：第一版生产赏票位置核验半径批准为 `200m`，只允许通过线上 `recognize-draw-tickets` 的 `PRIZE_TICKET_LOCATION_RADIUS_METERS=200` 环境配置提供；源码不得硬编码，配置缺失或非法仍 fail closed。小程序“我上传的版面”必须只按服务端 machine-readable verification status 映射失败体验：`LOCATION_FAILED` 显示“核验失败”且无操作，`PHOTO_FAILED` 显示“照片核验失败”并只允许“重新上传”，`NOTE_FAILED` 显示“备注未通过”并只允许“修改备注”；不得通过 message 文本猜测。PHOTO replacement 继承 LOCATION PASS，NOTE retry 继承 LOCATION/PHOTO PASS；APPROVED 与全部 PENDING 状态不显示失败操作。修改备注弹窗采用紧凑自适应高度，输入框必须在弹窗内水平居中且不溢出，说明文字位于输入框下方，重新核验操作与说明保持清晰的垂直间距；操作按钮与其居中的光晕容器必须使用相同宽度，不得因通用固定按钮宽度向任一侧溢出。用户提交重新核验备注后必须立即关闭弹窗并返回“我上传的版面”，后台结果只能通过列表状态、下拉刷新或再次进入页面观察，不得让弹窗等待核验终态后才关闭。
 
 2026-08-27 V1-F 用户文本安全统一规则：当前进入服务端内容安全审核的用户文本仅有资料昵称 `nickname` 与未来地图备注 `userNote`。两者必须复用同一个服务端文本安全能力，业务 usage 固定为 `PROFILE_NICKNAME` 与 `MAP_NOTE`，并由服务端分别映射微信 `msgSecCheck scene=1`（资料）与 `scene=2`（评论）；客户端不得提交或覆盖 scene。共享能力只返回 `passed=true/false`，只有微信明确 `suggest=pass` 才通过，其余风险、复核、拒绝、未知、异常和不可用全部 fail closed。昵称必须先审核通过再由 owner-scoped `bind-wechat-profile` 写入，失败保持原昵称并返回稳定错误；MAP_NOTE 继续沿用现有 NOTE gate、备注变更失效和只重跑 NOTE 的业务状态机，只替换底层直接 OpenAPI 调用。
 

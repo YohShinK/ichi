@@ -703,6 +703,91 @@ describe("V1-E page behavior", () => {
     ).not.toContain("reserve-recognition");
   });
 
+  it.each(["assist", "direct-upload"] as const)(
+    "rejects a known exhausted %s entry from the page snapshot without repeating account bootstrap",
+    async (flowMode) => {
+      quotaRemaining = 0;
+      const page = createRuntimePage();
+      call(page, "onLoad");
+      await call(page, "onShow");
+      await vi.waitFor(() => expect(page.data.accountState).toBe("ready"));
+      cloudCallFunctionMock.mockClear();
+
+      await call(page, "onImportBoard", baseEvent({ flowMode }));
+
+      expect(page.data.modalView).toBe("quota-exhausted");
+      expect(locationRequestCount).toBe(0);
+      expect(cameraAuthorizationCount).toBe(0);
+      expect(cloudCallFunctionMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it("keeps repeated exhausted attempts on the same deterministic fast-fail gate", async () => {
+    quotaRemaining = 0;
+    const page = createRuntimePage();
+    call(page, "onLoad");
+    await call(page, "onShow");
+    await vi.waitFor(() => expect(page.data.accountState).toBe("ready"));
+    cloudCallFunctionMock.mockClear();
+
+    await call(page, "onImportBoard", baseEvent({ flowMode: "assist" }));
+    page.setData({ modalView: "" });
+    await call(page, "onImportBoard", baseEvent({ flowMode: "assist" }));
+
+    expect(page.data.modalView).toBe("quota-exhausted");
+    expect(cloudCallFunctionMock).not.toHaveBeenCalled();
+  });
+
+  it("uses the quota-only server preflight for a ready account", async () => {
+    quotaRemaining = 2;
+    const page = createRuntimePage();
+    call(page, "onLoad");
+    await call(page, "onShow");
+    await vi.waitFor(() => expect(page.data.accountState).toBe("ready"));
+    cloudCallFunctionMock.mockClear();
+
+    await call(page, "onImportBoard", baseEvent({ flowMode: "assist" }));
+
+    expect(
+      cloudCallFunctionMock.mock.calls.map(([request]) => request.name),
+    ).toEqual(["get-quota-status"]);
+    expect(page.data.currentView).toBe("camera-capture");
+  });
+
+  it("invalidates a known-zero snapshot on show after the server quota is reset", async () => {
+    quotaRemaining = 0;
+    const page = createRuntimePage();
+    call(page, "onLoad");
+    await call(page, "onShow");
+    await vi.waitFor(() => expect(page.data.quotaRemaining).toBe(0));
+
+    quotaRemaining = 5;
+    await call(page, "onShow");
+    await vi.waitFor(() => expect(page.data.quotaRemaining).toBe(5));
+    cloudCallFunctionMock.mockClear();
+    await call(page, "onImportBoard", baseEvent({ flowMode: "assist" }));
+
+    expect(page.data.currentView).toBe("camera-capture");
+    expect(page.data.modalView).not.toBe("quota-exhausted");
+  });
+
+  it("revalidates a stale zero snapshot when the exhausted modal is dismissed", async () => {
+    quotaRemaining = 0;
+    const page = createRuntimePage();
+    call(page, "onLoad");
+    await call(page, "onShow");
+    await vi.waitFor(() => expect(page.data.quotaRemaining).toBe(0));
+    await call(page, "onImportBoard", baseEvent({ flowMode: "assist" }));
+    expect(page.data.modalView).toBe("quota-exhausted");
+
+    quotaRemaining = 5;
+    call(page, "onResetQuotaCapture");
+    await vi.waitFor(() => expect(page.data.quotaRemaining).toBe(5));
+
+    expect(page.data.modalView).toBe("");
+    expect(page.data.currentView).toBe("start");
+  });
+
   it("checks both entry modes without reserving or consuming quota", async () => {
     quotaRemaining = 2;
     for (const flowMode of ["assist", "direct-upload"]) {
@@ -858,6 +943,262 @@ describe("V1-E page behavior", () => {
     expect(page.data.cloudClues).toEqual([]);
     call(page, "onUnload");
   });
+
+  it("cascades an explicitly accepted cloud publication delete to the local board", async () => {
+    const page = createRuntimePage();
+    enterDraw(page);
+    const draft = call(page, "getActiveDraft") as LocalDrawDraft;
+    call(page, "persistDraft", {
+      ...draft,
+      recognitionJobId: "recognition-job-1",
+      cloudRecordId: "record_0123456789abcdef0123456789abcdef",
+      verificationStatus: "verified",
+      uploadStatus: "uploaded",
+      submissionState: "uploaded",
+      evidenceSubmissionVersion: 1,
+      locationNote: "ABC",
+    });
+    call(
+      page,
+      "onDeleteCloudRecord",
+      baseEvent({
+        recordId: "record_0123456789abcdef0123456789abcdef",
+        boardId: draft.boardId,
+      }),
+    );
+    cloudRecordsResult = [];
+    await call(page, "onConfirmDeleteUploadedBoard");
+
+    expect(JSON.parse(String(stored.get(LOCAL_DRAW_DRAFTS_KEY)))).toEqual([]);
+
+    const reloaded = createRuntimePage();
+    call(reloaded, "onLoad");
+    call(reloaded, "onOpenLocalRecords");
+    expect(reloaded.data.drafts).toEqual([]);
+    call(reloaded, "onUnload");
+  });
+
+  it("defensively shows only one current publication per board", async () => {
+    const currentRecordId = "record_0123456789abcdef0123456789abcdef";
+    const olderRecordId = "record_fedcba9876543210fedcba9876543210";
+    const oldestRecordId = "record_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const page = createRuntimePage();
+    enterDraw(page);
+    const draft = call(page, "getActiveDraft") as LocalDrawDraft;
+    call(page, "persistDraft", {
+      ...draft,
+      cloudRecordId: currentRecordId,
+      verificationStatus: "verified",
+      uploadStatus: "uploaded",
+      submissionState: "uploaded",
+      evidenceSubmissionVersion: 2,
+    });
+    cloudRecordsResult = [
+      {
+        recordId: currentRecordId,
+        recordCode: "A12BCD",
+        boardId: draft.boardId,
+        sourcePath: "assisted-draw",
+        status: "APPROVED",
+        prizeTicketVerificationStatus: "APPROVED",
+        updatedAt: "2026-08-28T04:00:00.000Z",
+        initialSnapshot: {
+          ip: "测试版面",
+          totalTickets: 10,
+          remainingTickets: 8,
+        },
+      },
+      {
+        recordId: olderRecordId,
+        recordCode: "LXZDNB",
+        boardId: draft.boardId,
+        sourcePath: "assisted-draw",
+        status: "APPROVED",
+        prizeTicketVerificationStatus: "APPROVED",
+        updatedAt: "2026-08-28T03:00:00.000Z",
+        initialSnapshot: {
+          ip: "测试版面",
+          totalTickets: 12,
+          remainingTickets: 10,
+        },
+      },
+      {
+        recordId: oldestRecordId,
+        recordCode: "123456",
+        boardId: draft.boardId,
+        sourcePath: "assisted-draw",
+        status: "APPROVED",
+        prizeTicketVerificationStatus: "APPROVED",
+        updatedAt: "2026-08-28T02:00:00.000Z",
+        initialSnapshot: {
+          ip: "测试版面",
+          totalTickets: 14,
+          remainingTickets: 12,
+        },
+      },
+    ];
+
+    await call(page, "refreshCloudRecords");
+
+    expect(page.data.contributions).toMatchObject([
+      { boardId: draft.boardId, cloudRecordId: currentRecordId },
+    ]);
+    expect(page.data.cloudClues).toMatchObject([
+      { recordId: currentRecordId, boardId: draft.boardId },
+    ]);
+  });
+
+  it("deletes a Local Board from My Records without deleting its Observation", async () => {
+    const recordId = "record_0123456789abcdef0123456789abcdef";
+    const page = createRuntimePage();
+    enterDraw(page);
+    const draft = call(page, "getActiveDraft") as LocalDrawDraft;
+    call(page, "persistDraft", {
+      ...draft,
+      cloudRecordId: recordId,
+      verificationStatus: "verified",
+      uploadStatus: "uploaded",
+      submissionState: "uploaded",
+      evidenceSubmissionVersion: 1,
+    });
+    cloudRecordsResult = [
+      {
+        recordId,
+        recordCode: "A12BCD",
+        boardId: draft.boardId,
+        sourcePath: "assisted-draw",
+        status: "APPROVED",
+        prizeTicketVerificationStatus: "APPROVED",
+        updatedAt: "2026-08-28T04:00:00.000Z",
+        initialSnapshot: {
+          ip: "测试版面",
+          totalTickets: 10,
+          remainingTickets: 8,
+        },
+      },
+    ];
+    cloudCallFunctionMock.mockClear();
+
+    await call(page, "onDeleteDraft", baseEvent({ boardId: draft.boardId }));
+
+    expect(JSON.parse(String(stored.get(LOCAL_DRAW_DRAFTS_KEY)))).toEqual([]);
+    expect(cloudCallFunctionMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: "delete-my-record" }),
+    );
+    await call(page, "refreshCloudRecords");
+    expect(page.data.cloudClues).toMatchObject([{ recordId }]);
+    expect(page.data.drafts).toEqual([]);
+    expect(page.data.cloudRecords).toMatchObject([{ recordId }]);
+
+    const reloaded = createRuntimePage();
+    call(reloaded, "onLoad");
+    await call(reloaded, "refreshCloudRecords");
+    expect(reloaded.data.drafts).toEqual([]);
+    expect(reloaded.data.cloudClues).toMatchObject([{ recordId }]);
+  });
+
+  it("keeps swipe-delete available for unbound, bound, and stale Local Boards", async () => {
+    const seedPage = createRuntimePage();
+    enterDraw(seedPage);
+    const seed = call(seedPage, "getActiveDraft") as LocalDrawDraft;
+    const drafts: LocalDrawDraft[] = [
+      {
+        ...seed,
+        boardId: "board-active-unbound",
+        recordCode: "A12BCD",
+        savedAt: 3,
+        submissionState: "local",
+        verificationStatus: "unverified",
+        uploadStatus: "not-uploaded",
+      },
+      {
+        ...seed,
+        boardId: "board-active-bound",
+        recordCode: "LXZDNB",
+        cloudRecordId: "record_0123456789abcdef0123456789abcdef",
+        savedAt: 2,
+        submissionState: "uploaded",
+        verificationStatus: "verified",
+        uploadStatus: "uploaded",
+        evidenceSubmissionVersion: 1,
+      },
+      {
+        ...seed,
+        boardId: "board-active-stale",
+        recordCode: "123456",
+        cloudRecordId: "record_fedcba9876543210fedcba9876543210",
+        savedAt: 1,
+        submissionState: "local",
+        verificationStatus: "unverified",
+        uploadStatus: "not-uploaded",
+      },
+    ];
+    stored.set(LOCAL_DRAW_DRAFTS_KEY, JSON.stringify(drafts));
+    const page = createRuntimePage();
+    call(page, "onLoad");
+    call(page, "onOpenLocalRecords");
+
+    expect(page.data.drafts).toMatchObject([
+      { boardId: "board-active-unbound", canDelete: true },
+      { boardId: "board-active-bound", canDelete: true },
+      { boardId: "board-active-stale", canDelete: true },
+    ]);
+
+    call(page, "onTouchStart", touchEvent("board-active-bound", 160, "active"));
+    call(page, "onTouchMove", touchEvent("board-active-bound", 72, "active"));
+    call(page, "onTouchEnd", touchEvent("board-active-bound", 72, "ended"));
+    expect(page.data.drafts).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          boardId: "board-active-bound",
+          swipeX: -72,
+        }),
+      ]),
+    );
+
+    cloudCallFunctionMock.mockClear();
+    await call(
+      page,
+      "onDeleteDraft",
+      baseEvent({ boardId: "board-active-bound" }),
+    );
+    expect(
+      JSON.parse(String(stored.get(LOCAL_DRAW_DRAFTS_KEY))).map(
+        (draft: LocalDrawDraft) => draft.boardId,
+      ),
+    ).toEqual(["board-active-unbound", "board-active-stale"]);
+    expect(cloudCallFunctionMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: "delete-my-record" }),
+    );
+  });
+
+  it.each([["location-failed"], ["photo-failed"], ["note-failed"]] as const)(
+    "cascades an explicitly accepted %s cloud publication delete",
+    async (verificationStatus) => {
+      const recordId = "record_0123456789abcdef0123456789abcdef";
+      const page = createRuntimePage();
+      enterDraw(page);
+      const draft = call(page, "getActiveDraft") as LocalDrawDraft;
+      call(page, "persistDraft", {
+        ...draft,
+        cloudRecordId: recordId,
+        verificationStatus,
+        uploadStatus: "uploaded",
+        submissionState: "pending-review",
+        evidenceSubmissionVersion: 1,
+      });
+
+      call(
+        page,
+        "onDeleteCloudRecord",
+        baseEvent({ recordId, boardId: draft.boardId }),
+      );
+      cloudRecordsResult = [];
+      await call(page, "onConfirmDeleteUploadedBoard");
+
+      expect(JSON.parse(String(stored.get(LOCAL_DRAW_DRAFTS_KEY)))).toEqual([]);
+    },
+  );
 
   it("does not patch record state while a native camera surface is mounted", async () => {
     cloudRecordsResult = [
@@ -1813,6 +2154,110 @@ describe("V1-E page behavior", () => {
     call(reloaded, "onUnload");
   });
 
+  it("keeps an active draw session and its persisted history when a late cloud refresh completes", async () => {
+    const page = createRuntimePage();
+    enterDraw(page);
+    const boardId = (page.data.activeDraft as { boardId: string }).boardId;
+
+    call(page, "commitDraw", "A", false);
+    await vi.advanceTimersByTimeAsync(1);
+    call(page, "commitDraw", "D", false);
+    await vi.advanceTimersByTimeAsync(1);
+
+    const beforeRefresh = JSON.parse(
+      String(stored.get(LOCAL_DRAW_DRAFTS_KEY)),
+    ) as LocalDrawDraft[];
+    expect(beforeRefresh[0]).toMatchObject({ boardId });
+    expect(beforeRefresh[0]?.history.map((event) => event.tier)).toEqual([
+      "A",
+      "D",
+    ]);
+
+    await call(page, "refreshCloudRecords");
+
+    expect(page.data).toMatchObject({
+      currentView: "draw",
+      activeDraft: { boardId },
+    });
+    const afterRefresh = JSON.parse(
+      String(stored.get(LOCAL_DRAW_DRAFTS_KEY)),
+    ) as LocalDrawDraft[];
+    expect(afterRefresh[0]?.history).toEqual(beforeRefresh[0]?.history);
+    expect(
+      (page.data.activeDraft as { historyItems: unknown[] }).historyItems,
+    ).toHaveLength(2);
+    call(page, "onUnload");
+  });
+
+  it("keeps four draws aligned across refresh, re-entry, submission, and verification identity", async () => {
+    const page = createRuntimePage();
+    enterDraw(page);
+    const boardId = (page.data.activeDraft as { boardId: string }).boardId;
+
+    for (const tier of ["A", "D"] as const) {
+      call(page, "commitDraw", tier, false);
+      await vi.advanceTimersByTimeAsync(1);
+    }
+    await call(page, "refreshCloudRecords");
+    expect(page.data.currentView).toBe("draw");
+
+    const reloaded = createRuntimePage();
+    call(reloaded, "onLoad");
+    expect(reloaded.data).toMatchObject({
+      currentView: "draw",
+      activeDraft: { boardId },
+    });
+    for (const tier of ["B", "C"] as const) {
+      call(reloaded, "commitDraw", tier, false);
+      await vi.advanceTimersByTimeAsync(1);
+    }
+    const persisted = JSON.parse(
+      String(stored.get(LOCAL_DRAW_DRAFTS_KEY)),
+    ) as LocalDrawDraft[];
+    expect(persisted[0]?.history.map((event) => event.tier)).toEqual([
+      "A",
+      "D",
+      "B",
+      "C",
+    ]);
+
+    reloaded.setData({
+      shareImagePath: "wxfile://four-draw-evidence.jpg",
+      shareNote: "四抽完整赏票",
+      shareReady: true,
+    });
+    await call(reloaded, "onSubmitEvidence");
+
+    const submit = cloudCallFunctionMock.mock.calls.find(
+      ([request]) =>
+        request.name === "recognize-draw-tickets" &&
+        request.data?.action === "submit",
+    )?.[0].data;
+    expect(submit).toMatchObject({
+      boardId,
+      submissionVersion: 1,
+      authoritativeDrawEvents: [
+        { tierCode: "A" },
+        { tierCode: "D" },
+        { tierCode: "B" },
+        { tierCode: "C" },
+      ],
+    });
+    const verify = cloudCallFunctionMock.mock.calls.find(
+      ([request]) =>
+        request.name === "recognize-draw-tickets" &&
+        request.data?.action === "verify",
+    )?.[0].data;
+    expect(verify).toMatchObject({
+      recordId: submit?.recordId,
+      boardId,
+      submissionVersion: submit?.submissionVersion,
+      imageFileId: expect.any(String),
+    });
+    call(page, "onUnload");
+    call(reloaded, "onUnload");
+  });
+
   it("updates a resumed draft time only after the session adds draws", () => {
     vi.setSystemTime(new Date(2026, 7, 13, 10, 0));
     const page = createRuntimePage();
@@ -1942,6 +2387,245 @@ describe("V1-E page behavior", () => {
       authoritativeDrawEvents: expect.any(Array),
     });
     call(page, "onUnload");
+  });
+
+  it("starts every true NEW upload with an empty note but preserves NOTE_FAILED edit text", () => {
+    const page = createRuntimePage();
+    enterDraw(page);
+    const draft = call(page, "getActiveDraft") as LocalDrawDraft;
+    call(page, "persistDraft", {
+      ...draft,
+      cloudRecordId: "record_0123456789abcdef0123456789abcdef",
+      evidenceSubmissionVersion: 1,
+      verificationStatus: "note-failed",
+      locationNote: "ABC",
+    });
+    page.setData({ shareNote: "ABC", shareReady: true });
+
+    call(page, "onStopTouchStart");
+    vi.advanceTimersByTime(500);
+    expect(page.data).toMatchObject({
+      modalView: "share-decision",
+      shareNote: "",
+      shareReady: false,
+    });
+
+    call(page, "onEditTicketNote", baseEvent({ boardId: draft.boardId }));
+    expect(page.data).toMatchObject({
+      modalView: "note-review",
+      shareNote: "ABC",
+    });
+  });
+
+  it("closes note review immediately while verification continues in the background", async () => {
+    const page = createRuntimePage();
+    enterDraw(page);
+    const draft = call(page, "getActiveDraft") as LocalDrawDraft;
+    call(page, "persistDraft", {
+      ...draft,
+      cloudRecordId: "record_0123456789abcdef0123456789abcdef",
+      evidenceSubmissionVersion: 1,
+      verificationStatus: "note-failed",
+      locationNote: "旧备注",
+    });
+    page.setData({ currentView: "contributions" });
+    call(page, "onEditTicketNote", baseEvent({ boardId: draft.boardId }));
+    call(page, "onReviewNoteInput", { detail: { value: "新备注" } });
+
+    let resolveReview!: (value: unknown) => void;
+    const reviewResponse = new Promise((resolve) => {
+      resolveReview = resolve;
+    });
+    const baseCloudCall = cloudCallFunctionMock.getMockImplementation();
+    cloudCallFunctionMock.mockImplementation(async (request) => {
+      if (
+        request.name === "recognize-draw-tickets" &&
+        request.data?.action === "review-note"
+      )
+        return reviewResponse;
+      return baseCloudCall?.(request);
+    });
+
+    const pending = call(page, "onSubmitNoteReview") as Promise<void>;
+    expect(page.data).toMatchObject({
+      activeTab: "my",
+      currentView: "contributions",
+      modalView: "",
+      evidenceSubmitting: true,
+    });
+    const savedDrafts = JSON.parse(
+      String(stored.get(LOCAL_DRAW_DRAFTS_KEY)),
+    ) as LocalDrawDraft[];
+    expect(
+      savedDrafts.find((item) => item.boardId === draft.boardId)
+        ?.verificationStatus,
+    ).toBe("note-pending");
+
+    resolveReview({
+      result: {
+        ok: true,
+        data: {
+          recordId: "record_0123456789abcdef0123456789abcdef",
+          boardId: draft.boardId,
+          submissionVersion: 1,
+          status: "APPROVED",
+        },
+      },
+    });
+    await pending;
+    expect(page.data).toMatchObject({
+      currentView: "contributions",
+      modalView: "",
+      evidenceSubmitting: false,
+    });
+  });
+
+  it("adopts a server-resolved publication for a non-tombstoned stale reference before NEW upload", async () => {
+    const oldRecordId = "record_0123456789abcdef0123456789abcdef";
+    const newRecordId = "record_fedcba9876543210fedcba9876543210";
+    const baseCloudCall = cloudCallFunctionMock.getMockImplementation();
+    cloudCallFunctionMock.mockImplementation(async (request) => {
+      if (
+        request.name === "finalize-board-observation" &&
+        request.data?.action === "prepare-new-upload"
+      ) {
+        return {
+          result: {
+            ok: true,
+            data: {
+              recordId: newRecordId,
+              recordCode: "LXZDNB",
+              boardId: request.data.boardId,
+              status: "private_saved",
+              idempotent: false,
+              created: true,
+            },
+          },
+        };
+      }
+      const result = await baseCloudCall?.(request);
+      if (request.name === "recognize-draw-tickets" && result?.result?.data) {
+        return {
+          result: {
+            ...result.result,
+            data: { ...result.result.data, recordId: newRecordId },
+          },
+        };
+      }
+      return result;
+    });
+    const page = createRuntimePage();
+    enterDraw(page);
+    const draft = call(page, "getActiveDraft") as LocalDrawDraft;
+    call(page, "persistDraft", {
+      ...draft,
+      recognitionJobId: "recognition-job-1",
+      cloudRecordId: oldRecordId,
+      history: [
+        { id: "draw-first", tier: "A" },
+        { id: "draw-next-1", tier: "B" },
+        { id: "draw-next-2", tier: "C" },
+      ],
+      verificationStatus: "unverified",
+      uploadStatus: "not-uploaded",
+      submissionState: "local",
+      locationNote: "ABC",
+    });
+    page.setData({ shareImagePath: "wxfile://new-observation.jpg" });
+    call(page, "onShareNoteInput", { detail: { value: "NEW" } });
+
+    await call(page, "onSubmitEvidence");
+
+    const prepareCalls = cloudCallFunctionMock.mock.calls.filter(
+      ([request]) =>
+        request.name === "finalize-board-observation" &&
+        request.data?.action === "prepare-new-upload",
+    );
+    expect(prepareCalls).toHaveLength(1);
+    expect(prepareCalls[0]?.[0].data).toMatchObject({
+      currentRecordId: oldRecordId,
+      boardId: draft.boardId,
+      recognitionJobId: "recognition-job-1",
+    });
+    expect(
+      cloudCallFunctionMock.mock.calls.find(
+        ([request]) =>
+          request.name === "recognize-draw-tickets" &&
+          request.data?.action === "submit",
+      )?.[0].data,
+    ).toMatchObject({
+      recordId: newRecordId,
+      submissionVersion: 1,
+      authoritativeDrawEvents: [
+        { eventId: "draw-first", tierCode: "A" },
+        { eventId: "draw-next-1", tierCode: "B" },
+        { eventId: "draw-next-2", tierCode: "C" },
+      ],
+    });
+    await vi.waitFor(() =>
+      expect(
+        cloudCallFunctionMock.mock.calls.find(
+          ([request]) =>
+            request.name === "recognize-draw-tickets" &&
+            request.data?.action === "verify",
+        )?.[0].data,
+      ).toMatchObject({
+        recordId: newRecordId,
+        boardId: draft.boardId,
+        submissionVersion: 1,
+      }),
+    );
+    const saved = JSON.parse(
+      String(stored.get(LOCAL_DRAW_DRAFTS_KEY)),
+    )[0] as LocalDrawDraft;
+    expect(saved).toMatchObject({
+      boardId: draft.boardId,
+      cloudRecordId: newRecordId,
+      recordCode: "LXZDNB",
+      evidenceSubmissionVersion: 1,
+    });
+    expect(saved.history).toEqual([
+      { id: "draw-first", tier: "A" },
+      { id: "draw-next-1", tier: "B" },
+      { id: "draw-next-2", tier: "C" },
+    ]);
+  });
+
+  it("does not lazily recreate a publication after explicit cloud deletion", async () => {
+    const oldRecordId = "record_0123456789abcdef0123456789abcdef";
+    const page = createRuntimePage();
+    enterDraw(page);
+    const draft = call(page, "getActiveDraft") as LocalDrawDraft;
+    call(page, "persistDraft", {
+      ...draft,
+      recognitionJobId: "recognition-job-lifecycle",
+      cloudRecordId: oldRecordId,
+      history: [{ id: "draw-before-delete", tier: "C" }],
+      verificationStatus: "verified",
+      uploadStatus: "uploaded",
+      submissionState: "uploaded",
+      evidenceSubmissionVersion: 1,
+      locationNote: "O1 historical note",
+    });
+    call(
+      page,
+      "onDeleteCloudRecord",
+      baseEvent({ recordId: oldRecordId, boardId: draft.boardId }),
+    );
+    cloudRecordsResult = [];
+    await call(page, "onConfirmDeleteUploadedBoard");
+
+    const reloaded = createRuntimePage();
+    call(reloaded, "onLoad");
+    call(reloaded, "onOpenDraft", baseEvent({ boardId: draft.boardId }));
+    expect(reloaded.data.activeDraft).toBeNull();
+    expect(JSON.parse(String(stored.get(LOCAL_DRAW_DRAFTS_KEY)))).toEqual([]);
+    expect(cloudCallFunctionMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "finalize-board-observation",
+        data: expect.objectContaining({ action: "prepare-new-upload" }),
+      }),
+    );
   });
 
   it("leaves capture on durable PENDING while a slow provider is unresolved", async () => {

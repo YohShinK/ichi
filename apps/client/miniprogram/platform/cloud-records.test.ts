@@ -373,7 +373,7 @@ describe("private cloud record adapter", () => {
       records: [
         {
           recordStateLabel: "已上传",
-          statsMeta: "余 1 / 2",
+          statsMeta: "余 2 / 2",
           uploadedAt: "2026-08-25T03:32:00.000Z",
           locationNote: "秋叶原本店",
           location: { latitude: 35.6, longitude: 139.7 },

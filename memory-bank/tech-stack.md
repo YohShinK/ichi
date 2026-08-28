@@ -1,5 +1,19 @@
 # ICHI Technology Stack
 
+2026-08-29 V1 Current Publication 大字段回归收口栈：`observationCandidates` 的稳定 P1 只原子保存 `publishedSubmissionVersion`、批准状态和可信时间等小型发布指针，不再复制 `drawSubmissions` 内的 `finalSnapshot`／`authoritativeDrawEvents`，避免重现生产已证实的 CloudBase `-502001` 大型 observation 更新失败。`get-my-records` 按 P1 的 owner、board 和精确 published version 读取已批准 submission，并把 snapshot、draw events、note 与 location 投影到返回记录；更新但失败的 attempt 只提供核验状态与重试上下文，不能覆盖当前发布内容。核验诊断在 AJV 后继续记录 normalize、reconcile、note review 和 publication transaction checkpoint，并兼容读取 CloudBase SDK 的 `code`／`errCode`。
+
+2026-08-29 V1 PHOTO 可恢复性栈：`recognize-draw-tickets` 的 Provider 调用以 `REQUEST_STARTED → HTTP_RESPONSE → RESPONSE_BODY_PARSED → CONTENT_PRESENT → OUTPUT_JSON_PARSED → AJV_PASSED` 非敏感 checkpoint 诊断技术失败；非 2xx、transport、JSON/AJV 和后续基础设施异常统一保持 attempt 为 `PROVIDER_FAILED`，不清空当前 Storage fileID、不触发即时终态删除。客户端既有 `provider-failed → 核验异常 + 重新核验` 投影和 same-version pending identity 继续复用；50 分钟 cleanup job 与平台 1 天 lifecycle 仍封住临时图片上限。Provider 正常输出才进入实体证据 normalize 与 exact reconciliation，未改模型、Prompt、Schema 或核验强度。
+
+2026-08-28 V1 Current Publication 收口栈：本机版本化 Storage 的 `boardId` 继续承载 Local Board；CloudBase `observationCandidates` 复用为每个 `ownerAccountId + boardId` 最多一条当前发布 P1，稳定 `recordId` 不因重新上传变化；`drawSubmissions` 以递增 `submissionVersion` 承载每次上传尝试。submit／PENDING／FAILED 只写 attempt，不写 P1；只有 LOCATION／PHOTO／NOTE 全部通过后的 APPROVED 事务才推进 P1 的 `publishedSubmissionVersion` 与必要轻量状态，可信 snapshot、draw events、location 和 note 继续保存在对应版本的 submission 中。`get-my-records` 由服务端按 owner+board、批准状态、发布版本和服务端时间选择唯一 current publication，并精确投影该 approved submission；客户端只做防御性去重。未来 MAP 若解锁也只能消费同一 current-only 投影，本轮不新增公共集合或地图端点。
+
+显式云端删除继续复用 `delete-my-record` 与 `deletionJobs` 墓碑，并在小程序 Local Board 中持久化 `pendingCloudDeletion`。只有 owner-scoped 删除明确受理后才删除当前设备 B1；网络失败、未知响应和普通 404 均保留 B1，重启后按 marker 幂等续跑。`recordCode` 仍只是 `^[A-Z0-9]{6}$` 展示码，`cloudRecordId` 只是 P1 reference；二者都不替代 `boardId`／`recordId` 的领域身份。生产只更新 `finalize-board-observation`、`finalize-draw-update`、`get-my-records`、`recognize-draw-tickets` 四个受影响函数，保留 Nodejs20.19、入口、环境配置和依赖层。
+
+2026-08-28 历史客户端边界说明：早先按 `recordId` 展示同 Board 多条 Observation 的临时投影已由上方 Current Publication 栈取代。`onDeleteDraft` 仍只操作本机 repository；`onConfirmDeleteUploadedBoard` 仍调用 owner-scoped `delete-my-record`，但成功后按最终合同级联删除当前设备 B1。
+
+2026-08-28 V1 六位记录码兼容边界：服务端 `newRecordCode` 使用大写字母数字字符集随机生成六位 display code，客户端持久化 validator 必须接受完整 `^[A-Z0-9]{6}$`，不得添加“至少一个字母且至少一个数字”的额外约束。本机 `deriveRecordCode` 可以为可读性继续保证混合字符，但服务端返回码是规范值；任一合法码都不能影响 Local Board 可恢复性、后台 verify 或 ownership。
+
+2026-08-28 历史 identity-recovery 说明：较早通过派生链为每次上传建立新 Observation 的做法已废止。当前 `prepare-new-upload` 对 owner+board 复用稳定 P1；显式删除墓碑返回删除终态且不得派生新 P1，never-uploaded／非显式 legacy stale 仍可安全绑定或首次建立 P1。客户端继续从不可变初始基线与完整 draw-event batch构建 attempt；NEW upload note 清空，NOTE_FAILED 同版本编辑保留原文。
+
 > 状态：APPROVED
 >
 > 版本：1.24

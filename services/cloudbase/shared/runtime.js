@@ -855,13 +855,85 @@ const createRuntime = ({
     domain.assert(locationNote.length <= 300, "LOCATION_NOTE_INVALID");
     if (event.sourcePath === "direct-upload")
       domain.assert(locationNote, "LOCATION_NOTE_REQUIRED");
-    domain.assert(
-      typeof event.recognitionJobId === "string" && event.recognitionJobId,
-      "RECOGNITION_JOB_INVALID",
-    );
+    const prepareNewUpload = event.action === "prepare-new-upload";
+    if (!prepareNewUpload)
+      domain.assert(
+        typeof event.recognitionJobId === "string" && event.recognitionJobId,
+        "RECOGNITION_JOB_INVALID",
+      );
+    if (prepareNewUpload) {
+      return db.runTransaction(async (transaction) => {
+        const recognitionJobId = String(event.recognitionJobId || "");
+        const job = recognitionJobId
+          ? await getDocument(transaction, COLLECTIONS.jobs, recognitionJobId)
+          : null;
+        const requestedRecordId = String(
+          event.currentRecordId || job?.recordId || "",
+        );
+        domain.assert(
+          /^record_[a-f0-9]{32}$/u.test(requestedRecordId) && event.boardId,
+          "RECORD_NOT_FOUND",
+        );
+        const boardDeletions = await transaction
+          .collection(COLLECTIONS.deletions)
+          .where({
+            ownerAccountId: accountId,
+            targetType: "record",
+            boardId: event.boardId,
+          })
+          .limit(1)
+          .get();
+        domain.assert(!boardDeletions.data?.length, "RECORD_DELETED");
+        const current = await getDocument(
+          transaction,
+          COLLECTIONS.observations,
+          requestedRecordId,
+        );
+        if (current) {
+          domain.assert(
+            current.ownerAccountId === accountId &&
+              current.boardId === event.boardId &&
+              current.sourcePath === "assisted-draw",
+            "RECORD_NOT_FOUND",
+          );
+          if (current.status !== "deleting")
+            return response({
+              recordId: current.recordId,
+              recordCode: current.recordCode,
+              boardId: current.boardId,
+              status: current.status,
+              idempotent: true,
+              created: false,
+            });
+        } else {
+          const deletion = await getDocument(
+            transaction,
+            COLLECTIONS.deletions,
+            `record:${requestedRecordId}`,
+          );
+          if (deletion) {
+            domain.assert(
+              deletion.ownerAccountId === accountId &&
+                deletion.boardId === event.boardId,
+              "RECORD_NOT_FOUND",
+            );
+            domain.assert(false, "RECORD_DELETED");
+          }
+          domain.assert(false, "RECORD_NOT_FOUND");
+        }
+        throw new domain.IchiError("RECORD_NOT_FOUND");
+      });
+    }
+    const boardId =
+      event.boardId ||
+      `board_${crypto
+        .createHash("sha256")
+        .update(`${accountId}:${event.recognitionJobId}:local-board`)
+        .digest("hex")
+        .slice(0, 32)}`;
     const recordId = `record_${crypto
       .createHash("sha256")
-      .update(`${accountId}:${event.recognitionJobId}`)
+      .update(`${accountId}:${boardId}:current-publication`)
       .digest("hex")
       .slice(0, 32)}`;
     return db.runTransaction(async (transaction) => {
@@ -911,7 +983,6 @@ const createRuntime = ({
         !(await getDocument(transaction, COLLECTIONS.codes, recordCode)),
         "RECORD_CODE_COLLISION",
       );
-      const boardId = event.boardId || domain.newInternalId("board");
       const timestamp = nowIso(now());
       if (!legacyCommitted) {
         reservation.status = "committed";
@@ -1093,34 +1164,7 @@ const createRuntime = ({
           result[item.tierCode] = (result[item.tierCode] || 0) + 1;
           return result;
         }, {});
-        const finalSnapshot = domain.deriveFinalSnapshot(
-          observation.initialSnapshot,
-          counts,
-        );
-        if (!sameVersion) {
-          const timestamp = nowIso(now());
-          await transaction
-            .collection(COLLECTIONS.observations)
-            .doc(recordId)
-            .update({
-              data: {
-                authoritativeDrawEvents: supplied,
-                authoritativeDrawSubmissionVersion: version,
-                finalSnapshot,
-                ...(finalSnapshot.schemaVersion === "board-record-r2-1.0.0"
-                  ? { tiers: finalSnapshot.tiers }
-                  : {}),
-                status: "private_saved",
-                updatedAt: timestamp,
-              },
-            });
-          await addAudit(transaction, {
-            type: "draw.verification_prepared",
-            actorAccountId: accountId,
-            subjectType: "record",
-            subjectId: recordId,
-          });
-        }
+        domain.deriveFinalSnapshot(observation.initialSnapshot, counts);
         return response({
           recordId,
           status: "verification_prepared",
@@ -1225,19 +1269,114 @@ const createRuntime = ({
       .orderBy("updatedAt", "desc")
       .limit(limit)
       .get();
-    const records = await Promise.all(
+    const deletionResult = await db
+      .collection(COLLECTIONS.deletions)
+      .where({ ownerAccountId: accountId, targetType: "record" })
+      .limit(100)
+      .get();
+    const deletedBoards = new Set(
+      (deletionResult.data || []).map((deletion) => deletion.boardId),
+    );
+    const candidates = await Promise.all(
       (result.data || [])
-        .filter((record) => record.status !== "deleting")
+        .filter(
+          (record) =>
+            record.status !== "deleting" &&
+            record.status !== "superseded" &&
+            !deletedBoards.has(record.boardId),
+        )
         .map(async (record) => {
+          const attemptResult = await db
+            .collection(COLLECTIONS.draws)
+            .where({ recordId: record.recordId })
+            .orderBy("createdAt", "desc")
+            .limit(1)
+            .get();
+          const publishedVersion = Number(
+            record.publishedSubmissionVersion || 0,
+          );
+          const publishedSubmission =
+            publishedVersion > 0 && record.boardId
+              ? await getDocument(
+                  db,
+                  COLLECTIONS.draws,
+                  `prize-ticket:${record.recordId}:${record.boardId}:${publishedVersion}`,
+                )
+              : null;
+          return {
+            ...record,
+            __latestSubmission: attemptResult.data?.[0],
+            __publishedSubmission: publishedSubmission,
+          };
+        }),
+    );
+    const currentByBoard = [];
+    const groups = new Map();
+    for (const record of candidates) {
+      const isPublication =
+        record.sourcePath === "direct-upload" ||
+        record.publicationState === "current" ||
+        Boolean(record.__latestSubmission);
+      if (!isPublication) continue;
+      const group = groups.get(record.boardId) || [];
+      group.push(record);
+      groups.set(record.boardId, group);
+    }
+    for (const group of groups.values()) {
+      group.sort((left, right) => {
+        const trusted = (record) =>
+          record.status === "uploaded" ||
+          record.verificationStatus === "APPROVED" ||
+          record.__latestSubmission?.status === "APPROVED"
+            ? 1
+            : 0;
+        const trustedDiff = trusted(right) - trusted(left);
+        if (trustedDiff) return trustedDiff;
+        const versionDiff =
+          Number(
+            right.publishedSubmissionVersion ||
+              right.__latestSubmission?.submissionVersion ||
+              0,
+          ) -
+          Number(
+            left.publishedSubmissionVersion ||
+              left.__latestSubmission?.submissionVersion ||
+              0,
+          );
+        if (versionDiff) return versionDiff;
+        return (
+          Date.parse(String(right.approvedAt || right.updatedAt || 0)) -
+          Date.parse(String(left.approvedAt || left.updatedAt || 0))
+        );
+      });
+      currentByBoard.push(group[0]);
+    }
+    const records = (
+      await Promise.all(
+        currentByBoard.map(async (record) => {
           const sanitized = { ...record };
           delete sanitized.ownerAccountId;
-          const version = Number(record.currentVerificationVersion || 0);
+          delete sanitized.__latestSubmission;
+          delete sanitized.__publishedSubmission;
+          const submission = record.__latestSubmission || null;
+          const publishedSubmission = record.__publishedSubmission || null;
+          if (
+            publishedSubmission?.ownerAccountId === accountId &&
+            publishedSubmission.status === "APPROVED" &&
+            Number(publishedSubmission.submissionVersion || 0) ===
+              Number(record.publishedSubmissionVersion || 0)
+          ) {
+            sanitized.finalSnapshot = publishedSubmission.finalSnapshot;
+            sanitized.authoritativeDrawEvents =
+              publishedSubmission.authoritativeDrawEvents;
+            if (publishedSubmission.finalSnapshot?.tiers)
+              sanitized.tiers = publishedSubmission.finalSnapshot.tiers;
+            sanitized.userNote = publishedSubmission.userNote || "";
+            sanitized.location =
+              publishedSubmission.ticketLocation || sanitized.location;
+          }
+          const version = Number(submission?.submissionVersion || 0);
           if (version > 0 && record.boardId) {
-            const submission = await getDocument(
-              db,
-              COLLECTIONS.draws,
-              `prize-ticket:${record.recordId}:${record.boardId}:${version}`,
-            );
             if (submission?.ownerAccountId === accountId) {
               sanitized.latestPrizeTicketSubmission = {
                 submissionVersion: version,
@@ -1292,7 +1431,8 @@ const createRuntime = ({
           }
           return sanitized;
         }),
-    );
+      )
+    ).filter(Boolean);
     return response({
       records,
       hasMore: (result.data || []).length === limit,

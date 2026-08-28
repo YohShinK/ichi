@@ -23,6 +23,28 @@ export interface ConfirmedBoardSnapshot {
   }[];
 }
 
+export interface LegacyConfirmedBoardSnapshot {
+  readonly schemaVersion: "board-snapshot-1.0.0";
+  readonly ip: string;
+  readonly theme?: string;
+  readonly pricePerDraw: number;
+  readonly currency: "CNY";
+  readonly totalTickets: number;
+  readonly remainingTickets: number;
+  readonly attachedTickets: number;
+  readonly tiers: readonly {
+    readonly tierId: string;
+    readonly sourceLabels: readonly string[];
+    readonly total: number;
+    readonly remaining: number;
+    readonly attached: number;
+  }[];
+  readonly issues: readonly unknown[];
+}
+
+export type InitialCloudBoardSnapshot =
+  ConfirmedBoardSnapshot | LegacyConfirmedBoardSnapshot;
+
 export const toConfirmedBoardSnapshot = (input: {
   readonly ip: string;
   readonly theme?: string;
@@ -143,3 +165,37 @@ export const finalizeCloudObservation = (
   readonly status: string;
   readonly idempotent: boolean;
 }> => callCloudFunction(api, "finalize-board-observation", input);
+
+export const prepareCloudObservationForUpload = (
+  api: CloudFunctionApi,
+  input: {
+    readonly currentRecordId?: string;
+    readonly recognitionJobId?: string;
+    readonly boardId: string;
+    readonly confirmedSnapshot: InitialCloudBoardSnapshot;
+    readonly location: {
+      readonly latitude: number;
+      readonly longitude: number;
+      readonly accuracy: number;
+      readonly source: "camera";
+      readonly capturedAt: string;
+      readonly consentVersion: string;
+    };
+    readonly observedAt: string;
+    readonly promptVersion: string;
+    readonly consentVersion: string;
+    readonly disclosureVersion: string;
+  },
+): Promise<{
+  readonly recordId: string;
+  readonly recordCode: string;
+  readonly boardId: string;
+  readonly status: string;
+  readonly idempotent: boolean;
+  readonly created: boolean;
+}> =>
+  callCloudFunction(api, "finalize-board-observation", {
+    action: "prepare-new-upload",
+    sourcePath: "assisted-draw",
+    ...input,
+  });

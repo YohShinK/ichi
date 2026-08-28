@@ -73,6 +73,7 @@ const { hashIdentity } = require("../../shared/domain.js") as {
 type TestDocument = Record<string, unknown>;
 const createTestDatabase = (
   seed: Record<string, Record<string, TestDocument>>,
+  options?: { rejectLargeObservationUpdate?: boolean },
 ) => {
   const collections = new Map(
     Object.entries(seed).map(([name, documents]) => [
@@ -110,6 +111,15 @@ const createTestDatabase = (
             async update(input: { data: TestDocument }) {
               const current = documents.get(id);
               if (!current) throw new Error("not found");
+              if (
+                options?.rejectLargeObservationUpdate &&
+                name === "observationCandidates" &&
+                ("finalSnapshot" in input.data ||
+                  "authoritativeDrawEvents" in input.data)
+              )
+                throw Object.assign(new Error("database internal error"), {
+                  errCode: -502001,
+                });
               documents.set(id, { ...current, ...structuredClone(input.data) });
             },
           };
@@ -128,6 +138,7 @@ const createVerificationHarness = (input?: {
   noteReviewer?: (value: unknown) => Promise<unknown>;
   providerTickets?: unknown[];
   deleteFileFails?: boolean;
+  rejectLargeObservationUpdate?: boolean;
 }) => {
   const appId = "wx-prize-ticket-test";
   const openId = "openid-prize-ticket-test";
@@ -136,40 +147,43 @@ const createVerificationHarness = (input?: {
   const recordId = "record_0123456789abcdef0123456789abcdef";
   const boardId = "board-prize-ticket-test";
   const identityId = hashIdentity({ appId, openId, secret });
-  const database = createTestDatabase({
-    wechatIdentities: { [identityId]: { accountId } },
-    observationCandidates: {
-      [recordId]: {
-        ownerAccountId: accountId,
-        recordId,
-        boardId,
-        sourcePath: "assisted-draw",
-        status: "private_saved",
-        location: {
-          latitude: 31.23,
-          longitude: 121.47,
-          accuracy: 10,
-        },
-        latestPrizeTicketSubmissionVersion: 0,
-        initialSnapshot: {
-          schemaVersion: "board-record-r2-1.0.0",
-          recognitionVersion: "R2",
-          ipName: "世界之外",
-          themeName: "此间即无间",
-          pricePerDraw: 65,
-          currency: "CNY",
-          tiers: [
-            {
-              tierCode: "A",
-              rawLabel: "A賞",
-              remainingTickets: input?.remainingTickets ?? 1,
-              isGrandPrize: true,
-            },
-          ],
+  const database = createTestDatabase(
+    {
+      wechatIdentities: { [identityId]: { accountId } },
+      observationCandidates: {
+        [recordId]: {
+          ownerAccountId: accountId,
+          recordId,
+          boardId,
+          sourcePath: "assisted-draw",
+          status: "private_saved",
+          location: {
+            latitude: 31.23,
+            longitude: 121.47,
+            accuracy: 10,
+          },
+          latestPrizeTicketSubmissionVersion: 0,
+          initialSnapshot: {
+            schemaVersion: "board-record-r2-1.0.0",
+            recognitionVersion: "R2",
+            ipName: "世界之外",
+            themeName: "此间即无间",
+            pricePerDraw: 65,
+            currency: "CNY",
+            tiers: [
+              {
+                tierCode: "A",
+                rawLabel: "A賞",
+                remainingTickets: input?.remainingTickets ?? 1,
+                isGrandPrize: true,
+              },
+            ],
+          },
         },
       },
     },
-  });
+    { rejectLargeObservationUpdate: input?.rejectLargeObservationUpdate },
+  );
   const deleteFile = vi.fn(async () => {
     if (input?.deleteFileFails) throw new Error("temporary storage failure");
     return {};
@@ -410,6 +424,93 @@ describe("PrizeTicketVerificationProviderV1", () => {
     });
   });
 
+  it("replays the production five-draw shape through schema and exact reconciliation", async () => {
+    const providerFixture = observable([
+      { ticketIndex: 1, tierRaw: "A賞", tierCode: "A" },
+      { ticketIndex: 2, tierRaw: "B賞", tierCode: "B" },
+      { ticketIndex: 3, tierRaw: "B賞", tierCode: "B" },
+      { ticketIndex: 4, tierRaw: "C賞", tierCode: "C" },
+      { ticketIndex: 5, tierRaw: "D賞", tierCode: "D" },
+    ]);
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        choices: [{ message: { content: JSON.stringify(providerFixture) } }],
+      }),
+    })) as unknown as typeof fetch;
+    const provider = await __test.callProvider({
+      fetchImpl,
+      apiKey: "test",
+      workspaceId: "test",
+      region: "cn-beijing",
+      imageUrl: "https://example.test/current-submission.jpg",
+    });
+    const facts = __test.authoritativeSubmissionFacts(
+      {
+        authoritativeDrawEvents: [
+          { eventId: "draw-1", tierCode: "A", occurredAt: 1 },
+          { eventId: "draw-2", tierCode: "B", occurredAt: 2 },
+          { eventId: "draw-3", tierCode: "B", occurredAt: 3 },
+          { eventId: "draw-4", tierCode: "C", occurredAt: 4 },
+          { eventId: "draw-5", tierCode: "D", occurredAt: 5 },
+        ],
+      },
+      {
+        initialSnapshot: {
+          ip: "世界之外",
+          pricePerDraw: 58,
+          tiers: [
+            { tierId: "A", total: 1, remaining: 1, attached: 0 },
+            { tierId: "B", total: 2, remaining: 2, attached: 0 },
+            { tierId: "C", total: 1, remaining: 1, attached: 0 },
+            { tierId: "D", total: 1, remaining: 1, attached: 0 },
+          ],
+          totalTickets: 5,
+          remainingTickets: 5,
+          attachedTickets: 0,
+        },
+      },
+      1,
+    );
+    const expectedDraws = __test.expectedFromAuthoritativeRecord(facts, 1);
+    const observedTickets = __test.observedFromTickets(provider);
+
+    expect(expectedDraws).toEqual({
+      total: 5,
+      tierCounts: { A: 1, B: 2, C: 1, D: 1 },
+    });
+    expect(__test.exactReconcile(expectedDraws, observedTickets)).toEqual({
+      status: "VERIFIED",
+      mismatches: [],
+    });
+  });
+
+  it("keeps an incorrect five-ticket fixture terminally mismatched", () => {
+    const expectedDraws = {
+      total: 5,
+      tierCounts: { A: 1, B: 2, C: 1, D: 1 },
+    };
+    const observedTickets = __test.observedFromTickets(
+      observable([
+        { ticketIndex: 1, tierRaw: "A賞", tierCode: "A" },
+        { ticketIndex: 2, tierRaw: "B賞", tierCode: "B" },
+        { ticketIndex: 3, tierRaw: "B賞", tierCode: "B" },
+        { ticketIndex: 4, tierRaw: "B賞", tierCode: "B" },
+        { ticketIndex: 5, tierRaw: "D賞", tierCode: "D" },
+      ]),
+    );
+
+    expect(__test.exactReconcile(expectedDraws, observedTickets)).toMatchObject(
+      {
+        status: "MISMATCH",
+        mismatches: [
+          { tier: "B", expected: 2, observed: 3 },
+          { tier: "C", expected: 1, observed: 0 },
+        ],
+      },
+    );
+  });
+
   it("lets an authoritative deletion win over an in-flight verification result", () => {
     expect(__test.isDeletedObservation({ status: "deleting" })).toBe(true);
     expect(__test.isDeletedObservation(null)).toBe(true);
@@ -592,7 +693,6 @@ describe("PrizeTicketVerificationProviderV1", () => {
       ownerAccountId: "account-prize-ticket-test",
       verificationStatus: "APPROVED",
       prizeTicketVerificationStatus: "APPROVED",
-      userNote: "入口右侧，A赏已抽出",
       status: "uploaded",
       initialSnapshot: {
         tiers: [{ remainingTickets: 1 }],
@@ -626,6 +726,33 @@ describe("PrizeTicketVerificationProviderV1", () => {
       },
     });
     expect(harness.deleteFile).toHaveBeenCalledOnce();
+  });
+
+  it("publishes by version pointer when CloudBase rejects large observation updates", async () => {
+    const harness = createVerificationHarness({
+      rejectLargeObservationUpdate: true,
+    });
+    await main({ action: "submit", ...harness.event() }, harness.runtime);
+
+    await expect(
+      main({ action: "verify", ...harness.event() }, harness.runtime),
+    ).resolves.toMatchObject({
+      ok: true,
+      data: { status: "APPROVED", photoStatus: "VERIFIED" },
+    });
+    const record = (
+      await harness.database
+        .collection("observationCandidates")
+        .doc(harness.recordId)
+        .get()
+    ).data;
+    expect(record).toMatchObject({
+      publishedSubmissionVersion: 1,
+      status: "uploaded",
+      verificationStatus: "APPROVED",
+    });
+    expect(record.finalSnapshot).toBeUndefined();
+    expect(record.authoritativeDrawEvents).toBeUndefined();
   });
 
   it("keeps failed terminal evidence deletion retryable in the existing maintenance queue", async () => {
@@ -816,6 +943,51 @@ describe("PrizeTicketVerificationProviderV1", () => {
     });
   });
 
+  it("keeps a provider transport failure retryable on the same submission and image", async () => {
+    const harness = createVerificationHarness();
+    await main({ action: "submit", ...harness.event() }, harness.runtime);
+    const unavailableRuntime = {
+      ...harness.runtime,
+      fetchImpl: vi.fn(async () => ({
+        ok: false,
+        status: 503,
+        json: async () => ({}),
+      })) as unknown as typeof fetch,
+    };
+
+    await expect(
+      main({ action: "verify", ...harness.event() }, unavailableRuntime),
+    ).resolves.toMatchObject({
+      ok: true,
+      data: {
+        status: "PROVIDER_FAILED",
+        errorCode: "PRIZE_TICKET_PROVIDER_FAILED",
+        providerDiagnostics: { httpStatus: 503, stage: "HTTP_RESPONSE" },
+      },
+    });
+    const attemptAfterFailure = (
+      await harness.database
+        .collection("drawSubmissions")
+        .doc(`prize-ticket:${harness.recordId}:${harness.boardId}:1`)
+        .get()
+    ).data;
+    expect(attemptAfterFailure).toMatchObject({
+      status: "PROVIDER_FAILED",
+      imageFileId: harness.event().imageFileId,
+      errorCode: "PRIZE_TICKET_PROVIDER_FAILED",
+      providerDiagnostics: { httpStatus: 503, stage: "HTTP_RESPONSE" },
+    });
+    expect(harness.deleteFile).not.toHaveBeenCalled();
+
+    await expect(
+      main({ action: "verify", ...harness.event() }, harness.runtime),
+    ).resolves.toMatchObject({
+      ok: true,
+      data: { status: "APPROVED", photoStatus: "VERIFIED" },
+    });
+    expect(harness.deleteFile).toHaveBeenCalledOnce();
+  });
+
   it("fails NOTE closed when msgSecCheck is unknown or unavailable", async () => {
     const harness = createVerificationHarness({
       noteReviewer: async () => ({}),
@@ -835,7 +1007,7 @@ describe("PrizeTicketVerificationProviderV1", () => {
         .doc(harness.recordId)
         .get()
     ).data;
-    expect(record).toMatchObject({ verificationStatus: "NOTE_FAILED" });
+    expect(record.verificationStatus).toBeUndefined();
     expect(record.status).not.toBe("uploaded");
   });
 
@@ -874,13 +1046,9 @@ describe("PrizeTicketVerificationProviderV1", () => {
         .doc(harness.recordId)
         .get()
     ).data;
-    expect(pendingRecord).toMatchObject({
-      verificationStatus: "NOTE_PENDING",
-      prizeTicketVerificationStatus: "NOTE_PENDING",
-      approvedAt: null,
-      status: "private_saved",
-      userNote: "修改后的现场备注",
-    });
+    expect(pendingRecord).toMatchObject({ status: "private_saved" });
+    expect(pendingRecord.verificationStatus).toBeUndefined();
+    expect(pendingRecord.userNote).toBeUndefined();
     resolveNoteReview({ result: { suggest: "pass" } });
     await expect(retry).resolves.toMatchObject({
       ok: true,
@@ -896,6 +1064,15 @@ describe("PrizeTicketVerificationProviderV1", () => {
     ).data;
     expect(record).toMatchObject({
       verificationStatus: "APPROVED",
+    });
+    const updatedAttempt = (
+      await harness.database
+        .collection("drawSubmissions")
+        .doc(`prize-ticket:${harness.recordId}:${harness.boardId}:1`)
+        .get()
+    ).data;
+    expect(updatedAttempt).toMatchObject({
+      status: "APPROVED",
       userNote: "修改后的现场备注",
     });
   });

@@ -240,6 +240,7 @@ describe("V1-E native mini-program flow coverage", () => {
 
   it("lays out Grand Prize options in row-major pairs without changing their data order", () => {
     expect(wxml).toContain('wx:for="{{grandPrizeOptions}}"');
+    expect(wxml).toContain("请根据原始版面标注，自行勾选大赏");
     expect(wxss).toMatch(
       /\.grand-prize-list\s*\{[\s\S]*?display:\s*grid;[\s\S]*?width:\s*calc\(100% - 10px\);[\s\S]*?margin:\s*0 auto;[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?grid-auto-flow:\s*row;[\s\S]*?gap:\s*10px 8px;/,
     );
@@ -347,7 +348,6 @@ describe("V1-E native mini-program flow coverage", () => {
     expect(ts).not.toContain("chooseBoardImage");
     expect(ts).toContain("confirmBoardCapture");
     expect(ts).not.toContain("board-correction");
-    expect(ts).not.toContain("refreshCloudQuota(getWxCloudFunctionApi())");
     expect(wxml).toContain("{{toast.message}} · 累计 ¥{{toast.cost}}");
   });
 

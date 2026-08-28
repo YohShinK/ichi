@@ -39,6 +39,7 @@ import {
   isResumableLocalDrawDraft,
   LOCAL_DRAW_DRAFTS_KEY,
   summarizeLocalDrawDraft,
+  toInitialCloudSnapshot,
   currentRemainingForPrize,
   initialRemainingForPrize,
   type LocalDrawDraft,
@@ -79,6 +80,7 @@ import {
   CloudAccountError,
   getWxCloudFunctionApi,
   loadCloudAccount,
+  refreshCloudQuota,
   getWxWechatProfileMediaAdapter,
   quotaUsedPercent,
   type CloudAccountProfile,
@@ -87,6 +89,7 @@ import {
 import {
   finalizeCloudObservation,
   getCloudRecognitionJob,
+  prepareCloudObservationForUpload,
   releaseCloudRecognition,
   reserveCloudRecognition,
   toConfirmedBoardSnapshot,
@@ -1176,6 +1179,32 @@ Page({
     }
   },
 
+  applyCloudQuota(quota: CloudQuotaSummary) {
+    getApp<IchiApp>().globalData.accountQuota = quota;
+    this.setData({
+      quotaLimit: quota.limit,
+      quotaUsed: quota.used,
+      quotaReserved: quota.reserved,
+      quotaRemaining: quota.remaining,
+      quotaUsedPercent: quotaUsedPercent(quota),
+      quotaResetAt: quota.resetAt,
+    });
+  },
+
+  async refreshRecognitionQuota(showFailure = false) {
+    try {
+      const quota = await refreshCloudQuota(getWxCloudFunctionApi());
+      this.applyCloudQuota(quota);
+      return quota;
+    } catch {
+      this.setData({
+        accountState: "unavailable" as const,
+        ...(showFailure ? { modalView: "account-unavailable" as const } : {}),
+      });
+      return null;
+    }
+  },
+
   onProfileNicknameInput(event: WechatMiniprogram.Input) {
     const profileNicknameDraft = String(event.detail.value ?? "");
     this.setData({
@@ -1336,40 +1365,32 @@ Page({
     }
     try {
       const result = await loadMyCloudRecords(getWxCloudFunctionApi());
-      const localBoardIds = new Set(
-        (this.data.drafts as readonly DraftViewModel[]).map(
-          (record) => record.boardId,
-        ),
-      );
       const currentCloudRecords = this.data
         .cloudRecords as readonly CloudRecordViewModel[];
-      const records = result.records
-        .filter((record) => !localBoardIds.has(record.boardId))
-        .map((record) => ({
-          ...record,
-          swipeX:
-            currentCloudRecords.find(
-              (current) => current.recordId === record.recordId,
-            )?.swipeX ?? 0,
-          ...(deletingUploadedRecordIds.has(record.recordId)
-            ? { isDeleting: true }
-            : {}),
-        }));
+      const seenBoards = new Set<string>();
+      const currentOnly = result.records.filter((record) => {
+        if (seenBoards.has(record.boardId)) return false;
+        seenBoards.add(record.boardId);
+        return true;
+      });
+      const records = currentOnly.map((record) => ({
+        ...record,
+        swipeX:
+          currentCloudRecords.find(
+            (current) => current.recordId === record.recordId,
+          )?.swipeX ?? 0,
+        ...(deletingUploadedRecordIds.has(record.recordId)
+          ? { isDeleting: true }
+          : {}),
+      }));
       if (!isNativeCameraSurfaceActive(this.data)) {
         this.setData({
           cloudRecords: records,
-          cloudClues: records.filter(
-            (record) =>
-              record.recordStateLabel === "待核对" ||
-              record.recordStateLabel === "核验异常" ||
-              record.recordStateLabel === "核验失败" ||
-              record.recordStateLabel === "照片核验失败" ||
-              record.recordStateLabel === "备注未通过" ||
-              record.recordStateLabel === "已上传",
-          ),
+          cloudClues: records,
           cloudRecordsState: "ready" as const,
         });
       }
+      await this.resumePendingCloudPublicationDeletions(records);
     } catch {
       if (!isNativeCameraSurfaceActive(this.data)) {
         this.setData({ cloudRecordsState: "unavailable" as const });
@@ -1405,11 +1426,24 @@ Page({
     this.setUploadedRecordDeleting(recordId, true);
     this.onCancelDeleteUploadedBoard();
     try {
+      const local = draftRepository
+        .readAll()
+        .find(
+          (draft) =>
+            draft.boardId === boardId && draft.cloudRecordId === recordId,
+        );
+      if (local)
+        draftRepository.upsert({
+          ...local,
+          pendingCloudDeletion: { recordId, requestedAt: Date.now() },
+        });
       await requestCloudRecordDeletion(getWxCloudFunctionApi(), {
         recordId,
         ...(boardId ? { boardId } : {}),
       });
-      this.detachDeletedUpload(recordId);
+      if (boardId) draftRepository.delete(boardId);
+      deletingUploadedRecordIds.delete(recordId);
+      this.refreshDrafts(null);
       await this.refreshCloudRecords();
       wx.showToast({ title: "记录已删除", icon: "none" });
     } catch {
@@ -1417,6 +1451,27 @@ Page({
       this.setUploadedRecordDeleting(recordId, false);
       wx.showToast({ title: "删除失败，请重试", icon: "none" });
     }
+  },
+
+  async resumePendingCloudPublicationDeletions(
+    records: readonly CloudRecordViewModel[],
+  ) {
+    const visible = new Set(records.map((record) => record.recordId));
+    for (const draft of draftRepository.readAll()) {
+      const pending = draft.pendingCloudDeletion;
+      if (!pending || visible.has(pending.recordId)) continue;
+      try {
+        await requestCloudRecordDeletion(getWxCloudFunctionApi(), {
+          recordId: pending.recordId,
+          boardId: draft.boardId,
+        });
+        draftRepository.delete(draft.boardId);
+        deletingUploadedRecordIds.delete(pending.recordId);
+      } catch {
+        // Only an explicit accepted/idempotent deletion receipt may remove B1.
+      }
+    }
+    this.refreshDrafts();
   },
 
   setUploadedRecordDeleting(recordId: string, isDeleting: boolean) {
@@ -1439,38 +1494,6 @@ Page({
         updateDraft,
       ),
     });
-  },
-
-  detachDeletedUpload(recordId: string) {
-    const drafts = draftRepository.readAll().map((draft) => {
-      if (draft.cloudRecordId !== recordId) return draft;
-      const preservedHistory = { ...draft };
-      delete preservedHistory.cloudRecordId;
-      delete preservedHistory.evidenceSubmissionVersion;
-      delete preservedHistory.currentVerificationVersion;
-      delete preservedHistory.verificationPending;
-      delete preservedHistory.originalEvidenceFileId;
-      delete preservedHistory.originalEvidenceCapturedAt;
-      delete preservedHistory.albumSaveWarning;
-      return {
-        ...preservedHistory,
-        savedAt: Date.now(),
-        uploadStatus: "not-uploaded" as const,
-        submissionState: "local" as const,
-        verificationStatus: "unverified" as const,
-      };
-    });
-    drafts.forEach((draft) => draftRepository.upsert(draft));
-    deletingUploadedRecordIds.delete(recordId);
-    this.setData({
-      cloudRecords: (this.data.cloudRecords as CloudRecordViewModel[]).filter(
-        (record) => record.recordId !== recordId,
-      ),
-      cloudClues: (this.data.cloudClues as CloudRecordViewModel[]).filter(
-        (record) => record.recordId !== recordId,
-      ),
-    });
-    this.refreshDrafts();
   },
 
   beginBoardCapture(recognitionMode: RecognitionFlowMode) {
@@ -1532,6 +1555,17 @@ Page({
     const requestedMode = event?.currentTarget.dataset.flowMode;
     const recognitionMode: RecognitionFlowMode =
       requestedMode === "direct-upload" ? "direct-upload" : "assist";
+    if (
+      this.data.accountState === "ready" &&
+      Number(this.data.quotaRemaining) <= 0
+    ) {
+      this.setData({
+        pendingRecognitionMode: recognitionMode,
+        modalView: "quota-exhausted" as const,
+        resumeCaptureAfterProfileAuthorization: false,
+      });
+      return;
+    }
     cameraTiming = { tapAt: Date.now() };
     markCameraTiming("tapAt");
     this.setData({
@@ -1540,16 +1574,25 @@ Page({
     });
     this.releasePendingBoardMedia();
     try {
-      const account = await this.refreshCloudAccount(true);
-      if (!account) return;
-      if (account.quota.remaining <= 0) {
+      const accountReady = this.data.accountState === "ready";
+      const account = accountReady
+        ? null
+        : await this.refreshCloudAccount(true);
+      const quota = accountReady
+        ? await this.refreshRecognitionQuota(true)
+        : account?.quota;
+      if (!quota) return;
+      if (quota.remaining <= 0) {
         this.setData({
           modalView: "quota-exhausted" as const,
           resumeCaptureAfterProfileAuthorization: false,
         });
         return;
       }
-      if (account.profile.profileState !== "complete") {
+      const profileState = accountReady
+        ? this.data.accountProfileState
+        : account?.profile.profileState;
+      if (profileState !== "complete") {
         this.setData({
           modalView: "wechat-login" as const,
           profileAuthorizationPurpose: "first-use" as const,
@@ -1602,6 +1645,7 @@ Page({
     this.onUndoBoardCapture();
     this.setData({ modalView: "" as const });
     this.onBackToStart();
+    void this.refreshRecognitionQuota();
   },
 
   async onCaptureBoardMedia() {
@@ -3252,6 +3296,9 @@ Page({
       this.setData({
         stopHolding: false,
         modalView: "share-decision" as const,
+        shareImagePath: "",
+        shareNote: "",
+        shareReady: false,
       });
       wx.vibrateShort({ type: "medium" });
     }, STOP_HOLD_DURATION_MS);
@@ -3375,11 +3422,7 @@ Page({
   async onSubmitEvidence() {
     if (!this.data.shareReady || this.data.evidenceSubmitting) return;
     const draft = this.getActiveDraft();
-    if (!draft?.cloudRecordId) {
-      wx.showToast({ title: "这条旧记录尚未建立云端身份", icon: "none" });
-      return;
-    }
-    const submissionVersion = (draft.evidenceSubmissionVersion ?? 0) + 1;
+    if (!draft) return;
     const capturedAt = Date.now();
     let ticketLocation: {
       latitude: number;
@@ -3389,6 +3432,7 @@ Page({
       capturedAt: string;
       consentVersion: string;
     };
+    this.setData({ evidenceSubmitting: true });
     try {
       const capturedLocation = await requestBoardLocation();
       ticketLocation = {
@@ -3400,33 +3444,85 @@ Page({
         consentVersion: LOCATION_CONSENT_VERSION,
       };
     } catch {
+      this.setData({ evidenceSubmitting: false });
       wx.showToast({ title: "无法获取赏票拍摄位置", icon: "none" });
       return;
     }
+    let uploadDraft = draft;
+    try {
+      const observation = await prepareCloudObservationForUpload(
+        getWxCloudFunctionApi(),
+        {
+          ...(draft.cloudRecordId
+            ? { currentRecordId: draft.cloudRecordId }
+            : {}),
+          ...(draft.recognitionJobId
+            ? { recognitionJobId: draft.recognitionJobId }
+            : {}),
+          boardId: draft.boardId,
+          confirmedSnapshot: toInitialCloudSnapshot(draft),
+          location: ticketLocation,
+          observedAt: ticketLocation.capturedAt,
+          promptVersion: BOARD_PROMPT_VERSION,
+          consentVersion: PRIVATE_OBSERVATION_CONSENT_VERSION,
+          disclosureVersion: NO_IMAGE_DISCLOSURE_VERSION,
+        },
+      );
+      const changedObservation = observation.recordId !== draft.cloudRecordId;
+      if (changedObservation) {
+        const stableDraft = { ...draft };
+        delete stableDraft.evidenceSubmissionVersion;
+        delete stableDraft.currentVerificationVersion;
+        delete stableDraft.verificationPending;
+        delete stableDraft.originalEvidenceFileId;
+        delete stableDraft.originalEvidenceCapturedAt;
+        delete stableDraft.albumSaveWarning;
+        uploadDraft = {
+          ...stableDraft,
+          cloudRecordId: observation.recordId,
+          recordCode: observation.recordCode,
+          uploadStatus: "not-uploaded",
+          submissionState: "local",
+          verificationStatus: "unverified",
+        };
+        draftRepository.upsert(uploadDraft);
+        this.refreshDrafts(uploadDraft.boardId);
+      }
+    } catch {
+      this.setData({ evidenceSubmitting: false });
+      wx.showToast({ title: "无法建立新的上传记录，请重试", icon: "none" });
+      return;
+    }
+    const recordId = uploadDraft.cloudRecordId;
+    if (!recordId) {
+      this.setData({ evidenceSubmitting: false });
+      wx.showToast({ title: "这条旧记录尚未建立云端身份", icon: "none" });
+      return;
+    }
+    const submissionVersion = (uploadDraft.evidenceSubmissionVersion ?? 0) + 1;
     const submissionStartedAt = Date.now();
     console.info("ICHI_PRIZE_TICKET_CLIENT", {
       stage: "confirm_tap",
-      recordId: draft.cloudRecordId,
-      boardId: draft.boardId,
+      recordId,
+      boardId: uploadDraft.boardId,
       submissionVersion,
       elapsedMs: 0,
     });
-    this.setData({ evidenceSubmitting: true });
     const api = getWxDrawTicketEvidenceApi();
     let uploaded: PendingDrawTicketEvidence | undefined;
     let pendingEstablished = false;
     let pendingStatus = "";
     try {
       uploaded = await uploadDrawTicketEvidence(api, {
-        recordId: draft.cloudRecordId,
-        boardId: draft.boardId,
+        recordId,
+        boardId: uploadDraft.boardId,
         submissionVersion,
         imagePath: String(this.data.shareImagePath),
         captureSource: "camera",
         capturedAt,
       });
       const pending = await createPendingDrawTicketVerification(api, uploaded, {
-        drawEvents: draft.history,
+        drawEvents: uploadDraft.history,
         userNote: String(this.data.shareNote).trim(),
         ticketLocation,
       });
@@ -3443,13 +3539,13 @@ Page({
       pendingStatus = pending.status;
       console.info("ICHI_PRIZE_TICKET_CLIENT", {
         stage: "pending_persisted",
-        recordId: draft.cloudRecordId,
-        boardId: draft.boardId,
+        recordId,
+        boardId: uploadDraft.boardId,
         submissionVersion,
         elapsedMs: Date.now() - submissionStartedAt,
       });
       const pendingDraft: LocalDrawDraft = {
-        ...draft,
+        ...uploadDraft,
         locationNote: String(this.data.shareNote).trim(),
         savedAt: Date.now(),
         submittedAt: Date.now(),
@@ -3475,8 +3571,8 @@ Page({
       this.saveNavigation("start", null);
       console.info("ICHI_PRIZE_TICKET_CLIENT", {
         stage: "uploaded_boards_navigation_requested",
-        recordId: draft.cloudRecordId,
-        boardId: draft.boardId,
+        recordId,
+        boardId: uploadDraft.boardId,
         submissionVersion,
         elapsedMs: Date.now() - submissionStartedAt,
       });
@@ -3493,13 +3589,13 @@ Page({
         () =>
           console.info("ICHI_PRIZE_TICKET_CLIENT", {
             stage: "uploaded_boards_visible",
-            recordId: draft.cloudRecordId,
-            boardId: draft.boardId,
+            recordId,
+            boardId: uploadDraft.boardId,
             submissionVersion,
             elapsedMs: Date.now() - submissionStartedAt,
           }),
       );
-      this.refreshDrafts(null);
+      this.refreshDrafts();
       void this.refreshCloudRecords();
       if (pending.status === "PHOTO_PENDING" || pending.status === "PENDING")
         void this.runTicketVerification(uploaded);
@@ -3534,8 +3630,8 @@ Page({
         void api.deleteFile(uploaded.imageFileId).catch(() => undefined);
       console.error("ICHI_PRIZE_TICKET_SUBMISSION", {
         stage: "pending_submit_failed",
-        recordId: draft.cloudRecordId,
-        boardId: draft.boardId,
+        recordId,
+        boardId: uploadDraft.boardId,
         submissionVersion,
         code: error instanceof Error ? error.message : "SUBMISSION_FAILED",
       });
@@ -3608,7 +3704,7 @@ Page({
           ? { verificationPending: pending }
           : {}),
       });
-      this.refreshDrafts(null);
+      this.refreshDrafts();
       void this.refreshCloudRecords();
     } catch (error) {
       console.error("ICHI_PRIZE_TICKET_BACKGROUND", {
@@ -3735,7 +3831,7 @@ Page({
           currentVerificationVersion: submissionVersion,
           verificationPending: uploaded,
         });
-        this.refreshDrafts(null);
+        this.refreshDrafts();
       } else {
         void this.refreshCloudRecords();
       }
@@ -3785,7 +3881,24 @@ Page({
     const recordId = String(this.data.noteReviewRecordId);
     const boardId = String(this.data.noteReviewBoardId);
     const submissionVersion = Number(this.data.noteReviewSubmissionVersion);
-    this.setData({ evidenceSubmitting: true });
+    const originalDraft = draftRepository
+      .readAll()
+      .find((item) => item.boardId === boardId);
+    if (originalDraft)
+      draftRepository.upsert({
+        ...originalDraft,
+        locationNote: userNote,
+        verificationStatus: "note-pending",
+        submissionState: "pending-review",
+        savedAt: Date.now(),
+      });
+    this.setData({
+      activeTab: "my" as const,
+      currentView: "contributions" as const,
+      evidenceSubmitting: true,
+      modalView: "" as const,
+    });
+    this.refreshDrafts(null);
     try {
       const result = await reviewDrawTicketNote(getWxDrawTicketEvidenceApi(), {
         recordId,
@@ -3810,21 +3923,20 @@ Page({
             result.status === "APPROVED" ? "uploaded" : "pending-review",
           savedAt: Date.now(),
         });
-      this.setData({
-        modalView: result.status === "APPROVED" ? "" : "note-review",
-      });
-      this.refreshDrafts(null);
+      this.refreshDrafts();
       await this.refreshCloudRecords();
-      wx.showToast({
-        title:
-          result.status === "APPROVED"
-            ? "备注核验通过"
-            : result.status === "NOTE_FAILED"
-              ? "备注未通过，请修改"
-              : "备注核验暂不可用",
-        icon: "none",
-      });
     } catch {
+      const draft = draftRepository
+        .readAll()
+        .find((item) => item.boardId === boardId);
+      if (draft)
+        draftRepository.upsert({
+          ...draft,
+          verificationStatus: "provider-failed",
+          submissionState: "pending-review",
+          savedAt: Date.now(),
+        });
+      this.refreshDrafts();
       wx.showToast({ title: "备注核验暂不可用", icon: "none" });
     } finally {
       this.setData({ evidenceSubmitting: false });
@@ -4180,19 +4292,10 @@ Page({
     this.setDraftSwipe("", 0);
   },
 
-  async onDeleteDraft(event: WechatMiniprogram.BaseEvent) {
+  onDeleteDraft(event: WechatMiniprogram.BaseEvent) {
     const boardId = event.currentTarget.dataset.boardId as string | undefined;
     if (!boardId) return;
     try {
-      const draft = draftRepository
-        .readAll()
-        .find((item) => item.boardId === boardId);
-      if (draft?.cloudRecordId) {
-        await requestCloudRecordDeletion(getWxCloudFunctionApi(), {
-          recordId: draft.cloudRecordId,
-          boardId,
-        });
-      }
       draftRepository.delete(boardId);
       this.refreshDrafts();
       void this.refreshCloudRecords();

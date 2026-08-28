@@ -9,6 +9,7 @@ import {
   RECORD_CODE_PATTERN,
   inspectLocalDraftStorage,
   summarizeLocalDrawDraft,
+  toInitialCloudSnapshot,
   type LocalDrawDraft,
 } from "./local-draw-drafts.js";
 
@@ -51,6 +52,38 @@ const makeDraft = (
 });
 
 describe("mini-program local draw drafts", () => {
+  it("rebuilds the immutable R2 initial snapshot without replaying draw history", () => {
+    const draft: LocalDrawDraft = {
+      schemaVersion: "board-record-r2-1.0.0",
+      boardId: "board-r2-recovery",
+      savedAt: 1,
+      prizeData: [
+        {
+          id: "a",
+          tier: "A",
+          rawLabel: "A賞",
+          initialRemainingTickets: 3,
+          isGrandPrize: true,
+        },
+      ],
+      history: [
+        { id: "draw-1", tier: "A" },
+        { id: "draw-2", tier: "A" },
+      ],
+      cost: 130,
+      verificationStatus: "verified",
+      uploadStatus: "uploaded",
+      unitPrice: 65,
+      ipName: "世界之外",
+    };
+
+    expect(toInitialCloudSnapshot(draft)).toMatchObject({
+      schemaVersion: "board-record-r2-1.0.0",
+      ipName: "世界之外",
+      tiers: [{ tierCode: "A", remainingTickets: 3 }],
+    });
+  });
+
   it("upserts by boardId and returns newest drafts first", () => {
     const storage = new FakeStorage();
     const repository = new LocalDrawDraftRepository(storage);
@@ -209,6 +242,27 @@ describe("mini-program local draw drafts", () => {
     expect(RECORD_CODE_PATTERN.test(createRecordCode("new-board"))).toBe(true);
     expect(deriveRecordCode("legacy-board")).toMatch(/[A-Z]/);
     expect(deriveRecordCode("legacy-board")).toMatch(/\d/);
+  });
+
+  it("keeps server-issued all-letter and all-digit display codes readable", () => {
+    const storage = new FakeStorage();
+    storage.values.set(
+      LOCAL_DRAW_DRAFTS_KEY,
+      JSON.stringify([
+        makeDraft("board-all-letters", { recordCode: "LXZDNB", savedAt: 2 }),
+        makeDraft("board-all-digits", { recordCode: "123456", savedAt: 1 }),
+      ]),
+    );
+
+    const records = new LocalDrawDraftRepository(storage).readAll();
+
+    expect(records.map((record) => record.recordCode)).toEqual([
+      "LXZDNB",
+      "123456",
+    ]);
+    expect(
+      inspectLocalDraftStorage(storage.values.get(LOCAL_DRAW_DRAFTS_KEY)),
+    ).toBe("ok");
   });
 
   it("resolves display-code collisions without changing board identity", () => {

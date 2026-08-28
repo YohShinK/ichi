@@ -941,7 +941,167 @@ describe("V1 CloudBase runtime envelope", () => {
     );
   });
 
-  it("persists authoritative draw events before asynchronous ticket verification", async () => {
+  it("never recreates a publication after an explicit deletion tombstone", async () => {
+    const appId = "wx-observation-recovery";
+    const ownerOpenId = "observation-owner";
+    const otherOpenId = "observation-other";
+    const secret = "observation-recovery-secret";
+    const ownerId = "account-observation-owner";
+    const otherId = "account-observation-other";
+    const oldRecordId = "record_0123456789abcdef0123456789abcdef";
+    const boardId = "board-stable-origin";
+    const jobId = "job-observation-origin";
+    const quotaId = `${ownerId}:2026-08-28`;
+    const previouslyDeletedFreshRecordId = `record_${createHash("sha256")
+      .update(`${ownerId}:${oldRecordId}:${boardId}:next-upload-observation`)
+      .digest("hex")
+      .slice(0, 32)}`;
+    const ownerIdentity = hashIdentity({ appId, openId: ownerOpenId, secret });
+    const otherIdentity = hashIdentity({ appId, openId: otherOpenId, secret });
+    const snapshot = {
+      schemaVersion: "board-record-r2-1.0.0",
+      recognitionVersion: "R2",
+      ipName: "世界之外",
+      pricePerDraw: 65,
+      currency: "CNY",
+      tiers: [
+        {
+          tierCode: "A",
+          rawLabel: "A賞",
+          remainingTickets: 3,
+          isGrandPrize: true,
+        },
+      ],
+    };
+    const database = createDocumentDatabase({
+      wechatIdentities: {
+        [ownerIdentity]: { accountId: ownerId },
+        [otherIdentity]: { accountId: otherId },
+      },
+      accounts: {
+        [ownerId]: { status: "active" },
+        [otherId]: { status: "active" },
+      },
+      recognitionJobs: {
+        [jobId]: {
+          ownerAccountId: ownerId,
+          status: "committed",
+          sourcePath: "assisted-draw",
+          recordId: oldRecordId,
+          quotaId,
+          keyHash: "origin-key",
+        },
+      },
+      dailyQuotas: {
+        [quotaId]: {
+          accountId: ownerId,
+          used: 1,
+          reservations: { "origin-key": { status: "committed" } },
+        },
+      },
+      deletionJobs: {
+        [`record:${oldRecordId}`]: {
+          ownerAccountId: ownerId,
+          targetType: "record",
+          targetId: oldRecordId,
+          boardId,
+          status: "completed",
+        },
+        [`record:${previouslyDeletedFreshRecordId}`]: {
+          ownerAccountId: ownerId,
+          targetType: "record",
+          targetId: previouslyDeletedFreshRecordId,
+          boardId,
+          status: "completed",
+        },
+      },
+      observationCandidates: {
+        record_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa: {
+          ownerAccountId: otherId,
+          recordId: "record_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          recordCode: "SAME12",
+          boardId: "board-unrelated",
+          sourcePath: "assisted-draw",
+          status: "private_saved",
+        },
+      },
+      recordCodes: {
+        SAME12: {
+          recordId: "record_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          ownerAccountId: otherId,
+          state: "active",
+        },
+      },
+    });
+    let activeOpenId = ownerOpenId;
+    const run = createRuntime({
+      cloud: {
+        DYNAMIC_CURRENT_ENV: "runtime-test",
+        init: () => undefined,
+        database: () => database,
+        getWXContext: () => ({ APPID: appId, OPENID: activeOpenId }),
+      },
+      env: { IDENTITY_HMAC_KEY: secret },
+      now: () => Date.parse("2026-08-28T12:00:00.000Z"),
+    });
+    const event = {
+      action: "prepare-new-upload",
+      currentRecordId: oldRecordId,
+      recognitionJobId: jobId,
+      boardId,
+      sourcePath: "assisted-draw",
+      confirmedSnapshot: snapshot,
+      location: {
+        latitude: 31.23,
+        longitude: 121.47,
+        accuracy: 12,
+        source: "camera",
+        capturedAt: "2026-08-28T11:59:00.000Z",
+        consentVersion: "v1-location",
+      },
+      observedAt: "2026-08-28T11:59:00.000Z",
+      promptVersion: "ichi-board-vlm-r2-direct-remaining-1.0.0",
+      consentVersion: "v1-location",
+      disclosureVersion: "v1-no-photo-retention",
+    };
+
+    await expect(run("finalize-board-observation", event)).resolves.toEqual({
+      ok: false,
+      error: { code: "RECORD_DELETED" },
+    });
+    expect(
+      (await database.collection("dailyQuotas").doc(quotaId).get()).data.used,
+    ).toBe(1);
+    await expect(
+      database.collection("observationCandidates").doc(oldRecordId).get(),
+    ).rejects.toThrow("not found");
+    await expect(
+      database
+        .collection("observationCandidates")
+        .doc(previouslyDeletedFreshRecordId)
+        .get(),
+    ).rejects.toThrow("not found");
+    await expect(
+      database
+        .collection("observationCandidates")
+        .doc("record_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+        .get(),
+    ).resolves.toMatchObject({
+      data: {
+        ownerAccountId: otherId,
+        recordCode: "SAME12",
+        boardId: "board-unrelated",
+      },
+    });
+
+    activeOpenId = otherOpenId;
+    await expect(run("finalize-board-observation", event)).resolves.toEqual({
+      ok: false,
+      error: { code: "RECORD_NOT_FOUND" },
+    });
+  });
+
+  it("keeps the current publication unchanged before asynchronous ticket verification", async () => {
     const appId = "wx-runtime-test";
     const openId = "runtime-ticket-openid";
     const identitySecret = "runtime-identity-secret";
@@ -1028,12 +1188,112 @@ describe("V1 CloudBase runtime envelope", () => {
         .get(),
     ).resolves.toMatchObject({
       data: {
-        authoritativeDrawEvents: [
-          { eventId: "draw-1", tierCode: "A", occurredAt: 1 },
-          { eventId: "draw-2", tierCode: "B", occurredAt: 2 },
+        initialSnapshot,
+        status: "private_saved",
+      },
+    });
+    const unchanged = (
+      await database
+        .collection("observationCandidates")
+        .doc("record_0123456789abcdef0123456789abcdef")
+        .get()
+    ).data;
+    expect(unchanged.authoritativeDrawEvents).toBeUndefined();
+    expect(unchanged.authoritativeDrawSubmissionVersion).toBeUndefined();
+    expect(unchanged.finalSnapshot).toBeUndefined();
+  });
+
+  it("projects the published submission while exposing a newer failed attempt status", async () => {
+    const appId = "wx-runtime-publication-test";
+    const openId = "runtime-publication-openid";
+    const identitySecret = "runtime-publication-secret";
+    const accountId = "account-runtime-publication";
+    const recordId = "record_0123456789abcdef0123456789abcdef";
+    const boardId = "board-runtime-publication";
+    const identityId = hashIdentity({
+      appId,
+      openId,
+      secret: identitySecret,
+    });
+    const initialSnapshot = {
+      schemaVersion: "board-record-r2-1.0.0",
+      recognitionVersion: "R2",
+      ipName: "测试 IP",
+      themeName: "测试主题",
+      pricePerDraw: 65,
+      currency: "CNY",
+      tiers: [{ tierCode: "A", remainingTickets: 2, isGrandPrize: true }],
+    };
+    const publishedSnapshot = {
+      ...initialSnapshot,
+      tiers: [{ tierCode: "A", remainingTickets: 1, isGrandPrize: true }],
+    };
+    const database = createDocumentDatabase({
+      wechatIdentities: { [identityId]: { accountId } },
+      accounts: { [accountId]: { status: "active" } },
+      observationCandidates: {
+        [recordId]: {
+          ownerAccountId: accountId,
+          recordId,
+          recordCode: "ABC123",
+          boardId,
+          sourcePath: "assisted-draw",
+          initialSnapshot,
+          publishedSubmissionVersion: 1,
+          publicationState: "current",
+          status: "uploaded",
+        },
+      },
+      drawSubmissions: {
+        [`prize-ticket:${recordId}:${boardId}:2`]: {
+          verificationId: `prize-ticket:${recordId}:${boardId}:2`,
+          ownerAccountId: accountId,
+          recordId,
+          boardId,
+          submissionVersion: 2,
+          status: "PROVIDER_FAILED",
+          finalSnapshot: initialSnapshot,
+          createdAt: "2026-08-28T12:02:00.000Z",
+        },
+        [`prize-ticket:${recordId}:${boardId}:1`]: {
+          verificationId: `prize-ticket:${recordId}:${boardId}:1`,
+          ownerAccountId: accountId,
+          recordId,
+          boardId,
+          submissionVersion: 1,
+          status: "APPROVED",
+          finalSnapshot: publishedSnapshot,
+          authoritativeDrawEvents: [{ eventId: "draw-1", tierCode: "A" }],
+          userNote: "已批准备注",
+          ticketLocation: { latitude: 31.23, longitude: 121.47 },
+          createdAt: "2026-08-28T12:01:00.000Z",
+        },
+      },
+    });
+    const run = createRuntime({
+      cloud: {
+        DYNAMIC_CURRENT_ENV: "runtime-test",
+        init: () => undefined,
+        database: () => database,
+        getWXContext: () => ({ APPID: appId, OPENID: openId }),
+      },
+      env: { IDENTITY_HMAC_KEY: identitySecret },
+    });
+
+    await expect(run("get-my-records", {})).resolves.toMatchObject({
+      ok: true,
+      data: {
+        records: [
+          {
+            recordId,
+            finalSnapshot: publishedSnapshot,
+            userNote: "已批准备注",
+            latestPrizeTicketSubmission: {
+              submissionVersion: 2,
+              status: "PROVIDER_FAILED",
+            },
+          },
         ],
-        authoritativeDrawSubmissionVersion: 1,
-        finalSnapshot: { remainingTickets: 1, attachedTickets: 2 },
       },
     });
   });
@@ -1057,22 +1317,19 @@ describe("V1 CloudBase runtime envelope", () => {
     });
     await expect(run("finalize-draw-update", request)).resolves.toMatchObject({
       ok: true,
-      data: { authoritativeDrawCount: 2, idempotent: true },
+      data: { authoritativeDrawCount: 2, idempotent: false },
     });
     const record = (
       await database.collection("observationCandidates").doc(recordId).get()
     ).data;
     expect(record).toMatchObject({
       initialSnapshot: { tiers: [{ remainingTickets: 5 }] },
-      finalSnapshot: { tiers: [{ remainingTickets: 3 }] },
-      authoritativeDrawEvents: [
-        { eventId: "draw-1", tierCode: "A" },
-        { eventId: "draw-2", tierCode: "A" },
-      ],
     });
+    expect(record.finalSnapshot).toEqual(record.initialSnapshot);
+    expect(record.authoritativeDrawEvents).toBeUndefined();
   });
 
-  it("serializes competing same-version batches and never commits beyond the R2 baseline", async () => {
+  it("validates competing prepare batches without mutating the R2 publication", async () => {
     const { run, database, recordId, boardId } = createR2DrawRuntime(1);
     const base = {
       recordId,
@@ -1092,20 +1349,15 @@ describe("V1 CloudBase runtime envelope", () => {
     ]);
 
     expect(
-      results.filter((result: unknown) => (result as { ok: boolean }).ok),
-    ).toHaveLength(1);
-    expect(results).toContainEqual({
-      ok: false,
-      error: { code: "SUBMISSION_VERSION_CONFLICT" },
-    });
+      results.every((result: unknown) => (result as { ok: boolean }).ok),
+    ).toBe(true);
     const record = (
       await database.collection("observationCandidates").doc(recordId).get()
     ).data;
-    expect(record.authoritativeDrawEvents).toHaveLength(1);
     expect(record).toMatchObject({
       initialSnapshot: { tiers: [{ remainingTickets: 1 }] },
-      finalSnapshot: { tiers: [{ remainingTickets: 0 }] },
     });
+    expect(record.finalSnapshot).toEqual(record.initialSnapshot);
   });
 
   it("rejects an authoritative R2 event batch that exceeds the initial tier baseline", async () => {

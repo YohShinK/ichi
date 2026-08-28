@@ -12,6 +12,27 @@ const directUploadIcon = readFileSync(
 );
 
 describe("V1-31 approved web-shell fidelity", () => {
+  it("keeps My Records local-only and My Uploads observation-only", () => {
+    const myRecords = wxml.slice(
+      wxml.indexOf("currentView === 'local-records'"),
+      wxml.indexOf("currentView === 'contributions'"),
+    );
+    const myUploads = wxml.slice(
+      wxml.indexOf("currentView === 'contributions'"),
+      wxml.indexOf("currentView === 'map-reminder'"),
+    );
+
+    expect(myRecords).toContain("{{drafts.length}}");
+    expect(myRecords).toContain('template is="record-row"');
+    expect(myRecords).not.toContain("cloudRecords");
+    expect(myRecords).not.toContain("onDeleteCloudRecord");
+
+    expect(myUploads).toContain("{{cloudClues.length}}");
+    expect(myUploads).toContain('wx:for="{{cloudClues}}"');
+    expect(myUploads).toContain("onDeleteCloudRecord");
+    expect(myUploads).not.toContain('wx:for="{{contributions}}"');
+  });
+
   it("uses the resolved web avatar and icon assets instead of placeholders", () => {
     const expectedAssets = [
       "/assets/v1-29/ichi-camera-cutout.png",
@@ -141,9 +162,6 @@ describe("V1-31 approved web-shell fidelity", () => {
     );
     expect(wxml).toMatch(
       /class="draft-card record-row-card[^>]*>[\s\S]*?class="record-state-badge status-pill {{item\.recordStateLabel === '已上传' \? 'status-pill--uploaded' : 'status-pill--dark'}}"/,
-    );
-    expect(wxml).toMatch(
-      /class="draft-card cloud-record-card[^>]*>[\s\S]*?class="record-state-badge status-pill {{item\.recordStateLabel === '已上传' && !item\.isDeleting \? 'status-pill--uploaded' : 'status-pill--dark'}}"/,
     );
     expect(wxss).toMatch(
       /\.status-pill--uploaded\s*{[\s\S]*?background: #e014a0;/,
@@ -315,7 +333,8 @@ describe("V1-31 approved web-shell fidelity", () => {
     expect(wxml).toContain(">修改备注</button>");
     expect(wxml).toContain("item.verificationAction === 'reupload'");
     expect(wxml).toContain("item.verificationAction === 'edit-note'");
-    expect(wxml).toContain("备注（必填）");
+    expect(wxml).toContain("门店地点与备注（必填）");
+    expect(wxml).toContain('placeholder="万达广场B1 XX店可以捡漏"');
     expect(wxml).toContain("只会重新核验备注，不会重复地点或照片核验。");
     expect(pageTs).toContain('result.status === "LOCATION_FAILED"');
     expect(pageTs).toContain('result.status === "PHOTO_FAILED"');

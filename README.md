@@ -4,14 +4,14 @@ ICHI 是面向一番赏玩家的用户侧产品，按照三个独立决策门逐
 
 ## 当前状态
 
-- 当前活动区块：V1-F｜跨端质量与小程序发布门（`IN_PROGRESS`）；已按 2026-08-14 新范围重新打开 V1-40—V1-47，并新增 V1-43A—V1-43I，V1-48 保留为人工决策门。
-- 最近完成区块：V1-E｜最终小程序页面实现；V1-31—V1-39 已于 2026-08-13 完成自动验证与用户授权的统一人工验收。
-- 下一门禁：V1-F 完成并由 V1-48 明确批准后，才能解锁 V2-A。
-- 应用代码：Next.js 页面壳、`V1-29 UI Design Tokens` 和全部已验收交互构成批准基线；微信小程序已覆盖 V1-31—V1-39。V1-F 当前使用千问 `qwen3.7-flash` 单模型、单次整版多模态识别，按 `ichi-board-vlm-3.0.0-rc1` 与 `board-provider-extraction-3.0.0-rc1` 抽取中文主 IP、原始 IP 文本、可选主题和逐排票位证据；赏票核对使用独立的版本化协议。账号与位置先于识别、每日 5 次有效识别配额、照片临时使用后删除、本人私有结构化记录、服务端六位码、CloudBase 定时维护和删除链路均属于本区块。公共地图、现实版面合并、Luna 实际治理、审核和发布仍锁定在 V2。
+- 当前活动区块：无。V1 development blocks 已全部 `COMPLETED / CLOSED`；当前唯一活动计划是 `V1.0.0 WECHAT SUCCESSFUL PUBLICATION`，checkpoint 为等待微信审核。V1.0.1 与 V2 仅为 backlog，尚未启动。
+- 最近完成区块：V1-F｜跨端质量与小程序发布门；开发、自动验证、真机 blocker、release candidate、release commit、备案／上架准备和微信送审均已完成。
+- 下一门禁：等待微信审核；通过后由用户正式发布并完成最小线上确认，随后关闭 V1 milestone。V1.0.1 与 V2 不自动解锁。
+- 应用代码：V1.0.0 source 已冻结在 `release/v1-freeze-20260828@f6aa06fca21104a0a406823e5e8c6cc4ab493ab7`。版面识别 R2、Local Board／Upload Submission／Current Cloud Publication、账号／位置／每日配额、照片临时使用后删除、私有结构化记录、CloudBase 定时维护与删除链路均已完成；公共地图、现实版面合并、治理和多人协作仍属于 V2 backlog。
 
 ## 独立延后分区
 
-[`apps/xhs-local-tool/`](apps/xhs-local-tool/) 已建立为小红书笔记可挂载的纯本地小工具分区。该目标不属于微信小程序 V2／V3，不含账号、位置、网络、CloudBase、地图或多人协作；当前只记录平台规则和粗粒度迁移计划。必须等待微信小程序 V1 全部开发并通过验收后，再以稳定 V1 为输入做复用、替换、删除和新增，不提前选择框架或编写代码。
+[`apps/xhs-local-tool/`](apps/xhs-local-tool/) 是小红书笔记可挂载的纯本地小工具分区，状态为 `POST-V1 / DEFERRED / USER_DECISION`。它不属于微信小程序 V1 successful publication、V2 或 V3，也不会因 V1 开发完成而自动启动。
 
 ## 正式入口
 

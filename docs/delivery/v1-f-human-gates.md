@@ -1,5 +1,7 @@
 # V1-F 人工门禁与前置条件
 
+> 2026-08-29 closure：`CLOSED / ARCHIVED`。本表保留 V1-F 人工门的历史定义，不再是 active checklist。与 V1.0.0 source、基础设施、真机、备案／上架和送审直接相关的门均已由用户最终冻结与微信送审事实关闭；“真实 Codex 账号治理能力验证”转入 V2 governance backlog，“代表性用户可用性研究”不再是 V1 发布 blocker。V1 唯一活动计划见 `memory-bank/implementation-plan.md` 的 `V1.0.0 WECHAT SUCCESSFUL PUBLICATION`。
+
 本清单按 2026-08-14 的 V1-F 新范围重排，只保留自动化无法替代、涉及真实凭据／外部写入或需要人类主观判断的项目。2026-08-13 自动化证据只是前置基线；V2 公共地图与治理能力仍保持锁定。
 
 | 人工介入项 | 前置条件 | 完成证据 |

@@ -1,5 +1,7 @@
 # ICHI Product Design Document
 
+2026-08-29 V1.0.0 product closure：V1 产品开发、三层架构、7 条产品规则、自动验证、真机 blocker、发布候选、release commit、备案／上架准备与微信送审均已完成并冻结。当前未声称审核通过或正式发布；V1 唯一活动计划是 `V1.0.0 WECHAT SUCCESSFUL PUBLICATION`。审核期间除真实拒绝原因或 production release blocker 外不修改 V1 行为，普通体验／性能优化进入 V1.0.1 backlog，V2 公共地图能力保持未启动。
+
 2026-08-29 V1 PHOTO 技术失败语义：LOCATION 已通过后，Provider HTTP／网络／超时、响应解析、Provider Schema 或服务端暂时异常都属于可重试的 `PROVIDER_FAILED`，不得伪装成表示照片事实不匹配的 `PHOTO_FAILED`。同一 submissionVersion 的 evidence 在既有临时保留窗内必须继续可用于明确的“重新核验”；只有 Provider 成功返回且 schema/normalize 完成后的实体证据无效、未知或 expected-vs-observed exact reconciliation 不一致，才进入对应 PHOTO 业务失败。技术失败不发布、覆盖或删除 Current P1，也不得放宽赏级与实体票精确核验。
 
 2026-08-28 V1 Current Publication 最终契约（取代本文较早的“同一 Board 多 Observation”临时规则）：产品固定为 Local Board、Upload Submission、Current Cloud Publication 三层。`MY_RECORDS` 只投影当前设备 Storage 中以 `boardId` 为身份的 Local Board；`MY_UPLOADS` 与未来 MAP 只投影本人每个 `ownerAccountId + boardId` 最多一条当前云端发布，以稳定 `recordId` 为身份；`drawSubmissions` 与单调 `submissionVersion` 只表达上传尝试。第一次上传建立 P1，后续完整通过 LOCATION／PHOTO／NOTE 的上传只原子更新同一 P1；PENDING、FAILED、Provider／网络异常和迟到旧版本均不得覆盖、隐藏或删除上一版可信 P1。服务端负责 one-current 唯一性，客户端去重只作防御。

@@ -1,5 +1,7 @@
 # ICHI V1 Release Source Freeze
 
+> Historical freeze-time manifest：本文件以下状态描述的是 2026-08-28 freeze task 当时事实，不是当前发布状态。2026-08-29 当前权威状态为 release source commit `f6aa06fca21104a0a406823e5e8c6cc4ab493ab7` 已完成、V1.0.0 已 upload／送审、备案与上架准备已完成；微信审核、正式发布和线上 smoke 仍 pending。唯一活动计划见 `memory-bank/implementation-plan.md`。
+
 - Release: `ICHI V1 release candidate`
 - Freeze date: `2026-08-28`
 - Source branch: `release/v1-freeze-20260828`

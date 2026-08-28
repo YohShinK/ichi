@@ -1,5 +1,7 @@
 # ICHI Technology Stack
 
+2026-08-29 V1.0.0 technology closure：V1 生产技术栈、识别 R2 Prompt／Schema／resolver、CloudBase 19 函数边界、Storage CUSTOM 与 1 天临时对象 lifecycle、13 个私有集合及 fail-closed 安全边界全部 `FROZEN / CLOSED`。当前没有 V1 技术实施计划；唯一 V1 active plan 是等待微信审核、正式发布和最小线上确认。组件按需注入与三张 PNG 优化转入 V1.0.1 backlog，CanonicalBoard／跨用户匹配／contributors／merge-unmerge／canonical version／协作地图转入 V2 backlog。
+
 2026-08-29 V1 Current Publication 大字段回归收口栈：`observationCandidates` 的稳定 P1 只原子保存 `publishedSubmissionVersion`、批准状态和可信时间等小型发布指针，不再复制 `drawSubmissions` 内的 `finalSnapshot`／`authoritativeDrawEvents`，避免重现生产已证实的 CloudBase `-502001` 大型 observation 更新失败。`get-my-records` 按 P1 的 owner、board 和精确 published version 读取已批准 submission，并把 snapshot、draw events、note 与 location 投影到返回记录；更新但失败的 attempt 只提供核验状态与重试上下文，不能覆盖当前发布内容。核验诊断在 AJV 后继续记录 normalize、reconcile、note review 和 publication transaction checkpoint，并兼容读取 CloudBase SDK 的 `code`／`errCode`。
 
 2026-08-29 V1 PHOTO 可恢复性栈：`recognize-draw-tickets` 的 Provider 调用以 `REQUEST_STARTED → HTTP_RESPONSE → RESPONSE_BODY_PARSED → CONTENT_PRESENT → OUTPUT_JSON_PARSED → AJV_PASSED` 非敏感 checkpoint 诊断技术失败；非 2xx、transport、JSON/AJV 和后续基础设施异常统一保持 attempt 为 `PROVIDER_FAILED`，不清空当前 Storage fileID、不触发即时终态删除。客户端既有 `provider-failed → 核验异常 + 重新核验` 投影和 same-version pending identity 继续复用；50 分钟 cleanup job 与平台 1 天 lifecycle 仍封住临时图片上限。Provider 正常输出才进入实体证据 normalize 与 exact reconciliation，未改模型、Prompt、Schema 或核验强度。

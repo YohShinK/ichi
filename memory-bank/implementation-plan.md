@@ -1,12 +1,62 @@
 # ICHI Implementation Plan
 
+## V1.0.0 plan closure（当前权威状态）
+
+> 状态日期：2026-08-29
+>
+> V1 development：`COMPLETED / CLOSED`
+>
+> V1 architecture：`FROZEN / CLOSED`
+>
+> V1 release candidate、release commit、微信 upload／送审、备案与上架准备：`COMPLETED / CLOSED`
+>
+> V1 successful publication：`ACTIVE / PENDING_WECHAT_REVIEW`
+
+本节取代本文所有较早日期条目的活动状态；下方 `READY`、`IN_PROGRESS`、`AWAITING_REVIEW`、`BLOCKED` 或“待真机／待部署／待发布”只保留为历史执行证据，不再代表当前工作。V1 只剩一个活动计划：`V1.0.0 WECHAT SUCCESSFUL PUBLICATION`。除微信审核拒绝或发现真实 production release blocker 外，V1 source 保持冻结。
+
+### V1.0.0 WECHAT SUCCESSFUL PUBLICATION
+
+> 当前状态：`ACTIVE / PENDING_WECHAT_REVIEW`
+
+DONE：
+
+- [x] V1 feature freeze
+- [x] V1 architecture freeze
+- [x] automated regression
+- [x] true-device blocker closure
+- [x] release candidate and release commit `f6aa06fca21104a0a406823e5e8c6cc4ab493ab7`
+- [x] WeChat upload and submission
+- [x] filing、privacy 与 listing preparation
+
+PENDING：
+
+- [ ] 微信审核通过
+- [ ] 用户执行正式发布
+- [ ] 微信后台确认版本状态为已发布／正式版
+- [ ] 执行不消耗识别额度或真实用户数据的最小 production smoke：正常打开、微信身份建立／读取、首页与核心入口可进入、无明显启动 crash
+- [ ] 确认线上正式版本号为 `1.0.0`
+- [ ] 将 successful publication 标记 `COMPLETED`，并关闭整个 V1 milestone
+
+若 `REVIEW_REJECTED`，只记录微信真实拒绝原因并创建一个 `REVIEW_BLOCKER`，做最小必要修复和受影响范围验证后重新送审；不得重开全部 V1 plans。若 `REVIEW_APPROVED`，状态转为 `READY_TO_PUBLISH`，由用户执行正式发布。只有正式发布成功且上述最小 smoke PASS，才关闭本计划与 V1 milestone。
+
+### V1 closure registry
+
+| 分类 | 数量 | 当前结论 |
+| --- | ---: | --- |
+| CLOSED V1 major plans | 11 | Product Development、Architecture、Security/Infrastructure、Recognition V1、Automated Validation、True-device Validation、Blocker Closure、Release Candidate Assembly、Release Commit、Filing/Listing Preparation、WeChat Upload/Submission 全部关闭 |
+| SUPERSEDED V1 intermediate plans | 8 | 多 Observation 展示、每次上传新 Current Observation、Cloud fallback 重建 MY_RECORDS、显式删除后 lazy-create P2、technical failure→PHOTO_FAILED、technical failure 即时删 evidence、P1 复制大字段、后台 refresh 无条件清 active identity 均由最终 V1 方案替代 |
+| BACKLOG plan groups | 2 | V1.0.1 performance/quality 与 V2 collaborative map；均 `NOT_STARTED` |
+| ACTIVE V1 plans | 1 | `V1.0.0 WECHAT SUCCESSFUL PUBLICATION` |
+
+V1.0.1 backlog 共 5 项：`lazyCodeLoading=requiredComponents`、优化 `ichi-camera-cutout.png`、`ichi-avatar.png`、`ichi-recognition-mascot.png`、重新运行微信代码质量检查。V2 backlog 共 6 项：CanonicalBoard、cross-user same-board matching、contributors、merge/unmerge、canonical version、多人协作地图。共 11 项从 V1 active scope 转出；全部只是 backlog，本轮不设计、不实施。push release branch 与 optional `v1.0.0` tag 属于 `POST-PUBLICATION SOURCE CONTROL HOUSEKEEPING / DEFERRED / USER_DECISION`，不是微信成功发布 blocker。
+
 2026-08-29 V1.0.0 最终冻结门 `COMPLETED`：用户真机确认原 `recordId`、原 submission v3 与原 `imageFileId` 的 same-version retry 已直接进入 `APPROVED`，未重新上传、未创建新 submissionVersion、未重复 draw 或 quota；DRAW SESSION blocker 未再复现，用户据此明确批准 V1.0.0 完全冻结。当前只允许组装并人工审阅 staged release candidate，不再开发功能，不解锁 V2，不执行 commit、push、tag、微信上传、提审或发布。微信开发者工具的组件按需注入与随包图片／音频累计大小两项均为非阻塞建议，V1.0.0 `SHIP_AS_IS`，优化任务 `DEFER_TO_1_0_1`。
 
-2026-08-29 V1 DRAW_SESSION_EXIT + PHOTO_VERIFICATION_END_TO_END_CLOSURE 工作集 `READY_FOR_DRAW_SESSION_AND_PHOTO_TRUE_DEVICE_RETEST`：生产只读取证确认最新两条真实 PHOTO_FAILED 分别是不同 Board 的 version 1 与 version 5，且连同同一 Board 的四次前序重传形成六次连续 `PRIZE_TICKET_PROVIDER_FAILED`；全部 LOCATION PASS、当前版本 image 路径正确、authoritative version 一致并保存 `A1/B2/C1/D1` 五条 draw events。生产在更早同模型/Prompt/Schema 下对相同五票计数已有 HTTP 200、AJV PASS、VERIFIED 对照。根因是技术失败 catch 被错误终态化并即时删除 evidence，不是 draw、boundary、stable P1、schema normalize 或照片 mismatch。红灯已锁定 503 被写 PHOTO_FAILED、HTTP 状态丢失和删除图片；最小修复后同一 submission/image 为 PROVIDER_FAILED 可重试，技术 checkpoint 持久化，正确五票 fixture PASS、错误赏级 fixture FAIL。最新定向 10 文件／213 项与整库 56 文件／539 项及全部静态门通过；只部署 `recognize-draw-tickets`，最终线上配置 6 键恢复、运行状态与反向 7 文件树 hash 核对通过。停止自动工作，等待一条高价值真机链。
+2026-08-29 V1 DRAW_SESSION_EXIT + PHOTO_VERIFICATION_END_TO_END_CLOSURE 工作集 `CLOSED`：生产只读取证确认最新两条真实 PHOTO_FAILED 分别是不同 Board 的 version 1 与 version 5，且连同同一 Board 的四次前序重传形成六次连续 `PRIZE_TICKET_PROVIDER_FAILED`；全部 LOCATION PASS、当前版本 image 路径正确、authoritative version 一致并保存 `A1/B2/C1/D1` 五条 draw events。生产在更早同模型/Prompt/Schema 下对相同五票计数已有 HTTP 200、AJV PASS、VERIFIED 对照。根因是技术失败 catch 被错误终态化并即时删除 evidence，不是 draw、boundary、stable P1、schema normalize 或照片 mismatch。红灯已锁定 503 被写 PHOTO_FAILED、HTTP 状态丢失和删除图片；最小修复后同一 submission/image 为 PROVIDER_FAILED 可重试，技术 checkpoint 持久化，正确五票 fixture PASS、错误赏级 fixture FAIL。最新定向 10 文件／213 项与整库 56 文件／539 项及全部静态门通过；只部署 `recognize-draw-tickets`，最终线上配置 6 键恢复、运行状态与反向 7 文件树 hash 核对通过；same-version v3 真机重试最终 `APPROVED`。
 
 2026-08-29 V1 DRAW_SESSION_EXIT + PHOTO_VERIFICATION_END_TO_END_CLOSURE 历史阻塞快照 `BLOCKED_PRODUCTION_EVIDENCE`（已由上方取证结论解除）：ACTIVE_DRAW 的 late cloud refresh 红灯已精确复现，最小修复为恢复链保留 active `boardId`；自动组合用例覆盖两抽持久化、云刷新不退出、重建页面、再抽两次、NEW upload 的四条 authoritative events，以及同一 record/board/version/image verify identity。此时尚缺的两条生产 PHOTO 证据现已取得，不再是当前阻塞。
 
-2026-08-28 V1 CURRENT_PUBLICATION_ARCHITECTURE_CLOSURE 工作集 `AWAITING_REVIEW`：完成 B1／S1…／P1 三层领域矩阵、所有创建／重传／刷新／删除／重启链路审计；以红灯回归锁定 owner+board 最多 0/1 个 current P1、成功重传覆盖同一 P1、失败 attempt 隔离、版本单调与迟到结果抑制、B1-only 本机删除、P1 删除当前设备级联、网络／404 保留 B1、pending marker 崩溃恢复和墓碑禁止惰性复活。自动门覆盖定向 152 项、整库 56 文件／534 项、TypeScript、ESLint、Prettier、contracts/workflow、V1-F preflight、19 函数 CloudBase build/static validation、Next production build、Playwright 26/26、冻结三 SHA 与差异检查。生产只部署四个受影响函数并完成反向哈希核对；只读盘点显示 5 条历史 P1 全部 deleting、active duplicate=0，故无需迁移。下一状态仅为 `READY_FOR_V1_PUBLICATION_ARCHITECTURE_TRUE_DEVICE_RETEST`；不解锁 V2 MAP，不上传／发布微信客户端，不 commit/push/merge/tag。
+2026-08-28 V1 CURRENT_PUBLICATION_ARCHITECTURE_CLOSURE 工作集 `CLOSED / FROZEN`：完成 B1／S1…／P1 三层领域矩阵、所有创建／重传／刷新／删除／重启链路审计；以红灯回归锁定 owner+board 最多 0/1 个 current P1、成功重传覆盖同一 P1、失败 attempt 隔离、版本单调与迟到结果抑制、B1-only 本机删除、P1 删除当前设备级联、网络／404 保留 B1、pending marker 崩溃恢复和墓碑禁止惰性复活。自动门覆盖定向 152 项、整库 56 文件／534 项、TypeScript、ESLint、Prettier、contracts/workflow、V1-F preflight、19 函数 CloudBase build/static validation、Next production build、Playwright 26/26、冻结三 SHA 与差异检查。生产只部署四个受影响函数并完成反向哈希核对；只读盘点显示 5 条历史 P1 全部 deleting、active duplicate=0，故无需迁移。最终真机与 release freeze 已通过；V2 MAP 保持 backlog。
 
 2026-08-28 V1 MY_RECORDS_PROJECTION_OWNERSHIP_CLOSURE 历史工作集：其中 MY_RECORDS local-only、Local Board repository-only 删除和 quota 优化继续有效；“MY_UPLOADS observation-only、同 Board 多 Observation”验收目标已由上方 Current Publication 工作集正式取代，不再作为待验收行为。
 
@@ -28,7 +78,7 @@
 >
 > 本计划只包含任务、验证和验收，不包含实现代码。
 
-2026-08-29 V1-43K fresh failure closure：技术异常与业务照片失败分流已在真机确认；最新 fresh failure 的 Provider HTTP 200、JSON/AJV 和五票结构化内容均成功，真实 blocker 位于已批准结果写入 P1 的 observation 大字段回归。自动收口改为小型 published-version pointer + 精确 approved-submission 读取投影，并保留 same-version 原图重核验；新增生产等价 `-502001` 约束、失败 attempt 不覆盖 current publication、正确／错误照片和技术重试回归。当前为 `AWAITING_REVIEW`，仅待用户在证据 retention 窗口内点击“重新核验当前照片”；不得自动调用 Provider、重新上传或创建新 submission version。
+2026-08-29 V1-43K fresh failure closure `CLOSED`：技术异常与业务照片失败分流已在真机确认；最新 fresh failure 的 Provider HTTP 200、JSON/AJV 和五票结构化内容均成功，真实 blocker 位于已批准结果写入 P1 的 observation 大字段回归。自动收口改为小型 published-version pointer + 精确 approved-submission 读取投影，并保留 same-version 原图重核验；新增生产等价 `-502001` 约束、失败 attempt 不覆盖 current publication、正确／错误照片和技术重试回归。用户已用原 record、v3 与原图完成 same-version retry 并进入 `APPROVED`。
 
 ## 0. 执行协议
 
@@ -148,7 +198,9 @@
 
 ### V1-F｜跨端质量与小程序发布门
 
-> 区块状态：IN_PROGRESS；2026-08-18 按最新数据边界重新建立发布基线。此前完成的跨端、识别代理、身份短码、性能与发布证据保留为可复用前置成果。V1-F 现在同时负责小程序发布硬化、最小微信账号、每日识别配额、千问刚性识别契约，以及“不持久化照片、只保存初始结构化版面快照、抽赏事实与确定性最终快照”的 CloudBase 私有沉淀；V2 的公共地图、现实版面自动合并、Luna 日常治理、来源审核和公开发布继续锁定。
+> 区块状态：COMPLETED / CLOSED；V1-F 开发、自动验证、真机 blocker、发布候选、release commit、备案／上架准备和微信送审均已完成。V2 公共地图、现实版面自动合并、Luna 日常治理、来源审核和公开发布转入 V2 backlog。当前只等待唯一活动计划 `V1.0.0 WECHAT SUCCESSFUL PUBLICATION`。
+
+> V1-F 状态覆盖：下表原状态列是执行时快照，现统一归档。V1-40—V1-45、V1-47、V1-48 及 V1-43A—V1-43H／V1-43J／V1-43K 均为 `COMPLETED / CLOSED`；V1-43I 的 Codex/Luna 治理验证转入 V2 backlog，V1-46 的独立代表性用户研究门由最终用户验收与发布决定取代，二者均不再是 V1 active 或发布 blocker。
 
 执行依赖：先完成 V1-43A；其后 V1-43B 与 V1-43D 可并行，V1-43C 依赖账号基础，V1-43E／V1-43F 依赖账号、位置与识别契约；V1-43J 在这些后端源码和验证完成后先部署、独立验收开发环境，V1-43G 再接入小程序前端，V1-43H 只在私有候选稳定后执行。V1-43I 可以在受限开发环境独立验证 Codex 账号能力，但不能阻塞其他无需人工介入的开发。随后重跑 V1-40—V1-45，完成 V1-46 人工理解度任务，最后由 V1-47 形成新发布候选；V1-48 仍是独立人工决策门。需要外部授权或人工选择的节点可以保留，其他无依赖工作继续推进。
 
@@ -172,26 +224,26 @@ V1-43G 的当前图片边界同样已收口：客户端约 8 MiB 为性能目标
 
 | Step | 状态 | 指令 | 自动验证 | 人工验收 |
 | --- | --- | --- | --- | --- |
-| V1-40 | IN_PROGRESS | 重跑完整网页批准基线与微信小程序最终端的双入口端到端对照：辅助抽赏覆盖首次登录引导、首次相机／位置授权、页内拍摄、冻结／撤回／对勾直接识别、唯一预占、中文 IP／可选主题、识别结果人工核对、私有保存、直接进入版面、一抽一记、撕拉、概率、撤销、收手、草稿恢复与删除；识别首页导入卡仅显示每日额度提示，草稿区使用不被左滑手势截获的原生纵向惯性／回弹滚动；仅上传版面复用同一账号、权限、相机和配额路径，完成私有提交、状态恢复与退出，不创建抽赏会话 | 两条路径、首次授权与后续免重复提示、相机取景与裁切结果一致、实时／冻结控制几何稳定、过期相机错误不显示恢复层、票数字段清空／重填与已贴 `0`、重复点击、异常恢复、待上传／待核对／已上传分层、本机／云端同步和删除全链路通过；草稿多条时可自由上下滚动、边界自然回弹且横向左滑仍只影响当前卡片；不存在相册入口；测试明确断言 V1 无公共地图写入 | 用户在真机执行两条核心流程，并抽查首次登录、资料更新、相机、权限、位置、草稿滚动与私有保存披露 |
-| V1-41 | AWAITING_REVIEW | 在新增账号、配额、私有保存和失败状态后，重跑完整网页批准基线与小程序代表性设备的逐页视觉与动效回归，保持 V1-E 已验收页面与 Design Tokens | 自动截图／几何／结构回归覆盖新增状态与批准页面；窄屏和常见手机无溢出；平台差异均记录且没有借后端接入重做 UI | 用户逐页检查账号、额度、保存／失败状态和原有页面，确认没有视觉退化 |
-| V1-42 | AWAITING_REVIEW | 重跑网页与小程序可访问性和可操作性抽查，并覆盖登录／账号异常、额度耗尽、上传进度、私有保存失败、重试与删除确认 | 自动检查与平台语义断言无 P0 问题；状态不只靠颜色；读屏、文字放大和触控误差下仍能完成关键任务 | 用户抽查双入口、账号、配额、删除、抽赏和异常恢复的可读性与触控 |
-| V1-43 | IN_PROGRESS | 在现有 CloudBase 代理上迁移为 `qwen3.7-flash` 单模型、单次整版多模态识别；客户端把长边控制在约 `2400px`、JPEG quality 约 `85`，二进制短暂直传私有 `recognition-temp/`。云函数事件只携带任务绑定 `fileID`，函数以 `getTempFileURL(maxAge=300s)` 获得 HTTPS URL并直接作为百炼 `image_url`，彻底删除 download Buffer → Base64 → Data URL 链。模型使用非思考 JSON Object 和约 4MP 视觉上限；提供方草稿经 AJV 和 Normalize 转成小程序稳定契约。完成后立即双端删除，异常遗留由 COS 最短 `1` 天过期兜底；图片和签名 URL不写数据库、日志、备份或持久引用 | 静态测试证明请求不含 Buffer／Data URL；授权样本通过固定模型、提示、Provider Schema 和图片预处理版本评估；超时、取消、临时 URL、上游、JSON、Schema 和低置信路径失败闭合；正常链零图片残留；分段耗时可计算 P50/P90/P95；模型输出不能直接写私有候选或公共数据 | 用户以授权真实版面验收 IP、赏级完整度、票区归属、票位状态、人工校正、P95、成本和失败恢复 |
-| V1-43A | IN_PROGRESS | 固化 V1 后端产品与隐私契约：可信账号必须在新版面拍摄与权威识别预占前完成；首次使用以“使用微信登录”引导完成头像昵称资料；首次进入拍摄时分别请求相机和位置权限，已授权后不重复提示；普通账号北京时间每日 5 次版面识别；照片绝不持久化；仅上传版面保存用户确认的初始结构化快照，辅助抽赏再保存赏票事实并以减法生成最终快照；记录／账号删除分别在 `24` 小时／`7` 天内完成；界面统一使用“我的记录／我上传的版面”和“待上传／待核对／已上传”，其中已上传不等于 V2 地图公开 | 数据流、首次登录状态机、位置语义、权限矩阵、结构化保留／删除表、差量守恒和失败语义无冲突；相机与位置权限独立；所有会公开的数据仍受 V2 门禁；披露文案明确照片不保存、私有结构化保存不等于地图发布 | 用户确认需求、技术设计、任务拆分和披露文案准确 |
-| V1-43B | IN_PROGRESS | 建立 CloudBase 最小账号基础：可信微信身份换取、内部 `accountId`、服务端会话、退出、会话恢复、账号异常和删除入口；账号在任何新识别与位置采集前完成，昵称／头像只作资料，不参与鉴权。资料未完成时，首次启动或辅助抽赏／仅上传任一入口显示同一个“使用微信登录”引导；任一路径授权头像与昵称后立即更新“我的”页和共享完成态，后续启动与另一入口不重复引导；再次点击头像或用户名可以通过带返回键的更新卡重新授权。头像临时 URL 失效时使用 owner-scoped 私有 fileID 持续显示，但不能改变内部账号、ICHI ID、记录归属或配额 | 伪造身份或 `ownerAccountId` 被拒绝；跨账号私有记录隔离；会话过期、重开、退出和删除可追溯；未建立账号不能开始新识别；内部 ID 不在公开 UI 或日志泄露；首次资料完成后不重复引导；双入口共用完成态；页面切换后头像昵称不回退；重复资料授权只更新展示字段，所有权保持不变 | 用户提供／授权 CloudBase 环境，并在真机完成首次登录引导、双入口共享、头像昵称授权、页面切换／重开不丢头像、再次授权更新资料、退出和删除任务 |
-| V1-43C | IN_PROGRESS | 实现普通账号北京时间每日 5 次有效识别配额、任务幂等、原子预占／扣除／释放、卡住预占恢复和全项目调用量／费用熔断；辅助抽赏与仅上传版面共用额度，左上角分数环只展示服务端剩余／上限。两个入口点击后先只读检查额度，耗尽时不进入位置、相机或拍摄；冻结照片后的第二次对勾才执行唯一权威预占，完整可恢复版面成功建立后才正式扣减 | 两个入口均覆盖只读额度门；耗尽时不请求位置／相机、不创建 reservation；入口检查不预占、不扣减；并发请求不超扣，重复点击不重复扣；只有 finalize 成功扣一次，取消、权限／网络／提供方／Schema／Normalize／本地生成失败均释放；单任务只有一次模型调用；跨日与时区边界、熔断和剩余次数通过 | 用户确认额度文案、耗尽弹窗和费用上限 |
-| V1-43D | IN_PROGRESS | 审核并锁定 `ichi-board-vlm-3.0.0-rc1` + `board-provider-extraction-3.0.0-rc1`：`qwen3.7-flash` 只返回主版面、中文主 IP、原始 IP 文字、可选主题、单抽价格、A—Z／SP1—SP4、奖品款式、票位总数／已贴／unknown、逐排计数和总数证据来源；不要求生产坐标或推理。总票数与已贴数是独立观察值，缺证据的已贴数为 null，空坐标数组、实体票容量和商品款式数都不能替代已贴数；只有完整逐排证据明确无 open／unknown 才判全贴。A1/A2、B1/B2 等所有字母分层并入所属字母，独立特殊赏映射 SP1—SP4。服务端 AJV 拒绝额外字段，Normalize 优先复算守恒的逐排证据、规范常见外文 IP 别名并拆分主题，同时负责计数冲突、问题动作和全部领域派生；已确认 pasted 即使有 unknown 也进入可编辑草稿，unknown 只让余票未决。模型不返回概率、分类或提交资格。主链 `enable_thinking=false`、`json_object`、`temperature=0`、`max_pixels=4194304`，不设 `max_tokens`；识别事件和位置来源均只接受 camera，生产链拒绝 album。`qwen3.7-plus strict` 仅作为待验证兜底，未通过图像接口、黄金样本、费用门和用户批准前保持关闭 | 机器文件可解析且版本互锁；Prompt、Provider JSON、AJV、Normalize、RecognitionContract、客户端解析和 UI 映射使用同一语义字段；逐排不守恒、聚合冲突、非法类型和缺失必要结构被拒绝或安全归一；SP1—SP4、中文 IP／主题分离、null 保留、局部识别和人工校正保持；分段耗时与 token 可诊断；黄金集比较 IP、主题、漏赏、票区归属、总数／已贴数、修正量、稳定性、P50/P90/P95 和成本；图片提示注入不能改变任务；正常链不出现第二模型调用；album 反例在云函数、领域和契约 Schema 测试中拒绝 | 用户按“发送／返回／后处理”审核并用授权真实单版面／多版面照片批准模型、提示、Schema、准确率和性能基线 |
-| V1-43E | IN_PROGRESS | 实现可信账号下的私有结构化观察：新版面拍摄在进入相机前取得 GCJ-02 位置、精度、时间和同意版本，模型识别同时要求相机来源、有效位置和成功权威预占。用户确认后幂等保存模型原始结构化草稿、最终校正、字段差异、版本、`observedAt`、`serverReceivedAt`、位置快照和处理状态。仅上传版面的当前最终快照等于初始快照；辅助抽赏另保存小程序历史、赏票结构化事实和用户修订，并按规范奖级确定性相减；不保存照片、不公开地图 | 无账号或无位置时不能开始新版面拍摄及权威预占；拒绝位置不扣额度并提供恢复路径；未确认或取消不沉淀；确认重试不重复；跨账号读取和客户端公共写入被拒绝；数据库、日志和存储无照片 | 用户确认首次位置授权、后续不重复提示、照片不保存披露、本人可见状态、赏票核对、差量结果、冲突处理和删除结果 |
-| V1-43F | AWAITING_REVIEW | 将六位大写字母数字码升级为服务端分配的观察记录码：每次新确认生成新码，同草稿／重试复用；旧本机码迁移并建立别名，不改变内部 `recordId`／`boardId`；多人同版面允许保留多个码 | 服务端唯一索引／冲突重试、幂等、旧记录迁移、离线临时候选回写和查找通过；短码不能读取私有记录、改变归属或参与现实版面去重 | 用户确认六位码用于搜索与溯源，不是密码、所有权或现实版面指纹 |
-| V1-43G | IN_PROGRESS | 接入并修复小程序相机／资料：资料未完成的首次启动显示“使用微信登录”，授权后“我的”页显示微信头像昵称，后续点击头像或用户名可再次授权更新；账号管理不展示内部可信上下文或绑定状态。新版面入口先完成账号／只读额度、位置和相机权限门，再挂载页内相机；第一次快门冻结照片并显示对勾与常驻撤回槽，第二次对勾执行唯一权威预占并进入既有 fileID 识别链。识别页以四个真实事件驱动 `0—15/15—35/35—80/80—100` 目标进度，显示进度按帧平滑追赶但不越过未完成事件；Canvas 绘制浅灰底环与圆头黑弧，结果就绪后必须实际完成 `100%` 和最终勾选才通过一次性完成门跳转。识别成功保留 IP／主题／票数字段人工核对，确认后直接进入抽赏版面。二进制仍直传任务绑定私有对象，事件只传 `fileID`，不恢复 Base64 | 首次引导只在资料未完成时出现；再次授权可更新展示资料但不能改变账号归属；额度耗尽不进入位置／相机／拍摄；已授权相机／位置不重复弹窗；权限拒绝不扣额并有设置入口；tap→camera init→ready 可诊断；目标突变不造成显示跳变，进度不由固定计时器提前越界，`72/98 → 100` 均完整可见且只跳转一次；失败、返回和卸载不补到 `100%` 并取消帧；实时／冻结控制几何稳定；撤回不扣额、确认只预占一次；任一失败不显示演示 IP 或票数 | 用户在真机确认首次登录、再次更新资料、账号、额度、两条入口、取景范围、环形进度与节点三态、相机／位置授权和记录状态 |
-| V1-43H | AWAITING_REVIEW | 为 V2 冷启动保留最小可迁移字段与离线预检：账号／公开授权状态、位置完整度、结构化来源完整度、模型与用户差异、守恒结果、`observedAt`、`serverReceivedAt`、重复／冲突原因和隐私状态；只生成私有资格报告，不实现现实版面自动合并、Luna 治理或公共发布 | 资格报告可由结构化输入重放；较早观察不会仅因时间而被拒绝，缺授权、缺位置、冲突、无法解释或隐私不合格候选不会误标可公开；仓库不存在 V1 公共地图写接口或客户端公共集合权限 | 用户确认 V1 积累的是带观察时间的历史结构化候选，V2 可展示时间但不会把它们说成实时库存 |
-| V1-43I | READY | 在用户真实 Codex 账号和受限开发环境验证计划中的治理自动化能力：可用定时任务、实际可选 Luna 模型、CloudBase MCP 连接、凭据持续性、无人值守执行、审批行为、最小权限、日志、失败通知与重试；只读测试队列并写建议，不接触生产公共集合 | 保存一次完整测试记录，证明任务在无人交互时按计划运行、只能读取脱敏候选并写建议；中断、凭据失效、MCP 失败和权限越界均不会发布或损坏数据 | 用户登录真实 Codex 账号、配置受限 CloudBase 测试环境与 MCP 后，确认模型、权限、调度和失败通知实际可用 |
-| V1-43J | IN_PROGRESS | 在 V1-43A—V1-43F 的仓库代码与自动验证通过后，先把账号、资料、配额、识别任务、观察、本人记录、删除与维护后端部署到绑定的 CloudBase 开发环境并独立验收；该步骤是 V1-43G 前置，不等待前端改造，不创建 V2 公共地图 | 资源、索引、私有权限、非秘密种子、事件函数和定时触发器与仓库清单一致；独立调用覆盖身份、幂等、配额摘要／预占、失败闭合、本人隔离、删除与维护；数据库、日志和存储无照片与公共写入口 | 用户批准精确部署清单；部署后确认目标环境资源可用于后续前端联调 |
-| V1-43K | IN_PROGRESS | 建立独立实体赏票真实性核验：复用唯一生产入口 `recognize-draw-tickets` 与 `PrizeTicketVerificationProviderV1`；首次 camera evidence 的系统相册保存尝试与传输预处理并行，保存尝试结束且上传并持久化 PENDING 后进入“我上传的版面”，Qwen 核验作为可恢复后台任务运行。CloudBase 从已同步 authoritative draw events 重建 expected，确定性 canonicalize/count/exact reconcile，并保存不可变 submission version；v1 原始证据保留，v2+ 相册 replacement 不覆盖首次 metadata | PENDING 首次提交、相册保存等待期间黑色提交圆钮显示旋转加载、慢 Provider 不阻塞离页、VERIFIED/MISMATCH/NEEDS_REVIEW/INVALID_EVIDENCE/PROVIDER_FAILED 分离、原图技术重试、v2 相册重传、旧结果不覆盖新版、幂等 retry 和真实线上 Provider latency 均可验证；Qwen request 不含 expected counts/draw history；数据库/日志无临时 URL 或密钥 | 用户以真机 camera-only 确认原图进入系统相册，提交等待态不变白，进入上传列表后立即看到待核对，稍后状态只在“我上传的版面”变化；核验失败可重传、技术异常可复用原图重试，真实 CloudBase → Qwen 链可由 RequestId 与 latency 证明 |
-| V1-44 | AWAITING_REVIEW | 重做版面语法、识别、账号、私有观察和身份契约审计：固定 `accountId`、`recordId`、`boardId`、六位记录码与未来 `boardInstanceId` 的不同职责，并核对 A—Z、SP1—SP4、编号款式合并、其他特殊赏级、辅助区块和未知降级 | schema 版本、A1／A2 → A、B1／B2 → B 并依此覆盖到 Z，SP1—SP4 顺序映射、超额特殊赏原文保留、推导门禁、身份权限、同记录幂等、两类记录隔离、旧数据迁移和服务端码冲突通过；形成 V2 防污染清单但不实现公共写入 | 用户确认身份、记录、现实版面和发布状态不会混淆 |
-| V1-45 | IN_PROGRESS | 重跑性能、弱网／离线、定位与识别超时、临时图片请求、配额并发、Storage 容量／损坏／迁移、重启恢复、50 抽撤销、本机／云端删除和费用压力测试；部署并验证 CloudBase 定时维护：预占释放、卡住任务协调、私有资格报告与结构化删除重试 | 已建会话离线可继续；新版面识别与私有保存可安全重试；临时图片请求 p50／p95、配额与费用、无照片残留和异常回退达到批准要求；关键维护不依赖 Codex 运行，重复执行保持幂等 | 用户确认连续现场使用、弱网、重开、配额耗尽和删除无明显阻力，并查看一次定时任务运行证据 |
-| V1-46 | READY | 用代表性用户任务做可用性与理解度测试，重点验证两条入口、账号与位置先行、每日 5 次额度、“我的记录／我上传的版面”、待上传／待核对／已上传、本机草稿／私有后端候选／地图公开、六位码／账号归属／现实版面身份的区别 | 记录完成时长、放弃点、误触和术语误解；不存在把“已上传”误认为地图公开、把短码当密码／所有权或把历史候选当实时库存的关键误解 | 用户决定 Continue、Adjust 或 Stop，并确认发布前必须修复的问题 |
-| V1-47 | READY | 修复 V1-F 验收问题并形成新的微信小程序发布候选；重新冻结网页基线、平台差异、账号／隐私／配额／私有结构化数据边界、运维与回滚清单 | 网页质量门、微信构建／真机、识别黄金集、账号权限、配额、结构化观察与差量、无照片残留、Storage、删除、成本、契约和跨端回归全部通过；旧 2026-08-13 发布证据只作前置基线，新候选无 V2 公共写入 | 用户批准 V1 小程序发布候选及 CloudBase 生产配置 |
-| V1-48 | READY | 复盘 V1 决策门，决定深化 V1 或启动 V2 研究 | 指标、访谈和风险证据齐全，不用主观热情替代 | 用户明确作出下一阶段决定 |
+| V1-40 | COMPLETED | 重跑完整网页批准基线与微信小程序最终端的双入口端到端对照：辅助抽赏覆盖首次登录引导、首次相机／位置授权、页内拍摄、冻结／撤回／对勾直接识别、唯一预占、中文 IP／可选主题、识别结果人工核对、私有保存、直接进入版面、一抽一记、撕拉、概率、撤销、收手、草稿恢复与删除；识别首页导入卡仅显示每日额度提示，草稿区使用不被左滑手势截获的原生纵向惯性／回弹滚动；仅上传版面复用同一账号、权限、相机和配额路径，完成私有提交、状态恢复与退出，不创建抽赏会话 | 两条路径、首次授权与后续免重复提示、相机取景与裁切结果一致、实时／冻结控制几何稳定、过期相机错误不显示恢复层、票数字段清空／重填与已贴 `0`、重复点击、异常恢复、待上传／待核对／已上传分层、本机／云端同步和删除全链路通过；草稿多条时可自由上下滚动、边界自然回弹且横向左滑仍只影响当前卡片；不存在相册入口；测试明确断言 V1 无公共地图写入 | 用户在真机执行两条核心流程，并抽查首次登录、资料更新、相机、权限、位置、草稿滚动与私有保存披露 |
+| V1-41 | COMPLETED | 在新增账号、配额、私有保存和失败状态后，重跑完整网页批准基线与小程序代表性设备的逐页视觉与动效回归，保持 V1-E 已验收页面与 Design Tokens | 自动截图／几何／结构回归覆盖新增状态与批准页面；窄屏和常见手机无溢出；平台差异均记录且没有借后端接入重做 UI | 用户逐页检查账号、额度、保存／失败状态和原有页面，确认没有视觉退化 |
+| V1-42 | COMPLETED | 重跑网页与小程序可访问性和可操作性抽查，并覆盖登录／账号异常、额度耗尽、上传进度、私有保存失败、重试与删除确认 | 自动检查与平台语义断言无 P0 问题；状态不只靠颜色；读屏、文字放大和触控误差下仍能完成关键任务 | 用户抽查双入口、账号、配额、删除、抽赏和异常恢复的可读性与触控 |
+| V1-43 | COMPLETED | 在现有 CloudBase 代理上迁移为 `qwen3.7-flash` 单模型、单次整版多模态识别；客户端把长边控制在约 `2400px`、JPEG quality 约 `85`，二进制短暂直传私有 `recognition-temp/`。云函数事件只携带任务绑定 `fileID`，函数以 `getTempFileURL(maxAge=300s)` 获得 HTTPS URL并直接作为百炼 `image_url`，彻底删除 download Buffer → Base64 → Data URL 链。模型使用非思考 JSON Object 和约 4MP 视觉上限；提供方草稿经 AJV 和 Normalize 转成小程序稳定契约。完成后立即双端删除，异常遗留由 COS 最短 `1` 天过期兜底；图片和签名 URL不写数据库、日志、备份或持久引用 | 静态测试证明请求不含 Buffer／Data URL；授权样本通过固定模型、提示、Provider Schema 和图片预处理版本评估；超时、取消、临时 URL、上游、JSON、Schema 和低置信路径失败闭合；正常链零图片残留；分段耗时可计算 P50/P90/P95；模型输出不能直接写私有候选或公共数据 | 用户以授权真实版面验收 IP、赏级完整度、票区归属、票位状态、人工校正、P95、成本和失败恢复 |
+| V1-43A | COMPLETED | 固化 V1 后端产品与隐私契约：可信账号必须在新版面拍摄与权威识别预占前完成；首次使用以“使用微信登录”引导完成头像昵称资料；首次进入拍摄时分别请求相机和位置权限，已授权后不重复提示；普通账号北京时间每日 5 次版面识别；照片绝不持久化；仅上传版面保存用户确认的初始结构化快照，辅助抽赏再保存赏票事实并以减法生成最终快照；记录／账号删除分别在 `24` 小时／`7` 天内完成；界面统一使用“我的记录／我上传的版面”和“待上传／待核对／已上传”，其中已上传不等于 V2 地图公开 | 数据流、首次登录状态机、位置语义、权限矩阵、结构化保留／删除表、差量守恒和失败语义无冲突；相机与位置权限独立；所有会公开的数据仍受 V2 门禁；披露文案明确照片不保存、私有结构化保存不等于地图发布 | 用户确认需求、技术设计、任务拆分和披露文案准确 |
+| V1-43B | COMPLETED | 建立 CloudBase 最小账号基础：可信微信身份换取、内部 `accountId`、服务端会话、退出、会话恢复、账号异常和删除入口；账号在任何新识别与位置采集前完成，昵称／头像只作资料，不参与鉴权。资料未完成时，首次启动或辅助抽赏／仅上传任一入口显示同一个“使用微信登录”引导；任一路径授权头像与昵称后立即更新“我的”页和共享完成态，后续启动与另一入口不重复引导；再次点击头像或用户名可以通过带返回键的更新卡重新授权。头像临时 URL 失效时使用 owner-scoped 私有 fileID 持续显示，但不能改变内部账号、ICHI ID、记录归属或配额 | 伪造身份或 `ownerAccountId` 被拒绝；跨账号私有记录隔离；会话过期、重开、退出和删除可追溯；未建立账号不能开始新识别；内部 ID 不在公开 UI 或日志泄露；首次资料完成后不重复引导；双入口共用完成态；页面切换后头像昵称不回退；重复资料授权只更新展示字段，所有权保持不变 | 用户提供／授权 CloudBase 环境，并在真机完成首次登录引导、双入口共享、头像昵称授权、页面切换／重开不丢头像、再次授权更新资料、退出和删除任务 |
+| V1-43C | COMPLETED | 实现普通账号北京时间每日 5 次有效识别配额、任务幂等、原子预占／扣除／释放、卡住预占恢复和全项目调用量／费用熔断；辅助抽赏与仅上传版面共用额度，左上角分数环只展示服务端剩余／上限。两个入口点击后先只读检查额度，耗尽时不进入位置、相机或拍摄；冻结照片后的第二次对勾才执行唯一权威预占，完整可恢复版面成功建立后才正式扣减 | 两个入口均覆盖只读额度门；耗尽时不请求位置／相机、不创建 reservation；入口检查不预占、不扣减；并发请求不超扣，重复点击不重复扣；只有 finalize 成功扣一次，取消、权限／网络／提供方／Schema／Normalize／本地生成失败均释放；单任务只有一次模型调用；跨日与时区边界、熔断和剩余次数通过 | 用户确认额度文案、耗尽弹窗和费用上限 |
+| V1-43D | COMPLETED | 审核并锁定 `ichi-board-vlm-3.0.0-rc1` + `board-provider-extraction-3.0.0-rc1`：`qwen3.7-flash` 只返回主版面、中文主 IP、原始 IP 文字、可选主题、单抽价格、A—Z／SP1—SP4、奖品款式、票位总数／已贴／unknown、逐排计数和总数证据来源；不要求生产坐标或推理。总票数与已贴数是独立观察值，缺证据的已贴数为 null，空坐标数组、实体票容量和商品款式数都不能替代已贴数；只有完整逐排证据明确无 open／unknown 才判全贴。A1/A2、B1/B2 等所有字母分层并入所属字母，独立特殊赏映射 SP1—SP4。服务端 AJV 拒绝额外字段，Normalize 优先复算守恒的逐排证据、规范常见外文 IP 别名并拆分主题，同时负责计数冲突、问题动作和全部领域派生；已确认 pasted 即使有 unknown 也进入可编辑草稿，unknown 只让余票未决。模型不返回概率、分类或提交资格。主链 `enable_thinking=false`、`json_object`、`temperature=0`、`max_pixels=4194304`，不设 `max_tokens`；识别事件和位置来源均只接受 camera，生产链拒绝 album。`qwen3.7-plus strict` 仅作为待验证兜底，未通过图像接口、黄金样本、费用门和用户批准前保持关闭 | 机器文件可解析且版本互锁；Prompt、Provider JSON、AJV、Normalize、RecognitionContract、客户端解析和 UI 映射使用同一语义字段；逐排不守恒、聚合冲突、非法类型和缺失必要结构被拒绝或安全归一；SP1—SP4、中文 IP／主题分离、null 保留、局部识别和人工校正保持；分段耗时与 token 可诊断；黄金集比较 IP、主题、漏赏、票区归属、总数／已贴数、修正量、稳定性、P50/P90/P95 和成本；图片提示注入不能改变任务；正常链不出现第二模型调用；album 反例在云函数、领域和契约 Schema 测试中拒绝 | 用户按“发送／返回／后处理”审核并用授权真实单版面／多版面照片批准模型、提示、Schema、准确率和性能基线 |
+| V1-43E | COMPLETED | 实现可信账号下的私有结构化观察：新版面拍摄在进入相机前取得 GCJ-02 位置、精度、时间和同意版本，模型识别同时要求相机来源、有效位置和成功权威预占。用户确认后幂等保存模型原始结构化草稿、最终校正、字段差异、版本、`observedAt`、`serverReceivedAt`、位置快照和处理状态。仅上传版面的当前最终快照等于初始快照；辅助抽赏另保存小程序历史、赏票结构化事实和用户修订，并按规范奖级确定性相减；不保存照片、不公开地图 | 无账号或无位置时不能开始新版面拍摄及权威预占；拒绝位置不扣额度并提供恢复路径；未确认或取消不沉淀；确认重试不重复；跨账号读取和客户端公共写入被拒绝；数据库、日志和存储无照片 | 用户确认首次位置授权、后续不重复提示、照片不保存披露、本人可见状态、赏票核对、差量结果、冲突处理和删除结果 |
+| V1-43F | COMPLETED | 将六位大写字母数字码升级为服务端分配的观察记录码：每次新确认生成新码，同草稿／重试复用；旧本机码迁移并建立别名，不改变内部 `recordId`／`boardId`；多人同版面允许保留多个码 | 服务端唯一索引／冲突重试、幂等、旧记录迁移、离线临时候选回写和查找通过；短码不能读取私有记录、改变归属或参与现实版面去重 | 用户确认六位码用于搜索与溯源，不是密码、所有权或现实版面指纹 |
+| V1-43G | COMPLETED | 接入并修复小程序相机／资料：资料未完成的首次启动显示“使用微信登录”，授权后“我的”页显示微信头像昵称，后续点击头像或用户名可再次授权更新；账号管理不展示内部可信上下文或绑定状态。新版面入口先完成账号／只读额度、位置和相机权限门，再挂载页内相机；第一次快门冻结照片并显示对勾与常驻撤回槽，第二次对勾执行唯一权威预占并进入既有 fileID 识别链。识别页以四个真实事件驱动 `0—15/15—35/35—80/80—100` 目标进度，显示进度按帧平滑追赶但不越过未完成事件；Canvas 绘制浅灰底环与圆头黑弧，结果就绪后必须实际完成 `100%` 和最终勾选才通过一次性完成门跳转。识别成功保留 IP／主题／票数字段人工核对，确认后直接进入抽赏版面。二进制仍直传任务绑定私有对象，事件只传 `fileID`，不恢复 Base64 | 首次引导只在资料未完成时出现；再次授权可更新展示资料但不能改变账号归属；额度耗尽不进入位置／相机／拍摄；已授权相机／位置不重复弹窗；权限拒绝不扣额并有设置入口；tap→camera init→ready 可诊断；目标突变不造成显示跳变，进度不由固定计时器提前越界，`72/98 → 100` 均完整可见且只跳转一次；失败、返回和卸载不补到 `100%` 并取消帧；实时／冻结控制几何稳定；撤回不扣额、确认只预占一次；任一失败不显示演示 IP 或票数 | 用户在真机确认首次登录、再次更新资料、账号、额度、两条入口、取景范围、环形进度与节点三态、相机／位置授权和记录状态 |
+| V1-43H | COMPLETED | 为 V2 冷启动保留最小可迁移字段与离线预检：账号／公开授权状态、位置完整度、结构化来源完整度、模型与用户差异、守恒结果、`observedAt`、`serverReceivedAt`、重复／冲突原因和隐私状态；只生成私有资格报告，不实现现实版面自动合并、Luna 治理或公共发布 | 资格报告可由结构化输入重放；较早观察不会仅因时间而被拒绝，缺授权、缺位置、冲突、无法解释或隐私不合格候选不会误标可公开；仓库不存在 V1 公共地图写接口或客户端公共集合权限 | 用户确认 V1 积累的是带观察时间的历史结构化候选，V2 可展示时间但不会把它们说成实时库存 |
+| V1-43I | BACKLOG_TRANSFERRED | 在用户真实 Codex 账号和受限开发环境验证计划中的治理自动化能力：可用定时任务、实际可选 Luna 模型、CloudBase MCP 连接、凭据持续性、无人值守执行、审批行为、最小权限、日志、失败通知与重试；只读测试队列并写建议，不接触生产公共集合 | 保存一次完整测试记录，证明任务在无人交互时按计划运行、只能读取脱敏候选并写建议；中断、凭据失效、MCP 失败和权限越界均不会发布或损坏数据 | 用户登录真实 Codex 账号、配置受限 CloudBase 测试环境与 MCP 后，确认模型、权限、调度和失败通知实际可用 |
+| V1-43J | COMPLETED | 在 V1-43A—V1-43F 的仓库代码与自动验证通过后，先把账号、资料、配额、识别任务、观察、本人记录、删除与维护后端部署到绑定的 CloudBase 开发环境并独立验收；该步骤是 V1-43G 前置，不等待前端改造，不创建 V2 公共地图 | 资源、索引、私有权限、非秘密种子、事件函数和定时触发器与仓库清单一致；独立调用覆盖身份、幂等、配额摘要／预占、失败闭合、本人隔离、删除与维护；数据库、日志和存储无照片与公共写入口 | 用户批准精确部署清单；部署后确认目标环境资源可用于后续前端联调 |
+| V1-43K | COMPLETED | 建立独立实体赏票真实性核验：复用唯一生产入口 `recognize-draw-tickets` 与 `PrizeTicketVerificationProviderV1`；首次 camera evidence 的系统相册保存尝试与传输预处理并行，保存尝试结束且上传并持久化 PENDING 后进入“我上传的版面”，Qwen 核验作为可恢复后台任务运行。CloudBase 从已同步 authoritative draw events 重建 expected，确定性 canonicalize/count/exact reconcile，并保存不可变 submission version；v1 原始证据保留，v2+ 相册 replacement 不覆盖首次 metadata | PENDING 首次提交、相册保存等待期间黑色提交圆钮显示旋转加载、慢 Provider 不阻塞离页、VERIFIED/MISMATCH/NEEDS_REVIEW/INVALID_EVIDENCE/PROVIDER_FAILED 分离、原图技术重试、v2 相册重传、旧结果不覆盖新版、幂等 retry 和真实线上 Provider latency 均可验证；Qwen request 不含 expected counts/draw history；数据库/日志无临时 URL 或密钥 | 用户以真机 camera-only 确认原图进入系统相册，提交等待态不变白，进入上传列表后立即看到待核对，稍后状态只在“我上传的版面”变化；核验失败可重传、技术异常可复用原图重试，真实 CloudBase → Qwen 链可由 RequestId 与 latency 证明 |
+| V1-44 | COMPLETED | 重做版面语法、识别、账号、私有观察和身份契约审计：固定 `accountId`、`recordId`、`boardId`、六位记录码与未来 `boardInstanceId` 的不同职责，并核对 A—Z、SP1—SP4、编号款式合并、其他特殊赏级、辅助区块和未知降级 | schema 版本、A1／A2 → A、B1／B2 → B 并依此覆盖到 Z，SP1—SP4 顺序映射、超额特殊赏原文保留、推导门禁、身份权限、同记录幂等、两类记录隔离、旧数据迁移和服务端码冲突通过；形成 V2 防污染清单但不实现公共写入 | 用户确认身份、记录、现实版面和发布状态不会混淆 |
+| V1-45 | COMPLETED | 重跑性能、弱网／离线、定位与识别超时、临时图片请求、配额并发、Storage 容量／损坏／迁移、重启恢复、50 抽撤销、本机／云端删除和费用压力测试；部署并验证 CloudBase 定时维护：预占释放、卡住任务协调、私有资格报告与结构化删除重试 | 已建会话离线可继续；新版面识别与私有保存可安全重试；临时图片请求 p50／p95、配额与费用、无照片残留和异常回退达到批准要求；关键维护不依赖 Codex 运行，重复执行保持幂等 | 用户确认连续现场使用、弱网、重开、配额耗尽和删除无明显阻力，并查看一次定时任务运行证据 |
+| V1-46 | SUPERSEDED | 用代表性用户任务做可用性与理解度测试，重点验证两条入口、账号与位置先行、每日 5 次额度、“我的记录／我上传的版面”、待上传／待核对／已上传、本机草稿／私有后端候选／地图公开、六位码／账号归属／现实版面身份的区别 | 记录完成时长、放弃点、误触和术语误解；不存在把“已上传”误认为地图公开、把短码当密码／所有权或把历史候选当实时库存的关键误解 | 用户决定 Continue、Adjust 或 Stop，并确认发布前必须修复的问题 |
+| V1-47 | COMPLETED | 修复 V1-F 验收问题并形成新的微信小程序发布候选；重新冻结网页基线、平台差异、账号／隐私／配额／私有结构化数据边界、运维与回滚清单 | 网页质量门、微信构建／真机、识别黄金集、账号权限、配额、结构化观察与差量、无照片残留、Storage、删除、成本、契约和跨端回归全部通过；旧 2026-08-13 发布证据只作前置基线，新候选无 V2 公共写入 | 用户批准 V1 小程序发布候选及 CloudBase 生产配置 |
+| V1-48 | COMPLETED | 复盘 V1 决策门，决定深化 V1 或启动 V2 研究 | 指标、访谈和风险证据齐全，不用主观热情替代 | 用户明确作出下一阶段决定 |
 
 ## V2：好版线索地图
 

@@ -1,5 +1,11 @@
 # ICHI Progress
 
+2026-08-29 V1.0.0 PLAN FINAL CLOSURE：当前权威项目状态为 `V1 DEVELOPMENT=COMPLETE`、`V1 ARCHITECTURE=FROZEN`、`V1 RELEASE CANDIDATE=COMPLETE`、`V1 RELEASE COMMIT=COMPLETE`、`V1 WECHAT SUBMISSION=COMPLETE`、`V1 FILING/LISTING PREPARATION=COMPLETE`、`V1 SUCCESSFUL PUBLICATION=PENDING`。release branch 为 `release/v1-freeze-20260828`，release source commit 为 `f6aa06fca21104a0a406823e5e8c6cc4ab493ab7`（`release: finalize ICHI v1.0.0`），保持不变。用户已明确微信小程序 V1.0.0 完成 upload／送审，备案、隐私与其他上架准备全部完成；尚无审核通过或正式发布事实。
+
+V1 唯一活动计划为 `V1.0.0 WECHAT SUCCESSFUL PUBLICATION`，checkpoint=`PENDING_WECHAT_REVIEW`。DONE：feature/architecture freeze、56 files／541 tests full regression、TypeScript、ESLint、contracts、workflow/V1-F、19 CloudBase functions validation、Next.js build、same-version v3 真机 APPROVED、release commit、微信 upload／送审、备案／隐私／上架准备。PENDING：审核通过、用户正式发布、后台确认 `1.0.0` 正式版、最小线上启动 smoke、关闭 successful publication 与整个 V1 milestone。审核拒绝时只开一个基于真实拒绝原因的最小 `REVIEW_BLOCKER`，不重开全部 V1；审核通过后转 `READY_TO_PUBLISH`，正式发布与最小 smoke 均通过后才标记 V1 `CLOSED`。
+
+计划审计口径：11 个 V1 major plan groups `CLOSED`，8 个中间方案 `SUPERSEDED`，V1.0.1 与 V2 共 2 个 plan groups／11 个具体事项转为 `BACKLOG / NOT_STARTED`，V1 `ACTIVE` count=`1`。下方所有较早日期中的 `READY`、`IN_PROGRESS`、`AWAITING_REVIEW`、`BLOCKED`、待真机、待部署或待发布均为历史证据快照，状态已归档，不再构成当前计划。V1 source 在审核期间冻结；普通优化进入 V1.0.1 backlog。push release branch 与 optional tag 属于 post-publication source-control housekeeping，由用户另行决定，不是微信发布 blocker。
+
 2026-08-29 V1.0.0 最终产品冻结 `PASS`：用户真机确认原 `recordId`、原 submission v3 与原 `imageFileId` 的 same-version retry 直接进入 `APPROVED`，没有重新上传、创建新 submissionVersion、重复 draw 或重复 quota；DRAW SESSION blocker 未再复现。用户据此明确批准 V1.0.0 完全冻结，当前只组装并人工审阅 staged release candidate，不再开发新功能。微信开发者工具的组件按需注入与随包图片／音频累计大小两项均为 recommendation-only，不构成上传或审核 blocker；V1.0.0 `SHIP_AS_IS`，`lazyCodeLoading: requiredComponents` 以及 `ichi-camera-cutout.png`、`ichi-avatar.png`、`ichi-recognition-mascot.png` 优化统一 `DEFER_TO_1_0_1`。本轮不修改 `app.json`、不压缩／迁移 PNG、不进入 V2，不执行 commit、push、tag、微信上传、提审或发布。
 
 2026-08-29 V1 FRESH PROVIDER FAILURE FORENSICS / publication blocker 自动收口完成，状态 `READY_FOR_PROVIDER_RETRY_TRUE_DEVICE`：只读锁定真机最新 `record_b329…23a1 / board-…d999 / v3`，图片约 `215.62`（CLI unit）JPEG 仍在 Storage，attempt 与 P1 均未被调查／部署改写。链路证据为 getTempFileURL 成功并提供有效 HTTPS、Provider request 已发送、HTTP 200／2170ms／RequestId `chatcmpl-005d…07ce`、body/envelope/content/JSON/AJV 全通过、`physical_tickets` 五票；draw facts 为 `A/B/B/C/D`、expected `A1/B2/C1/D1`。generic failure 发生于 AJV 后，结合专用 normalize error code、fail-closed note adapter 和历史 observation 大字段 `-502001`，根因锁定为 APPROVED publication transaction 再次复制 snapshot/events 到 P1。
@@ -110,11 +116,11 @@
 
 - 2026-08-23 当前 Provider JSON 协议仍为 `4.0.0-rc1`，生产 Prompt 已迭代为 `ichi-board-vlm-4.0.3-rc1`；严格 null、raw tier 确定性 pasted／父级聚合和 SP1—SP32 均保持。开发环境 19 个 Nodejs20.19 函数已重新列举核验，`recognize-board` 清理版已在线 smoke；真实四图准确率未通过，Storage CUSTOM 规则、资料绑定后端发布和真机端到端仍待完成。
 
-- 当前活动区块：V1-F｜跨端质量与小程序发布门
-- 区块状态：V1-E `COMPLETED`；V1-F `IN_PROGRESS`
+- 当前活动区块：无
+- 区块状态：V1-E `COMPLETED`；V1-F `COMPLETED / CLOSED`
 - 区块内工作集：V1-40—V1-47 已按新后端范围重新打开；V1-43 保留既有识别代理实现并继续进行，V1-43A—V1-43J 覆盖账号／位置／配额／刚性识别契约／私有观察／六位码／开发环境后端先行部署／客户端同步／V2 预检与真实 Codex 账号验证，V1-48 保留为人工决策门
 - 最近完成：V1-E 已于 2026-08-13 完成全部自动验证、区块级回归及用户授权的统一人工验收，V1-31—V1-39 全部为 `COMPLETED`
-- 下一候选区块：V2-A｜公开贡献、来源审核与地图事实底座；仅在 V1-F 完成且 V1-48 明确批准后解锁
+- 下一候选区块：无；当前只执行 `V1.0.0 WECHAT SUCCESSFUL PUBLICATION` 外部发布计划。V1.0.1 与 V2 均为 `BACKLOG / NOT_STARTED`，不得自动解锁。
 - 代码状态：CloudBase 开发环境当前有 13 个 ADMINONLY 集合、19 个 Nodejs20.19 私有事件函数、4 个维护触发器和 0 个已知云存储文件。17 个生成函数与 2 个独立模型函数统一绑定 `ichi-node-deps_cloud1-d7gxqfwv783a1f131` v1 依赖层；新增 `release-recognition` 为校正确认后的客户端终态失败显式释放尚未认领的配额预占。版面识别主链已部署为 v4 单一语义 Provider 协议，仍保持 `qwen3.7-flash`、非思考 JSON Object、`max_pixels=4194304` 与 fileID／临时 URL；旧 Buffer／Base64／Data URL 方案未恢复。授权黄金样本、赏票二次识别、真机跨账号／删除／弱网、2.62MP 对照、性能分位与费用熔断阈值仍属人工门，V2 公共地图继续锁定。
 
 2026-08-25 V1-F 版面识别进度动画二次收口：`platform/recognition-progress.ts` 现独立维护真实事件许可的 `targetProgress` 与逐帧显示的 `displayProgress`，四段等待不越过 `15/35/80/100` 边界；结果就绪后以最长 `420ms` 的快速 ease-out 完成最后一段，只有显示 `100%`、第四节点“版面结果已就绪”并成功消费一次性完成门后才进入结果页。小程序改用复用 Canvas 上下文的浅灰底环与圆头黑弧，当前节点改为 `#5528c2` 的 `1.6s` 柔和呼吸点，并使用进行中／已完成动态文案。Provider 失败不再发出 `result-ready`，页面失败、返回和卸载统一停止帧并清理引用。定向 4 文件／75 项、全量 44 文件／318 项 Vitest、根与 Web TypeScript、Next.js 生产构建和工作流校验通过。全量 ESLint 被本轮范围外已有的 3 项问题拦截：`pages/home/index.ts` 的 `_pendingFinalization` 未使用，以及 `recognize-board/protocol-v5.test.ts` 两处 `no-explicit-any`；本轮未越界修改。Canvas 圆头、呼吸节奏和完成帧仍待用户真机视觉确认。

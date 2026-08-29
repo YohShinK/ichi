@@ -40,8 +40,10 @@ let cameraAuthorizationCount = 0;
 let cameraPermissionState: boolean | undefined = true;
 let cloudRecordsResult: unknown[] = [];
 let profileComplete = true;
+let profileHasAvatar = true;
 let profileNickname = "ICHI 玩家";
 let profileAvatarUrlAvailable = true;
+let accountBootstrapFailure = false;
 const profileAvatarFileId =
   "cloud://test-env/profile-avatars/current-avatar.jpg";
 const app = {
@@ -327,6 +329,9 @@ beforeEach(() => {
       data?: Record<string, unknown>;
     }) => {
       if (name === "bootstrap-account") {
+        if (accountBootstrapFailure) {
+          throw { errMsg: "request:fail timeout" };
+        }
         return {
           result: {
             ok: true,
@@ -347,7 +352,7 @@ beforeEach(() => {
               ichiId: "ICHI-001",
               nickname: profileNickname,
               avatarState: profileComplete ? "wechat-authorized" : "default",
-              ...(profileComplete
+              ...(profileHasAvatar
                 ? {
                     avatarFileId: profileAvatarFileId,
                     ...(profileAvatarUrlAvailable
@@ -378,15 +383,20 @@ beforeEach(() => {
       if (name === "bind-wechat-profile") {
         profileComplete = true;
         profileNickname = String(data?.nickname ?? "微信玩家");
+        if (data?.avatarFileId || data?.avatarUrl) profileHasAvatar = true;
         return {
           result: {
             ok: true,
             data: {
               ichiId: "ICHI-001",
               nickname: profileNickname,
-              avatarState: "wechat-authorized",
-              avatarFileId: profileAvatarFileId,
-              avatarUrl: "https://avatar.example/updated.jpg",
+              avatarState: profileHasAvatar ? "wechat-authorized" : "default",
+              ...(profileHasAvatar
+                ? {
+                    avatarFileId: profileAvatarFileId,
+                    avatarUrl: "https://avatar.example/updated.jpg",
+                  }
+                : {}),
               profileState: "complete",
             },
           },
@@ -520,59 +530,38 @@ beforeEach(() => {
   cameraPermissionState = true;
   cloudRecordsResult = [];
   profileComplete = true;
+  profileHasAvatar = true;
   profileNickname = "ICHI 玩家";
   profileAvatarUrlAvailable = true;
+  accountBootstrapFailure = false;
   app.globalData = {};
   vi.useFakeTimers();
 });
 
 describe("V1-E page behavior", () => {
-  it("opens WeChat login on first use only and allows later profile updates", async () => {
+  it("silently bootstraps a fresh account without opening a profile authorization wall", async () => {
     profileComplete = false;
+    profileHasAvatar = false;
     const page = createRuntimePage();
     call(page, "onLoad");
     await call(page, "onShow");
     await vi.waitFor(() => expect(page.data.accountState).toBe("ready"));
-    expect(page.data.modalView).toBe("wechat-login");
-    expect(page.data.profileAuthorizationPurpose).toBe("first-use");
-    call(page, "onCloseWechatProfileAuthorization");
-    expect(page.data.modalView).toBe("wechat-login");
-
-    call(page, "onProfileNicknameInput", { detail: { value: "微信玩家" } });
-    call(page, "onChooseWechatAvatar", {
-      detail: { avatarUrl: "/tmp/wechat-avatar.jpg" },
-    });
-    expect(page.data.profileAuthorizationReady).toBe(true);
-    await call(page, "onAuthorizeWechatProfile");
     expect(page.data).toMatchObject({
       modalView: "",
-      accountNickname: "微信玩家",
-      accountProfileState: "complete",
+      accountNickname: "ICHI 玩家",
+      accountAvatarUrl: "/assets/v1-29/ichi-avatar.png",
     });
-    expect(String(page.data.accountAvatarUrl)).toMatch(
-      /^\/user-data\/ichi-profile-avatar-/u,
-    );
+    expect(
+      cloudCallFunctionMock.mock.calls.map(([request]) => request.name),
+    ).toContain("bootstrap-account");
 
-    await call(page, "onShow");
-    await vi.waitFor(() => expect(page.data.accountState).toBe("ready"));
-    expect(page.data.modalView).toBe("");
     call(page, "onOpenWechatProfileAuthorization");
-    expect(page.data.modalView).toBe("wechat-login");
-    expect(page.data.profileAuthorizationPurpose).toBe("update");
-    expect(page.data.profileOriginalNickname).toBe("微信玩家");
+    expect(page.data.modalView).toBe("profile-edit");
+    expect(page.data.profileOriginalNickname).toBe("ICHI 玩家");
     expect(page.data.profileAuthorizationReady).toBe(false);
-    call(page, "onProfileNicknameInput", { detail: { value: "微信玩家" } });
-    expect(page.data.profileAuthorizationReady).toBe(false);
-    call(page, "onProfileNicknameInput", { detail: { value: "临时昵称" } });
-    expect(page.data.profileAuthorizationReady).toBe(true);
-    call(page, "onProfileNicknameInput", { detail: { value: "微信玩家" } });
-    expect(page.data.profileAuthorizationReady).toBe(false);
-    call(page, "onChooseWechatAvatar", {
-      detail: { avatarUrl: "/tmp/avatar-only-update.jpg" },
-    });
-    expect(page.data.profileAuthorizationReady).toBe(true);
     call(page, "onCloseWechatProfileAuthorization");
     expect(page.data.modalView).toBe("");
+
     call(page, "onOpenWechatProfileAuthorization");
     call(page, "onProfileNicknameInput", { detail: { value: "新微信玩家" } });
     expect(page.data.profileAuthorizationReady).toBe(true);
@@ -580,61 +569,58 @@ describe("V1-E page behavior", () => {
     expect(page.data).toMatchObject({
       modalView: "",
       accountNickname: "新微信玩家",
-      accountProfileState: "complete",
     });
     expect(cloudCallFunctionMock).toHaveBeenCalledWith(
       expect.objectContaining({
         name: "bind-wechat-profile",
         data: expect.objectContaining({
           nickname: "新微信玩家",
-          avatarFileId: profileAvatarFileId,
         }),
       }),
     );
-    profileAvatarUrlAvailable = false;
     call(page, "onSelectTab", baseEvent({ tab: "map" }));
     call(page, "onSelectTab", baseEvent({ tab: "my" }));
-    await vi.waitFor(() =>
-      expect(String(page.data.accountAvatarUrl)).toMatch(
-        /^\/user-data\/ichi-profile-avatar-/u,
-      ),
-    );
+    await vi.waitFor(() => expect(page.data.accountState).toBe("ready"));
+    expect(page.data.accountAvatarUrl).toBe("/assets/v1-29/ichi-avatar.png");
     expect(page.data.accountNickname).toBe("新微信玩家");
 
     const reloaded = createRuntimePage();
     call(reloaded, "onLoad");
+    await call(reloaded, "onShow");
+    await vi.waitFor(() => expect(reloaded.data.accountState).toBe("ready"));
     expect(reloaded.data.accountNickname).toBe("新微信玩家");
-    expect(String(reloaded.data.accountAvatarUrl)).toMatch(
-      /^\/user-data\/ichi-profile-avatar-/u,
+    expect(reloaded.data.accountAvatarUrl).toBe(
+      "/assets/v1-29/ichi-avatar.png",
     );
   });
 
-  it("shares one first-use authorization gate across both board entry paths", async () => {
-    profileComplete = false;
-    const page = createRuntimePage();
-    await call(page, "onImportBoard", baseEvent({ flowMode: "assist" }));
-    expect(page.data).toMatchObject({
-      modalView: "wechat-login",
-      profileAuthorizationPurpose: "first-use",
-      resumeCaptureAfterProfileAuthorization: true,
-      pendingRecognitionMode: "assist",
-    });
-    call(page, "onProfileNicknameInput", { detail: { value: "微信玩家" } });
-    call(page, "onChooseWechatAvatar", {
-      detail: { avatarUrl: "/tmp/wechat-avatar.jpg" },
-    });
-    await call(page, "onAuthorizeWechatProfile");
-    expect(page.data.currentView).toBe("camera-capture");
+  it.each(["assist", "direct-upload"] as const)(
+    "lets an incomplete-profile account enter %s without profile authorization",
+    async (flowMode) => {
+      profileComplete = false;
+      profileHasAvatar = false;
+      const page = createRuntimePage();
+      await call(page, "onImportBoard", baseEvent({ flowMode }));
+      expect(page.data.currentView).toBe("camera-capture");
+      expect(page.data.modalView).toBe("");
+      expect(page.data.accountState).toBe("ready");
+      expect(
+        cloudCallFunctionMock.mock.calls.map(([request]) => request.name),
+      ).not.toContain("bind-wechat-profile");
+    },
+  );
 
-    call(page, "onBackToStart");
-    await call(page, "onImportBoard", baseEvent({ flowMode: "direct-upload" }));
-    expect(page.data.currentView).toBe("camera-capture");
+  it("shows a technical retry state instead of a profile authorization prompt when silent bootstrap fails", async () => {
+    accountBootstrapFailure = true;
+    const page = createRuntimePage();
+    call(page, "onLoad");
+    await call(page, "onShow");
+    await vi.waitFor(() => expect(page.data.accountState).toBe("unavailable"));
     expect(page.data.modalView).toBe("");
-    expect(
-      cloudCallFunctionMock.mock.calls.filter(
-        ([request]) => request.name === "bind-wechat-profile",
-      ),
-    ).toHaveLength(1);
+
+    await call(page, "onImportBoard", baseEvent({ flowMode: "assist" }));
+    expect(page.data.modalView).toBe("account-unavailable");
+    expect(page.data.currentView).toBe("start");
   });
 
   it("requests camera permission once and reuses the persisted authorization", async () => {

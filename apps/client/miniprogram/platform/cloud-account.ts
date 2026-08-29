@@ -188,7 +188,7 @@ export const bindWechatProfile = async (
   if (avatarFileId && !isAvatarFileId(avatarFileId)) {
     throw new CloudAccountError("PROFILE_AVATAR_INVALID");
   }
-  if (!avatarFileId && (!avatarUrl || !isHttpsUrl(avatarUrl))) {
+  if (avatarUrl && !isHttpsUrl(avatarUrl)) {
     throw new CloudAccountError("PROFILE_AVATAR_INVALID");
   }
   const data: WechatProfileBindingInput = {

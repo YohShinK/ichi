@@ -2427,7 +2427,7 @@ button.profile-avatar {
   animation: modal-enter 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.wechat-login-card {
+.profile-edit-card {
   top: 50vh;
   height: auto;
   max-width: 332px;
@@ -2437,7 +2437,7 @@ button.profile-avatar {
   text-align: center;
 }
 
-.wechat-login-back {
+.profile-edit-back {
   position: absolute;
   top: 18px;
   left: 18px;
@@ -2452,10 +2452,10 @@ button.profile-avatar {
   background: #f0f2f5;
 }
 
-.wechat-login-back::after { border: 0; }
-.wechat-login-back image { width: 18px; height: 18px; }
+.profile-edit-back::after { border: 0; }
+.profile-edit-back image { width: 18px; height: 18px; }
 
-.wechat-login-avatar {
+.profile-edit-avatar {
   display: block;
   overflow: hidden;
   width: 76px !important;
@@ -2468,28 +2468,28 @@ button.profile-avatar {
   box-shadow: 0 8px 24px rgba(17, 17, 17, 0.12);
 }
 
-.wechat-login-avatar::after {
+.profile-edit-avatar::after {
   border: 0;
 }
 
-.wechat-login-avatar image {
+.profile-edit-avatar image {
   display: block;
   width: 100%;
   height: 100%;
 }
 
-.wechat-login-card .card-copy {
+.profile-edit-card .card-copy {
   max-width: 252px;
   margin: 10px auto 18px;
 }
 
-.wechat-login-card .account-profile-nickname {
+.profile-edit-card .account-profile-nickname {
   margin-bottom: 18px;
   background: #f0f2f5;
   text-align: center;
 }
 
-.wechat-login-card .action-button[disabled] {
+.profile-edit-card .action-button[disabled] {
   background: #dfe2e7;
   color: #9a9da6;
   box-shadow: none;

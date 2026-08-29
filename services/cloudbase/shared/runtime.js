@@ -372,7 +372,10 @@ const createRuntime = ({
         );
         return response({
           ichiId: profile.canonicalIchiId,
-          nickname: profile.nickname,
+          nickname:
+            typeof profile.nickname === "string" && profile.nickname.trim()
+              ? profile.nickname.trim()
+              : "ICHI 玩家",
           profileState: profile.profileState,
           created: false,
         });
@@ -404,6 +407,7 @@ const createRuntime = ({
             accountId,
             canonicalIchiId,
             nickname: "ICHI 玩家",
+            avatarFileId: null,
             avatarState: "default",
             profileState: "incomplete",
             createdAt: timestamp,
@@ -450,7 +454,10 @@ const createRuntime = ({
     const avatarUrl = await freshProfileAvatarUrl(profile);
     return {
       ichiId: profile.canonicalIchiId,
-      nickname: profile.nickname,
+      nickname:
+        typeof profile.nickname === "string" && profile.nickname.trim()
+          ? profile.nickname.trim()
+          : "ICHI 玩家",
       avatarState: profile.avatarState,
       ...(typeof profile.avatarFileId === "string" && profile.avatarFileId
         ? { avatarFileId: profile.avatarFileId }
@@ -502,8 +509,10 @@ const createRuntime = ({
       nickname.length >= 1 && nickname.length <= 32,
       "PROFILE_NICKNAME_INVALID",
     );
+    const hasAvatarUpdate = Boolean(avatarFileId || avatarUrl);
     domain.assert(
-      validAvatarFileId ||
+      !hasAvatarUpdate ||
+        validAvatarFileId ||
         (/^https:\/\//u.test(avatarUrl) && avatarUrl.length <= 1024),
       "PROFILE_AVATAR_INVALID",
     );
@@ -529,8 +538,12 @@ const createRuntime = ({
         .update({
           data: {
             nickname,
-            ...(avatarFileId ? { avatarFileId } : { avatarUrl }),
-            avatarState: "wechat-authorized",
+            ...(avatarFileId
+              ? { avatarFileId }
+              : avatarUrl
+                ? { avatarUrl }
+                : {}),
+            ...(hasAvatarUpdate ? { avatarState: "wechat-authorized" } : {}),
             profileState: "complete",
             updatedAt: timestamp,
           },
@@ -547,8 +560,8 @@ const createRuntime = ({
       const boundProfile = {
         ...profile,
         nickname,
-        ...(avatarFileId ? { avatarFileId } : { avatarUrl }),
-        avatarState: "wechat-authorized",
+        ...(avatarFileId ? { avatarFileId } : avatarUrl ? { avatarUrl } : {}),
+        ...(hasAvatarUpdate ? { avatarState: "wechat-authorized" } : {}),
         profileState: "complete",
       };
       return {

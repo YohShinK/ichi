@@ -149,7 +149,7 @@ type ModalView =
   | "capture-permission-required"
   | "delete-uploaded-board"
   | "note-review"
-  | "wechat-login";
+  | "profile-edit";
 type AccountState = "loading" | "ready" | "unavailable";
 
 const recognitionReservationErrorMessage = (error: unknown): string => {
@@ -536,7 +536,6 @@ const DEFAULT_ACCOUNT_AVATAR = "/assets/v1-29/ichi-avatar.png";
 const ACCOUNT_DISPLAY_CACHE_KEY = "ichi.account-display.v1";
 
 const isProfileAuthorizationReady = (
-  purpose: "first-use" | "update",
   nickname: unknown,
   avatarPath: unknown,
   originalNickname: unknown,
@@ -544,7 +543,6 @@ const isProfileAuthorizationReady = (
   const normalizedNickname = String(nickname ?? "").trim();
   const normalizedAvatarPath = String(avatarPath ?? "").trim();
   if (!normalizedNickname) return false;
-  if (purpose === "first-use") return Boolean(normalizedAvatarPath);
   return (
     normalizedNickname !== String(originalNickname ?? "").trim() ||
     Boolean(normalizedAvatarPath)
@@ -828,13 +826,10 @@ Page({
     accountNickname: "ICHI 玩家",
     accountAvatarUrl: DEFAULT_ACCOUNT_AVATAR,
     accountIchiId: "同步中",
-    accountProfileState: "incomplete",
     profileNicknameDraft: "",
     profileOriginalNickname: "",
     profileAvatarPath: "",
     profileAuthorizationReady: false,
-    profileAuthorizationPurpose: "first-use" as "first-use" | "update",
-    resumeCaptureAfterProfileAuthorization: false,
     quotaLimit: 5,
     quotaUsed: 0,
     quotaReserved: 0,
@@ -881,7 +876,6 @@ Page({
             accountNickname: cachedAccount.nickname,
             accountAvatarUrl: cachedAccount.avatarPath,
             accountIchiId: cachedAccount.ichiId,
-            accountProfileState: "complete",
           }
         : {}),
       ...(recognitionFlow
@@ -1133,23 +1127,12 @@ Page({
                 String(this.data.accountAvatarUrl || DEFAULT_ACCOUNT_AVATAR),
               )),
         accountIchiId: account.profile.ichiId,
-        accountProfileState: account.profile.profileState,
         quotaLimit: account.quota.limit,
         quotaUsed: account.quota.used,
         quotaReserved: account.quota.reserved,
         quotaRemaining: account.quota.remaining,
         quotaUsedPercent: quotaUsedPercent(account.quota),
         quotaResetAt: account.quota.resetAt,
-        ...(account.profile.profileState !== "complete" && !this.data.modalView
-          ? {
-              modalView: "wechat-login" as const,
-              profileAuthorizationPurpose: "first-use" as const,
-              profileNicknameDraft: "",
-              profileOriginalNickname: "",
-              profileAvatarPath: "",
-              profileAuthorizationReady: false,
-            }
-          : {}),
       });
       if (!cachedAvatarPath && account.profile.avatarFileId) {
         void persistAccountDisplayCache(account.profile).then((avatarPath) => {
@@ -1210,7 +1193,6 @@ Page({
     this.setData({
       profileNicknameDraft,
       profileAuthorizationReady: isProfileAuthorizationReady(
-        this.data.profileAuthorizationPurpose,
         profileNicknameDraft,
         this.data.profileAvatarPath,
         this.data.profileOriginalNickname,
@@ -1226,7 +1208,6 @@ Page({
       this.setData({
         profileAvatarPath: avatarPath,
         profileAuthorizationReady: isProfileAuthorizationReady(
-          this.data.profileAuthorizationPurpose,
           this.data.profileNicknameDraft,
           avatarPath,
           this.data.profileOriginalNickname,
@@ -1240,27 +1221,15 @@ Page({
       return;
     }
     this.setData({
-      modalView: "wechat-login" as const,
-      profileAuthorizationPurpose:
-        this.data.accountProfileState === "complete"
-          ? ("update" as const)
-          : ("first-use" as const),
-      profileNicknameDraft:
-        this.data.accountProfileState === "complete"
-          ? String(this.data.accountNickname)
-          : "",
-      profileOriginalNickname:
-        this.data.accountProfileState === "complete"
-          ? String(this.data.accountNickname)
-          : "",
+      modalView: "profile-edit" as const,
+      profileNicknameDraft: String(this.data.accountNickname || "ICHI 玩家"),
+      profileOriginalNickname: String(this.data.accountNickname || "ICHI 玩家"),
       profileAvatarPath: "",
       profileAuthorizationReady: false,
-      resumeCaptureAfterProfileAuthorization: false,
     });
   },
 
   onCloseWechatProfileAuthorization() {
-    if (this.data.profileAuthorizationPurpose !== "update") return;
     const avatarPath = String(this.data.profileAvatarPath).trim();
     if (avatarPath.startsWith("/") || avatarPath.startsWith("wxfile://")) {
       void deleteWxTemporaryBoardImage(avatarPath);
@@ -1278,17 +1247,13 @@ Page({
     const nickname = String(this.data.profileNicknameDraft).trim();
     const avatarPath = String(this.data.profileAvatarPath).trim();
     const authorizationReady = isProfileAuthorizationReady(
-      this.data.profileAuthorizationPurpose,
       nickname,
       avatarPath,
       this.data.profileOriginalNickname,
     );
     if (!authorizationReady) {
       wx.showToast({
-        title:
-          this.data.profileAuthorizationPurpose === "first-use"
-            ? "请先填写昵称并选择头像"
-            : "请先更改头像或昵称",
+        title: "请先更改头像或昵称",
         icon: "none",
       });
       return;
@@ -1301,9 +1266,6 @@ Page({
         : existingProfile?.avatarUrl
           ? { avatarUrl: existingProfile.avatarUrl }
           : undefined;
-      if (!avatarPath && !existingAvatarBinding) {
-        throw new CloudAccountError("PROFILE_AVATAR_INVALID");
-      }
       const profile = avatarPath
         ? await bindWechatProfileFromSelection(
             api,
@@ -1328,7 +1290,6 @@ Page({
             profile,
             String(this.data.accountAvatarUrl || DEFAULT_ACCOUNT_AVATAR),
           ),
-        accountProfileState: profile.profileState,
         profileNicknameDraft: "",
         profileOriginalNickname: "",
         profileAvatarPath: "",
@@ -1336,20 +1297,9 @@ Page({
         modalView: "" as const,
       });
       wx.showToast({
-        title:
-          this.data.profileAuthorizationPurpose === "first-use"
-            ? "微信登录成功"
-            : "微信资料已更新",
+        title: "个人资料已更新",
         icon: "success",
       });
-      if (this.data.resumeCaptureAfterProfileAuthorization) {
-        this.setData({ resumeCaptureAfterProfileAuthorization: false });
-        await this.onImportBoard({
-          currentTarget: {
-            dataset: { flowMode: this.data.pendingRecognitionMode },
-          },
-        } as unknown as WechatMiniprogram.BaseEvent);
-      }
     } catch {
       wx.showToast({ title: "微信资料授权失败", icon: "none" });
     } finally {
@@ -1562,7 +1512,6 @@ Page({
       this.setData({
         pendingRecognitionMode: recognitionMode,
         modalView: "quota-exhausted" as const,
-        resumeCaptureAfterProfileAuthorization: false,
       });
       return;
     }
@@ -1585,22 +1534,6 @@ Page({
       if (quota.remaining <= 0) {
         this.setData({
           modalView: "quota-exhausted" as const,
-          resumeCaptureAfterProfileAuthorization: false,
-        });
-        return;
-      }
-      const profileState = accountReady
-        ? this.data.accountProfileState
-        : account?.profile.profileState;
-      if (profileState !== "complete") {
-        this.setData({
-          modalView: "wechat-login" as const,
-          profileAuthorizationPurpose: "first-use" as const,
-          profileNicknameDraft: "",
-          profileOriginalNickname: "",
-          profileAvatarPath: "",
-          profileAuthorizationReady: false,
-          resumeCaptureAfterProfileAuthorization: true,
         });
         return;
       }

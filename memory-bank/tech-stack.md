@@ -1,5 +1,9 @@
 # ICHI Technology Stack
 
+2026-08-29 `WECHAT_PREMATURE_PROFILE_AUTH_GATE` REVIEW_BLOCKER 技术修订（当前最高事实源）：复用现有 `bootstrap-account` 的 `cloud.getWXContext()` 可信 identity mapping 与事务内 find-or-create，不新增 Guest／Anonymous／临时游客模型、collection 或客户端 owner identity。Account/session readiness 只由这条可信服务端链决定；`profiles.profileState`、`nickname`、`avatarFileId` 仅是展示资料，不得作为首页或功能入口 gate。新 profile 继续由服务端写入 `nickname="ICHI 玩家"`；没有 `avatarFileId` 时客户端使用 `/assets/v1-29/ichi-avatar.png` fallback，不上传默认头像、不做生产 migration。
+
+可选资料更新继续复用 `bind-wechat-profile`、`profile-avatars/` owner-only Storage 与本地 `USER_DATA_PATH` 展示缓存。客户端只把 `chooseAvatar` 临时 path 交给 `wx.cloud.uploadFile`，服务端数据库只接收稳定 `cloud://.../profile-avatars/...` fileID；昵称-only 与头像-only 主动更新都必须由 owner-scoped 服务端按现有 profile 合并，昵称始终经过共享 `PROFILE_NICKNAME`/`msgSecCheck scene=1` 安全检查。bootstrap 网络／函数失败映射为技术失败 UI，不得降级为资料授权请求。
+
 2026-08-29 V1.0.0 technology closure：V1 生产技术栈、识别 R2 Prompt／Schema／resolver、CloudBase 19 函数边界、Storage CUSTOM 与 1 天临时对象 lifecycle、13 个私有集合及 fail-closed 安全边界全部 `FROZEN / CLOSED`。当前没有 V1 技术实施计划；唯一 V1 active plan 是等待微信审核、正式发布和最小线上确认。组件按需注入与三张 PNG 优化转入 V1.0.1 backlog，CanonicalBoard／跨用户匹配／contributors／merge-unmerge／canonical version／协作地图转入 V2 backlog。
 
 2026-08-29 V1 Current Publication 大字段回归收口栈：`observationCandidates` 的稳定 P1 只原子保存 `publishedSubmissionVersion`、批准状态和可信时间等小型发布指针，不再复制 `drawSubmissions` 内的 `finalSnapshot`／`authoritativeDrawEvents`，避免重现生产已证实的 CloudBase `-502001` 大型 observation 更新失败。`get-my-records` 按 P1 的 owner、board 和精确 published version 读取已批准 submission，并把 snapshot、draw events、note 与 location 投影到返回记录；更新但失败的 attempt 只提供核验状态与重试上下文，不能覆盖当前发布内容。核验诊断在 AJV 后继续记录 normalize、reconcile、note review 和 publication transaction checkpoint，并兼容读取 CloudBase SDK 的 `code`／`errCode`。
@@ -102,7 +106,7 @@ V1-A 锁定 Node.js 24.11、pnpm 11.9.0、TypeScript 6.0.3、Vitest 4.1.10、ESL
 
 V1-A 锁定微信基础库 3.17.0；根仓库、CI 和本地开发保持 Node 24.11。目标 CloudBase 环境的实际函数创建接口不接受 `Nodejs24.11`，用户于 2026-08-18 明确批准把 V1 事件云函数运行时改为平台推荐且实测支持的 `Nodejs20.19`。工程绑定用户提供的小程序 AppID；AppSecret 只允许存在于受控服务端环境变量，不进入仓库或客户端。
 
-V1-F 采用后端优先集成：先在仓库完成资源清单、事件函数和自动验证，再部署 CloudBase 开发环境并独立调用后端；通过后才改造小程序头像资料入口、动态昵称／ICHI ID、每日配额进度环与耗尽弹窗。云函数通过 `cloud.getWXContext()` 取得可信 `APPID/OPENID`，但客户端首次资料未完成时必须显示“使用微信登录”的首次授权引导；引导使用当前微信支持的 `button open-type="chooseAvatar"` 与 `input type="nickname"`，不继续依赖 `wx.getUserProfile` 自动取回资料。资料绑定函数为 owner-scoped 更新接口：首次写入和后续经用户再次授权的头像／昵称更新都允许执行，但内部 `accountId`、ICHI ID、记录归属和配额不随资料改变。头像显示优先使用同一 owner 的私有 CloudBase `avatarFileId`；短时 HTTPS URL 仅作兼容回退，不得因临时 URL 重新签发或失效造成头像闪动、覆盖为默认头像。配额摘要由 `get-quota-status` 返回 `limit/used/reserved/remaining/dateKey/resetAt`；两个新版面入口先执行该只读检查，只有冻结照片确认后才由 `reserve-recognition` 预占，最终 `used` 仍只由成功建立可恢复版面后的 `finalize-board-observation` 提交。
+V1-F 采用后端优先集成：先在仓库完成资源清单、事件函数和自动验证，再部署 CloudBase 环境并独立调用后端。云函数通过 `cloud.getWXContext()` 取得可信 `APPID/OPENID`，`bootstrap-account` 在事务内静默 find-or-create Account；客户端不要求资料授权即可进入首页和两个新版面入口。用户主动编辑资料时使用当前微信支持的 `button open-type="chooseAvatar"` 与 `input type="nickname"`，不依赖 `wx.getUserProfile` 自动取回资料。资料更新函数为 owner-scoped 接口，支持 nickname-only 与 avatar-only 合并更新；内部 `accountId`、ICHI ID、记录归属和配额不随资料改变。头像显示优先使用同一 owner 的私有 CloudBase `avatarFileId`，不存在时使用包体默认头像；短时 HTTPS URL 仅作兼容回退。配额摘要由 `get-quota-status` 返回 `limit/used/reserved/remaining/dateKey/resetAt`；两个新版面入口先执行该只读检查，只有冻结照片确认后才由 `reserve-recognition` 预占，最终 `used` 仍只由成功建立可恢复版面后的 `finalize-board-observation` 提交。
 
 2026-08-22 当前运行补充：冻结照片对勾只执行 `get-quota-status` 只读可用性检查并进入独立校正页；本地校正输出成功后才执行唯一一次 `reserve-recognition`。客户端终态失败通过 `release-recognition` 只释放仍为 `reserved` 的任务，重复调用幂等；云函数仍在处理时，客户端等待调用 Promise 真正结束后再补删 Storage 对象。版面 Prompt／Provider Schema 已部署为 `4.0.0-rc1` ticketPattern 单一语义协议，特殊赏支持 SP1—SP32。以下 3.0、2400px 与多版面模型选择段落只记录旧运行基线；当前模型输入是约 1800px／JPEG 82 的本地透视校正单版面，模型不再搜索或选择多版面。
 

@@ -1,5 +1,27 @@
 # ICHI Implementation Plan
 
+## V1.0.0 REVIEW_BLOCKER（当前权威状态）
+
+> 状态日期：2026-08-29
+>
+> V1 development / architecture：除下列明确范围外继续 `FROZEN / CLOSED`
+>
+> V1 successful publication：`ACTIVE / READY_FOR_RESUBMISSION`
+>
+> 最近 blocker：`WECHAT_PREMATURE_PROFILE_AUTH_GATE / RESOLVED`
+
+本 blocker 只解锁 Account bootstrap、首次 profile gate、辅助抽赏／仅上传版面入口 gate、默认头像／昵称、用户主动头像／昵称持久化、直接相关测试与 Memory Bank／review status。其余 V1 领域、R2 三 SHA、Storage CUSTOM、`recognition-temp/ Days=1`、13 个私有集合 ACL、Local Board／Upload Submission／Current Cloud Publication 七条规则、PHOTO、quota 与 V2 全部继续冻结。
+
+工作集：
+
+- [x] AUTH-1—AUTH-6：fresh identity 静默建号、首页无授权墙、两个功能入口不受 profile incomplete 阻塞、默认资料与老用户兼容。
+- [x] AUTH-7—AUTH-10：头像临时路径不入库、稳定 fileID 持久化与重启恢复、昵称 msgSecCheck 与持久化。
+- [x] AUTH-11—AUTH-13：取消资料编辑不影响基础功能、bootstrap 幂等、技术失败不转成资料授权。
+- [x] 定向测试、全量回归、TypeScript、ESLint、Prettier、contracts、workflow/V1-F、CloudBase 静态校验、冻结哈希与 `git diff --check`。
+- [x] 只部署 `bootstrap-account`、`get-my-profile`、`bind-wechat-profile`，完成反向源码、运行时、入口、状态与环境键存在性核验。
+- [x] 用户真机复现审核路径与头像／昵称 smoke：Fresh User、Existing User、生产 Account 创建、默认资料、两个功能入口、头像与昵称重启持久化全部 PASS；状态转为 `READY_FOR_RESUBMISSION`。
+- [x] 精确提交 `fix: use silent account bootstrap before profile setup`；push、CI 与重新送审按后续指令执行。
+
 ## V1.0.0 plan closure（当前权威状态）
 
 > 状态日期：2026-08-29
@@ -10,13 +32,13 @@
 >
 > V1 release candidate、release commit、微信 upload／送审、备案与上架准备：`COMPLETED / CLOSED`
 >
-> V1 successful publication：`ACTIVE / PENDING_WECHAT_REVIEW`
+> V1 successful publication：`ACTIVE / READY_FOR_RESUBMISSION`
 
 本节取代本文所有较早日期条目的活动状态；下方 `READY`、`IN_PROGRESS`、`AWAITING_REVIEW`、`BLOCKED` 或“待真机／待部署／待发布”只保留为历史执行证据，不再代表当前工作。V1 只剩一个活动计划：`V1.0.0 WECHAT SUCCESSFUL PUBLICATION`。除微信审核拒绝或发现真实 production release blocker 外，V1 source 保持冻结。
 
 ### V1.0.0 WECHAT SUCCESSFUL PUBLICATION
 
-> 当前状态：`ACTIVE / PENDING_WECHAT_REVIEW`
+> 当前状态：`ACTIVE / READY_FOR_RESUBMISSION`
 
 DONE：
 
@@ -27,9 +49,11 @@ DONE：
 - [x] release candidate and release commit `f6aa06fca21104a0a406823e5e8c6cc4ab493ab7`
 - [x] WeChat upload and submission
 - [x] filing、privacy 与 listing preparation
+- [x] `WECHAT_PREMATURE_PROFILE_AUTH_GATE` 修复、生产部署与 Fresh／Existing User 真机验收
 
 PENDING：
 
+- [ ] 微信重新送审
 - [ ] 微信审核通过
 - [ ] 用户执行正式发布
 - [ ] 微信后台确认版本状态为已发布／正式版

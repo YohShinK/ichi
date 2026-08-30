@@ -6,6 +6,7 @@ import {
   callCloudFunction,
   CloudAccountError,
   loadCloudAccount,
+  getWxWechatProfileMediaAdapter,
   normalizeWechatNickname,
   normalizeWechatProfileSelection,
   quotaUsedPercent,
@@ -221,6 +222,33 @@ describe("cloud account adapter", () => {
     });
   });
 
+  it("allows a user-initiated nickname update without requiring an avatar", async () => {
+    const callFunction = vi.fn(async () => ({
+      result: {
+        ok: true,
+        data: {
+          ichiId: "ICHI-001",
+          nickname: "主动修改的昵称",
+          avatarState: "default",
+          profileState: "complete",
+        },
+      },
+    }));
+
+    await expect(
+      bindWechatProfile({ callFunction } as CloudFunctionApi, {
+        nickname: "主动修改的昵称",
+      }),
+    ).resolves.toMatchObject({
+      nickname: "主动修改的昵称",
+      avatarState: "default",
+    });
+    expect(callFunction).toHaveBeenCalledWith({
+      name: "bind-wechat-profile",
+      data: { nickname: "主动修改的昵称" },
+    });
+  });
+
   it("normalizes explicit nickname and chooseAvatar paths without accepting Base64", () => {
     expect(
       normalizeWechatProfileSelection({
@@ -277,6 +305,24 @@ describe("cloud account adapter", () => {
     expect(deleteAvatar).toHaveBeenCalledWith(
       "cloud://private/profile-avatars/avatar-1.jpg",
     );
+  });
+
+  it("uploads chooseAvatar temporary paths only to the durable profile avatar prefix", async () => {
+    const uploadFile = vi.fn(async () => ({
+      fileID: "cloud://private/profile-avatars/stable-avatar.jpg",
+    }));
+    vi.stubGlobal("wx", { cloud: { uploadFile } });
+
+    const adapter = getWxWechatProfileMediaAdapter();
+    await expect(
+      adapter.uploadAvatar("wxfile://tmp/avatar.jpg"),
+    ).resolves.toEqual({
+      avatarFileId: "cloud://private/profile-avatars/stable-avatar.jpg",
+    });
+    expect(uploadFile).toHaveBeenCalledWith({
+      cloudPath: expect.stringMatching(/^profile-avatars\/[a-z0-9-]+\.jpg$/u),
+      filePath: "wxfile://tmp/avatar.jpg",
+    });
   });
 
   it("falls back to durable server cleanup when direct rejected-avatar deletion fails", async () => {

@@ -196,6 +196,120 @@ const createR2DrawRuntime = (initialRemaining: number) => {
 };
 
 describe("V1 CloudBase runtime envelope", () => {
+  it("silently creates one idempotent account with server-owned default profile values", async () => {
+    const appId = "wx-silent-bootstrap";
+    const openId = "fresh-silent-openid";
+    const identitySecret = "silent-bootstrap-secret";
+    const identityId = hashIdentity({ appId, openId, secret: identitySecret });
+    const database = createDocumentDatabase({});
+    const run = createRuntime({
+      cloud: {
+        DYNAMIC_CURRENT_ENV: "runtime-test",
+        init: () => undefined,
+        database: () => database,
+        getWXContext: () => ({ APPID: appId, OPENID: openId }),
+      },
+      env: { IDENTITY_HMAC_KEY: identitySecret },
+      now: () => Date.parse("2026-08-29T01:00:00.000Z"),
+    });
+
+    const first = await run("bootstrap-account", {});
+    const second = await run("bootstrap-account", {});
+    expect(first).toMatchObject({
+      ok: true,
+      data: {
+        nickname: "ICHI 玩家",
+        profileState: "incomplete",
+        created: true,
+      },
+    });
+    expect(second).toMatchObject({
+      ok: true,
+      data: { nickname: "ICHI 玩家", created: false },
+    });
+    const identity = await database
+      .collection("wechatIdentities")
+      .doc(identityId)
+      .get();
+    const accountId = String(identity.data.accountId);
+    await expect(
+      database.collection("profiles").doc(accountId).get(),
+    ).resolves.toMatchObject({
+      data: { nickname: "ICHI 玩家", avatarFileId: null },
+    });
+  });
+
+  it.each([
+    {
+      label: "nickname and avatar",
+      stored: {
+        nickname: "老玩家",
+        avatarFileId: "cloud://test/profile-avatars/old.jpg",
+      },
+      expected: {
+        nickname: "老玩家",
+        avatarFileId: "cloud://test/profile-avatars/old.jpg",
+      },
+    },
+    {
+      label: "nickname only",
+      stored: { nickname: "老玩家" },
+      expected: { nickname: "老玩家" },
+    },
+    {
+      label: "avatar only",
+      stored: {
+        nickname: "",
+        avatarFileId: "cloud://test/profile-avatars/old.jpg",
+      },
+      expected: {
+        nickname: "ICHI 玩家",
+        avatarFileId: "cloud://test/profile-avatars/old.jpg",
+      },
+    },
+    {
+      label: "neither nickname nor avatar",
+      stored: { nickname: null },
+      expected: { nickname: "ICHI 玩家" },
+    },
+  ])(
+    "preserves existing profile compatibility for $label",
+    async ({ stored, expected }) => {
+      const appId = "wx-existing-profile";
+      const openId = `existing-${String(stored.nickname)}`;
+      const secret = "existing-profile-secret";
+      const accountId = "account-existing-profile";
+      const identityId = hashIdentity({ appId, openId, secret });
+      const database = createDocumentDatabase({
+        wechatIdentities: { [identityId]: { accountId } },
+        accounts: { [accountId]: { status: "active" } },
+        profiles: {
+          [accountId]: {
+            canonicalIchiId: "ICHI-777",
+            avatarState: stored.avatarFileId ? "wechat-authorized" : "default",
+            profileState: "incomplete",
+            ...stored,
+          },
+        },
+      });
+      const run = createRuntime({
+        cloud: {
+          DYNAMIC_CURRENT_ENV: "runtime-test",
+          init: () => undefined,
+          database: () => database,
+          getWXContext: () => ({ APPID: appId, OPENID: openId }),
+          getTempFileURL: async () => ({ fileList: [] }),
+        },
+        env: { IDENTITY_HMAC_KEY: secret },
+      });
+
+      await expect(run("get-my-profile", {})).resolves.toMatchObject({
+        ok: true,
+        data: expected,
+      });
+    },
+  );
+
   it("removes server-owned document metadata before whole-document writes", () => {
     expect(
       stripDatabaseMetadata({
@@ -405,6 +519,21 @@ describe("V1 CloudBase runtime envelope", () => {
       cloud,
       env: { IDENTITY_HMAC_KEY: identitySecret },
       textSafetyReviewer,
+    });
+
+    await expect(
+      run("bind-wechat-profile", { nickname: "仅修改昵称" }),
+    ).resolves.toMatchObject({
+      ok: true,
+      data: {
+        nickname: "仅修改昵称",
+        avatarState: "default",
+        profileState: "complete",
+      },
+    });
+    await expect(run("get-my-profile", {})).resolves.toMatchObject({
+      ok: true,
+      data: { nickname: "仅修改昵称", avatarState: "default" },
     });
 
     await expect(

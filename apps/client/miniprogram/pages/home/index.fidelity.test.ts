@@ -374,15 +374,13 @@ describe("V1-31 approved web-shell fidelity", () => {
     );
   });
 
-  it("uses first-use WeChat login and later profile re-authorization", () => {
+  it("keeps profile editing optional and never presents it as login", () => {
     expect(wxml).toContain('type="nickname"');
     expect(wxml).toContain('open-type="chooseAvatar"');
     expect(wxml).toContain('bindchooseavatar="onChooseWechatAvatar"');
-    expect(wxml).toContain("使用微信登录");
-    expect(wxml).toContain("更新微信资料");
-    expect(wxml).toContain(
-      'wx:if="{{profileAuthorizationPurpose === \'update\'}}" class="wechat-login-back"',
-    );
+    expect(wxml).not.toContain("使用微信登录");
+    expect(wxml).toContain("更新个人资料");
+    expect(wxml).toContain('class="profile-edit-back"');
     expect(wxml).toContain(
       'bindtap="onCloseWechatProfileAuthorization" aria-label="返回我的"',
     );
@@ -399,7 +397,7 @@ describe("V1-31 approved web-shell fidelity", () => {
     );
     expect(pageTs).not.toContain("getUserProfile");
     expect(wxss).toMatch(
-      /\.wechat-login-back\s*{[\s\S]*?top: 18px;[\s\S]*?left: 18px;[\s\S]*?width: 40px !important;[\s\S]*?height: 40px !important;/,
+      /\.profile-edit-back\s*{[\s\S]*?top: 18px;[\s\S]*?left: 18px;[\s\S]*?width: 40px !important;[\s\S]*?height: 40px !important;/,
     );
     expect(wxss).toMatch(
       /\.profile\s*{[\s\S]*?display: grid;[\s\S]*?grid-template-columns: 80px minmax\(0, 1fr\);[\s\S]*?column-gap: 16px;/,

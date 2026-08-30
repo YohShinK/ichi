@@ -1,5 +1,23 @@
 # ICHI Implementation Plan
 
+## V1.0.1 THREE TAB SPLIT SHARE IMAGE EXPERIMENT（当前唯一活动区块）
+
+> 状态日期：2026-08-31
+>
+> 状态：`TRUE_DEVICE_PASS / READY_FOR_GITHUB_CLOSEOUT`
+>
+> 分支：`feature/v1.0.1-sharing`
+>
+> V1.0.0：`RELEASED / FROZEN`
+
+- [x] 审计真实结构与素材：三个 UI Tab 共用 `/pages/home/index`；Profile 的真实默认头像固定为 `/assets/v1-29/ichi-avatar.png`，上一轮大图只有 sharing 引用。
+- [x] 先建立好友／朋友圈分离常量、三 Tab payload、两类素材实存、好友 5:4、不同 URL、隐私与 listener 生命周期回归。
+- [x] 删除上一轮 1254×1254 分享图；从默认头像确定性生成唯一 800×640 白底 5:4 `/assets/share/ichi-share-message.png`，朋友圈直接复用未修改的默认头像。
+- [x] 根据真机反馈只重生成好友图：从原始默认头像将主体由 400×400 精确放大 30% 至 520×520，画布、白底、居中、路径及全部分享合同保持。
+- [x] 完成 targeted sharing/home tests、`pnpm quality`、workflow/V1-F、冻结 SHA 与差异门。
+- [x] 用户在长期主工作区确认三 Tab 好友 5:4 图片、朋友圈默认头像、复制链接与落地页最终真机效果 PASS。
+- [x] 用户授权 source candidate 精确 commit、普通 push、PR、required CI 与 merge commit；backend／CloudBase／DB／Storage 变更固定为 0，`v1.0.1` tag 继续等待微信正式发布。
+
 ## V1.0.0 FINAL PUBLICATION CLOSURE（当前权威状态）
 
 > 状态日期：2026-08-30

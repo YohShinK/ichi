@@ -114,6 +114,13 @@ import {
   type PendingDrawTicketEvidence,
 } from "../../platform/draw-ticket-recognition.js";
 import type { IchiApp } from "../../app.js";
+import {
+  createCopyUrlPayload,
+  createFriendSharePayload,
+  createTimelineSharePayload,
+  parsePublicShareTab,
+  type PublicShareTab,
+} from "../../platform/home-sharing.js";
 
 type HomeView =
   | RecognitionStableView
@@ -181,6 +188,26 @@ const recognitionReservationErrorMessage = (error: unknown): string => {
     messages[error.code] ??
     `无法建立私有识别任务（参考码：${error.code || "RESERVE_FAILED"}）。`
   );
+};
+
+interface NativeShareApi {
+  showShareMenu?: (options: {
+    readonly menus: readonly ["shareAppMessage", "shareTimeline"];
+  }) => void;
+  onCopyUrl?: (listener: () => { readonly query: string }) => void;
+  offCopyUrl?: () => void;
+}
+
+const nativeShareApi = (): NativeShareApi => wx as unknown as NativeShareApi;
+const copyUrlOwners = new WeakSet<object>();
+
+const publicEntryView = (
+  tab: PublicShareTab,
+  recognitionView: HomeView,
+): HomeView => {
+  if (tab === "map") return "map-preview";
+  if (tab === "my") return "my";
+  return recognitionView;
 };
 
 interface DraftViewModel extends LocalDrawDraftSummary {
@@ -840,7 +867,18 @@ Page({
     pendingRecognitionMode: "assist" as RecognitionFlowMode,
   },
 
-  onLoad() {
+  onLoad(query: Readonly<Record<string, unknown>> = {}) {
+    const requestedTab = parsePublicShareTab(query);
+    const shareApi = nativeShareApi();
+    shareApi.showShareMenu?.({
+      menus: ["shareAppMessage", "shareTimeline"],
+    });
+    if (!copyUrlOwners.has(this) && shareApi.onCopyUrl) {
+      shareApi.onCopyUrl(() =>
+        createCopyUrlPayload(parsePublicShareTab({ tab: this.data.activeTab })),
+      );
+      copyUrlOwners.add(this);
+    }
     let stableView: RecognitionStableView;
     let recognitionFlow: ReturnType<typeof decodeRecognitionFlow>;
     let storageStatus: ReturnType<typeof inspectLocalDraftStorage>;
@@ -864,11 +902,12 @@ Page({
       return;
     }
     const cachedAccount = readAccountDisplayCache();
+    const recognitionEntryView: HomeView =
+      storageStatus === "schema-incompatible"
+        ? "schema-incompatible"
+        : stableView;
     this.setData({
-      currentView:
-        storageStatus === "schema-incompatible"
-          ? ("schema-incompatible" as const)
-          : stableView,
+      currentView: recognitionEntryView,
       activeTab: "recognize",
       topSafePx: getTopSafePx(),
       ...(cachedAccount
@@ -905,6 +944,11 @@ Page({
         : {}),
     });
     this.refreshDrafts(activeBoardId ?? undefined);
+    this.setData({
+      activeTab: requestedTab,
+      currentView: publicEntryView(requestedTab, recognitionEntryView),
+      modalView: "" as const,
+    });
     const restoredDraft = activeBoardId
       ? draftRepository
           .readAll()
@@ -959,7 +1003,23 @@ Page({
     void this.resumePendingTicketVerifications();
   },
 
+  onShareAppMessage() {
+    return createFriendSharePayload(
+      parsePublicShareTab({ tab: this.data.activeTab }),
+    );
+  },
+
+  onShareTimeline() {
+    return createTimelineSharePayload(
+      parsePublicShareTab({ tab: this.data.activeTab }),
+    );
+  },
+
   onUnload() {
+    if (copyUrlOwners.has(this)) {
+      nativeShareApi().offCopyUrl?.();
+      copyUrlOwners.delete(this);
+    }
     this.setData({ generationId: "" });
     this.releasePendingBoardMedia();
     clearRecognitionTimers();

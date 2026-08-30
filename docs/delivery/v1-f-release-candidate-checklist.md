@@ -1,6 +1,6 @@
 # V1-F 发布候选清单
 
-> 2026-08-29 closure：`COMPLETED / ARCHIVED`。V1.0.0 发布候选、真机验收、release commit、备案／上架准备和微信 upload／送审均已完成；本文件保留构建候选时的历史门禁，不再承担当前 active status。唯一活动计划是等待微信审核通过、正式发布及最小线上确认。
+> 2026-08-30 closure：`COMPLETED / ARCHIVED`。V1.0.0 发布候选、真机验收、release commit、备案／上架准备、微信 upload／送审、审核通过与正式发布均已完成；本文件保留构建候选时的历史门禁，不再承担 current status。V1 active plans=`0`。
 
 > 2026-08-14 已按 V1 账号、每日配额与私有观察新范围重置。2026-08-13 的勾选证据只能复用，以下项目必须在新实现后重新通过。
 

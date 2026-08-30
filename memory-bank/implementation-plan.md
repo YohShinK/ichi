@@ -1,16 +1,26 @@
 # ICHI Implementation Plan
 
-## V1.0.0 REVIEW_BLOCKER（当前权威状态）
+## V1.0.0 FINAL PUBLICATION CLOSURE（当前权威状态）
 
-> 状态日期：2026-08-29
+> 状态日期：2026-08-30
 >
-> V1 development / architecture：除下列明确范围外继续 `FROZEN / CLOSED`
+> V1 development：`CLOSED`
 >
-> V1 successful publication：`ACTIVE / READY_FOR_RESUBMISSION`
+> V1 architecture、security / infrastructure：`FROZEN`
 >
-> 最近 blocker：`WECHAT_PREMATURE_PROFILE_AUTH_GATE / RESOLVED`
+> V1 automated validation、true-device validation：`CLOSED`
+>
+> V1 WeChat review：`APPROVED`
+>
+> V1 WeChat publication：`PUBLISHED`
+>
+> V1.0.0：`RELEASED / FROZEN`
+>
+> V1 active plans：`0`
+>
+> `WECHAT_PREMATURE_PROFILE_AUTH_GATE`：`RESOLVED / CLOSED`
 
-本 blocker 只解锁 Account bootstrap、首次 profile gate、辅助抽赏／仅上传版面入口 gate、默认头像／昵称、用户主动头像／昵称持久化、直接相关测试与 Memory Bank／review status。其余 V1 领域、R2 三 SHA、Storage CUSTOM、`recognition-temp/ Days=1`、13 个私有集合 ACL、Local Board／Upload Submission／Current Cloud Publication 七条规则、PHOTO、quota 与 V2 全部继续冻结。
+微信小程序 ICHI V1.0.0 已于 2026-08-30 正式上线。线上产品源码固定为 `03942f2067959a4b8b0eb6223c949e51e768587d`；此后的 release closure docs、CI metadata、merge commit、tag 与 GitHub Release 不改变 `ONLINE_SOURCE_COMMIT`。V1 产品源码、R2 三 SHA、Storage CUSTOM、`recognition-temp/ Days=1`、13 个私有集合 ACL、Local Board／Upload Submission／Current Cloud Publication 七条规则、PHOTO 与 quota 全部冻结。
 
 工作集：
 
@@ -20,11 +30,12 @@
 - [x] 定向测试、全量回归、TypeScript、ESLint、Prettier、contracts、workflow/V1-F、CloudBase 静态校验、冻结哈希与 `git diff --check`。
 - [x] 只部署 `bootstrap-account`、`get-my-profile`、`bind-wechat-profile`，完成反向源码、运行时、入口、状态与环境键存在性核验。
 - [x] 用户真机复现审核路径与头像／昵称 smoke：Fresh User、Existing User、生产 Account 创建、默认资料、两个功能入口、头像与昵称重启持久化全部 PASS；状态转为 `READY_FOR_RESUBMISSION`。
-- [x] 精确提交 `fix: use silent account bootstrap before profile setup`；push、CI 与重新送审按后续指令执行。
+- [x] 精确提交 `fix: use silent account bootstrap before profile setup`，对应线上源码 commit `03942f2067959a4b8b0eb6223c949e51e768587d`。
+- [x] 微信重新送审、审核通过、正式发布与线上确认全部完成；V1.0.0 successful publication plan `COMPLETE / CLOSED`。
 
 ## V1.0.0 plan closure（当前权威状态）
 
-> 状态日期：2026-08-29
+> 状态日期：2026-08-30
 >
 > V1 development：`COMPLETED / CLOSED`
 >
@@ -32,13 +43,13 @@
 >
 > V1 release candidate、release commit、微信 upload／送审、备案与上架准备：`COMPLETED / CLOSED`
 >
-> V1 successful publication：`ACTIVE / READY_FOR_RESUBMISSION`
+> V1 successful publication：`COMPLETE / CLOSED`
 
-本节取代本文所有较早日期条目的活动状态；下方 `READY`、`IN_PROGRESS`、`AWAITING_REVIEW`、`BLOCKED` 或“待真机／待部署／待发布”只保留为历史执行证据，不再代表当前工作。V1 只剩一个活动计划：`V1.0.0 WECHAT SUCCESSFUL PUBLICATION`。除微信审核拒绝或发现真实 production release blocker 外，V1 source 保持冻结。
+本节取代本文所有较早日期条目的活动状态；下方 `READY`、`IN_PROGRESS`、`AWAITING_REVIEW`、`BLOCKED` 或“待真机／待部署／待发布”只保留为历史执行证据，不再代表当前工作。V1 active plans 为 `0`，V1.0.0 source 永久冻结；普通新功能只能进入 V1.0.1 或更高版本。
 
 ### V1.0.0 WECHAT SUCCESSFUL PUBLICATION
 
-> 当前状态：`ACTIVE / READY_FOR_RESUBMISSION`
+> 当前状态：`COMPLETE / CLOSED`
 
 DONE：
 
@@ -50,29 +61,18 @@ DONE：
 - [x] WeChat upload and submission
 - [x] filing、privacy 与 listing preparation
 - [x] `WECHAT_PREMATURE_PROFILE_AUTH_GATE` 修复、生产部署与 Fresh／Existing User 真机验收
-
-PENDING：
-
-- [ ] 微信重新送审
-- [ ] 微信审核通过
-- [ ] 用户执行正式发布
-- [ ] 微信后台确认版本状态为已发布／正式版
-- [ ] 执行不消耗识别额度或真实用户数据的最小 production smoke：正常打开、微信身份建立／读取、首页与核心入口可进入、无明显启动 crash
-- [ ] 确认线上正式版本号为 `1.0.0`
-- [ ] 将 successful publication 标记 `COMPLETED`，并关闭整个 V1 milestone
-
-若 `REVIEW_REJECTED`，只记录微信真实拒绝原因并创建一个 `REVIEW_BLOCKER`，做最小必要修复和受影响范围验证后重新送审；不得重开全部 V1 plans。若 `REVIEW_APPROVED`，状态转为 `READY_TO_PUBLISH`，由用户执行正式发布。只有正式发布成功且上述最小 smoke PASS，才关闭本计划与 V1 milestone。
+- [x] 微信重新送审、审核通过、正式发布、正式版 `1.0.0` 与最小线上确认
 
 ### V1 closure registry
 
 | 分类 | 数量 | 当前结论 |
 | --- | ---: | --- |
-| CLOSED V1 major plans | 11 | Product Development、Architecture、Security/Infrastructure、Recognition V1、Automated Validation、True-device Validation、Blocker Closure、Release Candidate Assembly、Release Commit、Filing/Listing Preparation、WeChat Upload/Submission 全部关闭 |
+| CLOSED V1 major plans | 12 | Product Development、Architecture、Security/Infrastructure、Recognition V1、Automated Validation、True-device Validation、Blocker Closure、Release Candidate Assembly、Release Commit、Filing/Listing Preparation、WeChat Upload/Submission、WeChat Successful Publication 全部关闭 |
 | SUPERSEDED V1 intermediate plans | 8 | 多 Observation 展示、每次上传新 Current Observation、Cloud fallback 重建 MY_RECORDS、显式删除后 lazy-create P2、technical failure→PHOTO_FAILED、technical failure 即时删 evidence、P1 复制大字段、后台 refresh 无条件清 active identity 均由最终 V1 方案替代 |
 | BACKLOG plan groups | 2 | V1.0.1 performance/quality 与 V2 collaborative map；均 `NOT_STARTED` |
-| ACTIVE V1 plans | 1 | `V1.0.0 WECHAT SUCCESSFUL PUBLICATION` |
+| ACTIVE V1 plans | 0 | 无 |
 
-V1.0.1 backlog 共 5 项：`lazyCodeLoading=requiredComponents`、优化 `ichi-camera-cutout.png`、`ichi-avatar.png`、`ichi-recognition-mascot.png`、重新运行微信代码质量检查。V2 backlog 共 6 项：CanonicalBoard、cross-user same-board matching、contributors、merge/unmerge、canonical version、多人协作地图。共 11 项从 V1 active scope 转出；全部只是 backlog，本轮不设计、不实施。push release branch 与 optional `v1.0.0` tag 属于 `POST-PUBLICATION SOURCE CONTROL HOUSEKEEPING / DEFERRED / USER_DECISION`，不是微信成功发布 blocker。
+V1.0.1 backlog 共 8 项：首页转发给好友、首页分享到朋友圈、分享落地页／bootstrap 真机验证、`lazyCodeLoading=requiredComponents`、优化 `ichi-camera-cutout.png`、`ichi-avatar.png`、`ichi-recognition-mascot.png`、重新运行微信代码质量检查。分享能力是下一阶段优先任务，但本轮不设计、不实施。V2 backlog 共 6 项：CanonicalBoard、cross-user same-board matching、contributors、merge/unmerge、canonical version、多人协作地图。
 
 2026-08-29 V1.0.0 最终冻结门 `COMPLETED`：用户真机确认原 `recordId`、原 submission v3 与原 `imageFileId` 的 same-version retry 已直接进入 `APPROVED`，未重新上传、未创建新 submissionVersion、未重复 draw 或 quota；DRAW SESSION blocker 未再复现，用户据此明确批准 V1.0.0 完全冻结。当前只允许组装并人工审阅 staged release candidate，不再开发功能，不解锁 V2，不执行 commit、push、tag、微信上传、提审或发布。微信开发者工具的组件按需注入与随包图片／音频累计大小两项均为非阻塞建议，V1.0.0 `SHIP_AS_IS`，优化任务 `DEFER_TO_1_0_1`。
 
@@ -222,7 +222,7 @@ V1.0.1 backlog 共 5 项：`lazyCodeLoading=requiredComponents`、优化 `ichi-c
 
 ### V1-F｜跨端质量与小程序发布门
 
-> 区块状态：COMPLETED / CLOSED；V1-F 开发、自动验证、真机 blocker、发布候选、release commit、备案／上架准备和微信送审均已完成。V2 公共地图、现实版面自动合并、Luna 日常治理、来源审核和公开发布转入 V2 backlog。当前只等待唯一活动计划 `V1.0.0 WECHAT SUCCESSFUL PUBLICATION`。
+> 区块状态：COMPLETED / CLOSED；V1-F 开发、自动验证、真机 blocker、发布候选、release commit、备案／上架准备、微信送审、审核通过与正式发布均已完成。V2 公共地图、现实版面自动合并、Luna 日常治理、来源审核和公开发布转入 V2 backlog。V1 active plans=`0`。
 
 > V1-F 状态覆盖：下表原状态列是执行时快照，现统一归档。V1-40—V1-45、V1-47、V1-48 及 V1-43A—V1-43H／V1-43J／V1-43K 均为 `COMPLETED / CLOSED`；V1-43I 的 Codex/Luna 治理验证转入 V2 backlog，V1-46 的独立代表性用户研究门由最终用户验收与发布决定取代，二者均不再是 V1 active 或发布 blocker。
 

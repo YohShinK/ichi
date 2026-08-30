@@ -4,7 +4,7 @@
 
 头像与昵称改为“我的”页面中的可选 Profile 编辑：只有用户主动点击头像或昵称时才进入编辑流程，取消编辑不影响任何基础功能。`chooseAvatar` 返回的本机临时路径必须先上传到既有 `profile-avatars/`，再把稳定 CloudBase `fileID` 交给 owner-scoped 服务端更新；临时 path 绝不写数据库。头像替换继续遵守“新对象上传 → DB 更新成功 → 再删除旧对象”的既有安全顺序。昵称更新继续经过服务端 `PROFILE_NICKNAME → msgSecCheck scene=1` 后写入。已有昵称／头像分别保留；缺失字段逐项使用 `ICHI 玩家`／包体默认头像 fallback，不要求老用户重新授权。手机号继续完全不在 ICHI 范围内。
 
-2026-08-29 V1.0.0 product closure：V1 产品开发、三层架构、7 条产品规则、自动验证、真机 blocker、发布候选、release commit、备案／上架准备与微信送审均已完成并冻结。当前未声称审核通过或正式发布；V1 唯一活动计划是 `V1.0.0 WECHAT SUCCESSFUL PUBLICATION`。审核期间除真实拒绝原因或 production release blocker 外不修改 V1 行为，普通体验／性能优化进入 V1.0.1 backlog，V2 公共地图能力保持未启动。
+2026-08-30 V1.0.0 product closure：微信审核已通过且小程序已正式上线；V1 产品开发、三层架构、7 条产品规则、自动验证、真机验收、发布候选、release commit、备案／上架准备、微信送审与 successful publication 全部完成。V1.0.0 状态 `RELEASED / FROZEN`，线上源码固定为 `03942f2067959a4b8b0eb6223c949e51e768587d`，V1 active plans=`0`。普通新功能进入 V1.0.1 或更高版本，V2 公共地图能力保持未启动。
 
 2026-08-29 V1 PHOTO 技术失败语义：LOCATION 已通过后，Provider HTTP／网络／超时、响应解析、Provider Schema 或服务端暂时异常都属于可重试的 `PROVIDER_FAILED`，不得伪装成表示照片事实不匹配的 `PHOTO_FAILED`。同一 submissionVersion 的 evidence 在既有临时保留窗内必须继续可用于明确的“重新核验”；只有 Provider 成功返回且 schema/normalize 完成后的实体证据无效、未知或 expected-vs-observed exact reconciliation 不一致，才进入对应 PHOTO 业务失败。技术失败不发布、覆盖或删除 Current P1，也不得放宽赏级与实体票精确核验。
 

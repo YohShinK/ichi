@@ -4,7 +4,7 @@
 
 可选资料更新继续复用 `bind-wechat-profile`、`profile-avatars/` owner-only Storage 与本地 `USER_DATA_PATH` 展示缓存。客户端只把 `chooseAvatar` 临时 path 交给 `wx.cloud.uploadFile`，服务端数据库只接收稳定 `cloud://.../profile-avatars/...` fileID；昵称-only 与头像-only 主动更新都必须由 owner-scoped 服务端按现有 profile 合并，昵称始终经过共享 `PROFILE_NICKNAME`/`msgSecCheck scene=1` 安全检查。bootstrap 网络／函数失败映射为技术失败 UI，不得降级为资料授权请求。
 
-2026-08-29 V1.0.0 technology closure：V1 生产技术栈、识别 R2 Prompt／Schema／resolver、CloudBase 19 函数边界、Storage CUSTOM 与 1 天临时对象 lifecycle、13 个私有集合及 fail-closed 安全边界全部 `FROZEN / CLOSED`。当前没有 V1 技术实施计划；唯一 V1 active plan 是等待微信审核、正式发布和最小线上确认。组件按需注入与三张 PNG 优化转入 V1.0.1 backlog，CanonicalBoard／跨用户匹配／contributors／merge-unmerge／canonical version／协作地图转入 V2 backlog。
+2026-08-30 V1.0.0 technology closure：微信小程序已正式发布，线上源码固定为 `03942f2067959a4b8b0eb6223c949e51e768587d`。V1 生产技术栈、识别 R2 Prompt／Schema／resolver、CloudBase 19 函数边界、Storage CUSTOM 与 1 天临时对象 lifecycle、13 个私有集合及 fail-closed 安全边界全部 `FROZEN / CLOSED`，V1 active plans=`0`。好友／朋友圈分享、分享落地页 bootstrap、组件按需注入与三张 PNG 优化转入 V1.0.1 backlog；CanonicalBoard／跨用户匹配／contributors／merge-unmerge／canonical version／协作地图转入 V2 backlog。
 
 2026-08-29 V1 Current Publication 大字段回归收口栈：`observationCandidates` 的稳定 P1 只原子保存 `publishedSubmissionVersion`、批准状态和可信时间等小型发布指针，不再复制 `drawSubmissions` 内的 `finalSnapshot`／`authoritativeDrawEvents`，避免重现生产已证实的 CloudBase `-502001` 大型 observation 更新失败。`get-my-records` 按 P1 的 owner、board 和精确 published version 读取已批准 submission，并把 snapshot、draw events、note 与 location 投影到返回记录；更新但失败的 attempt 只提供核验状态与重试上下文，不能覆盖当前发布内容。核验诊断在 AJV 后继续记录 normalize、reconcile、note review 和 publication transaction checkpoint，并兼容读取 CloudBase SDK 的 `code`／`errCode`。
 

@@ -44,6 +44,17 @@ let profileHasAvatar = true;
 let profileNickname = "ICHI 玩家";
 let profileAvatarUrlAvailable = true;
 let accountBootstrapFailure = false;
+const showShareMenuMock = vi.fn();
+const hideShareMenuMock = vi.fn();
+let copyUrlListener: (() => { readonly query: string }) | undefined;
+const onCopyUrlMock = vi.fn(
+  (listener: () => { readonly query: string }): void => {
+    copyUrlListener = listener;
+  },
+);
+const offCopyUrlMock = vi.fn((): void => {
+  copyUrlListener = undefined;
+});
 const profileAvatarFileId =
   "cloud://test-env/profile-avatars/current-avatar.jpg";
 const app = {
@@ -219,6 +230,10 @@ beforeAll(async () => {
       miniProgram: { envVersion: "develop" },
     }),
     showToast: vi.fn(),
+    showShareMenu: showShareMenuMock,
+    hideShareMenu: hideShareMenuMock,
+    onCopyUrl: onCopyUrlMock,
+    offCopyUrl: offCopyUrlMock,
     showModal(options: ModalRequest) {
       modalRequests.push(options);
     },
@@ -534,11 +549,136 @@ beforeEach(() => {
   profileNickname = "ICHI 玩家";
   profileAvatarUrlAvailable = true;
   accountBootstrapFailure = false;
+  showShareMenuMock.mockReset();
+  hideShareMenuMock.mockReset();
+  onCopyUrlMock.mockClear();
+  offCopyUrlMock.mockClear();
+  copyUrlListener = undefined;
   app.globalData = {};
   vi.useFakeTimers();
 });
 
 describe("V1-E page behavior", () => {
+  it.each([
+    ["recognize", "start"],
+    ["map", "map-preview"],
+    ["my", "my"],
+  ] as const)("lands tab=%s on its public main entry", (tab, currentView) => {
+    const page = createRuntimePage();
+    call(page, "onLoad", { tab });
+    expect(page.data).toMatchObject({ activeTab: tab, currentView });
+    expect(showShareMenuMock).toHaveBeenCalledWith({
+      menus: ["shareAppMessage", "shareTimeline"],
+    });
+    call(page, "onUnload");
+  });
+
+  it.each([undefined, "invalid"])(
+    "falls back to recognition for tab=%s",
+    (tab) => {
+      const page = createRuntimePage();
+      call(page, "onLoad", tab ? { tab } : {});
+      expect(page.data).toMatchObject({
+        activeTab: "recognize",
+        currentView: "start",
+      });
+      call(page, "onUnload");
+    },
+  );
+
+  it("shares the current tab with a fixed package image without mutating state", () => {
+    const page = createRuntimePage();
+    call(page, "onLoad", { tab: "map" });
+    const before = structuredClone(page.data);
+
+    expect(call(page, "onShareAppMessage")).toEqual({
+      title: "ICHI 一奇抽赏助手",
+      path: "/pages/home/index?tab=map",
+      imageUrl: "/assets/share/ichi-share-message.png",
+    });
+    expect(call(page, "onShareTimeline")).toEqual({
+      title: "ICHI 一奇抽赏助手",
+      query: "tab=map",
+      imageUrl: "/assets/v1-29/ichi-avatar.png",
+    });
+    expect(copyUrlListener?.()).toEqual({ query: "tab=map" });
+    expect(page.data).toEqual(before);
+
+    call(page, "onUnload");
+    expect(offCopyUrlMock).toHaveBeenCalledOnce();
+  });
+
+  it("opens a my share with the receiver's silent account and no sender identity", async () => {
+    const sender = createRuntimePage();
+    call(sender, "onLoad", { tab: "my" });
+    sender.setData({ accountNickname: "User A" });
+    const payload = call(sender, "onShareAppMessage") as {
+      path: string;
+      imageUrl: string;
+    };
+    call(sender, "onUnload");
+
+    profileNickname = "User B";
+    const receiver = createRuntimePage();
+    call(receiver, "onLoad", { tab: payload.path.split("tab=")[1] });
+    await call(receiver, "onShow");
+    await vi.waitFor(() =>
+      expect(receiver.data.accountNickname).toBe("User B"),
+    );
+    expect(payload).toEqual({
+      title: "ICHI 一奇抽赏助手",
+      path: "/pages/home/index?tab=my",
+      imageUrl: "/assets/share/ichi-share-message.png",
+    });
+    expect(payload.path).not.toContain("User A");
+    call(receiver, "onUnload");
+  });
+
+  it("keeps sharing active across all tabs without duplicate copy listeners", () => {
+    const page = createRuntimePage();
+    call(page, "onLoad", { tab: "recognize" });
+    call(page, "onSelectTab", baseEvent({ tab: "my" }));
+
+    expect(page.data).toMatchObject({ activeTab: "my", currentView: "my" });
+    expect(hideShareMenuMock).not.toHaveBeenCalled();
+    expect(offCopyUrlMock).not.toHaveBeenCalled();
+    expect(onCopyUrlMock).toHaveBeenCalledTimes(1);
+    expect(copyUrlListener?.()).toEqual({ query: "tab=my" });
+    expect(call(page, "onShareAppMessage")).toEqual({
+      title: "ICHI 一奇抽赏助手",
+      path: "/pages/home/index?tab=my",
+      imageUrl: "/assets/share/ichi-share-message.png",
+    });
+    expect(call(page, "onShareTimeline")).toEqual({
+      title: "ICHI 一奇抽赏助手",
+      query: "tab=my",
+      imageUrl: "/assets/v1-29/ichi-avatar.png",
+    });
+    call(page, "onSelectTab", baseEvent({ tab: "map" }));
+    expect(onCopyUrlMock).toHaveBeenCalledTimes(1);
+    expect(copyUrlListener?.()).toEqual({ query: "tab=map" });
+    call(page, "onSelectTab", baseEvent({ tab: "recognize" }));
+    expect(onCopyUrlMock).toHaveBeenCalledTimes(1);
+    expect(copyUrlListener?.()).toEqual({ query: "tab=recognize" });
+
+    call(page, "onShow");
+    expect(onCopyUrlMock).toHaveBeenCalledTimes(1);
+    call(page, "onUnload");
+    expect(offCopyUrlMock).toHaveBeenCalledOnce();
+  });
+
+  it("opens a map share without requesting location or any V2 map API", () => {
+    const page = createRuntimePage();
+    call(page, "onLoad", { tab: "map" });
+    expect(page.data).toMatchObject({
+      activeTab: "map",
+      currentView: "map-preview",
+    });
+    expect(locationRequestCount).toBe(0);
+    expect(cloudCallFunctionMock).not.toHaveBeenCalled();
+    call(page, "onUnload");
+  });
+
   it("silently bootstraps a fresh account without opening a profile authorization wall", async () => {
     profileComplete = false;
     profileHasAvatar = false;

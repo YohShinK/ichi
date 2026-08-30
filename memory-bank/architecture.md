@@ -1,5 +1,7 @@
 # ICHI Architecture
 
+2026-08-31 V1.0.1 THREE TAB SPLIT SHARE IMAGE 架构增量：识别、地图、“我的”继续共用 `pages/home/index`，内部与公开 Tab 值都固定为 `recognize|map|my`；缺失或非法 query 才回退识别。Page 的菜单、单一 `wx.onCopyUrl` listener 与 tab-only privacy contract 不变。`platform/home-sharing.ts` 以两个明确常量区分用途：好友 `FRIEND_SHARE_IMAGE_URL=/assets/share/ichi-share-message.png`，指向由既有默认头像确定性生成的唯一 800×640 白底 5:4 包内图，头像层从 400×400 线性放大 30% 至 520×520 后仍保持居中且不裁切；朋友圈 `TIMELINE_SHARE_IMAGE_URL=/assets/v1-29/ichi-avatar.png`，直接复用既有 Profile 默认头像，不复制资源；复制链接仍不含图片。上一轮仅用于分享的 1254×1254 大图已删除。没有新增 Page、collection、function、Storage 对象、HTTPS 图片、V2 地图依赖或用户资料投影。
+
 2026-08-29 `WECHAT_PREMATURE_PROFILE_AUTH_GATE` 生产制品状态：只更新 `bootstrap-account`、`get-my-profile`、`bind-wechat-profile` 三个受影响函数；反向下载与本地生成物的确定性树哈希分别同为 `b9d0f708017b6a86f425d4dd84cc0a716411110e6f1484fa70258e58bdf36fd4`、`bb691ad78fd23a2440ca9159ef101db3fd2364062f046cfcb0868f30db94c02a`、`d0fb5e0e3bb8dec589ce34f8925f1ed861d221225ac017387eb71d2a37762d71`。三者保持 Nodejs20.19、`index.main`、Active/Available、依赖层 Active 与原环境键；无身份调用继续 fail closed。未部署其余 16 个函数，未迁移数据，未改 Storage、ACL、lifecycle 或识别制品。
 
 2026-08-29 `WECHAT_PREMATURE_PROFILE_AUTH_GATE` REVIEW_BLOCKER 架构修订：账号架构继续只有现有 `wechatIdentities → accounts/profiles` 一套可信模型。`bootstrap-account` 从 `cloud.getWXContext()` 派生 identityId，在数据库事务内 find-or-create Account；新 profile 由服务端写入 `nickname="ICHI 玩家"`、`avatarFileId=null`，重复 bootstrap 复用同一 identity mapping。`pages/home` 的启动刷新与新版面入口不再读取 `profileState` 作 gate；Account bootstrap／额度失败进入技术重试态，资料缺失只影响展示 fallback。`/assets/v1-29/ichi-avatar.png` 是唯一包体默认头像，不进入 Storage。

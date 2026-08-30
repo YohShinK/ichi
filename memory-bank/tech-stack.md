@@ -1,5 +1,7 @@
 # ICHI Technology Stack
 
+2026-08-31 V1.0.1 THREE TAB SPLIT SHARE IMAGE 技术边界：现有 `pages/home/index` 的 `onShareAppMessage`、`onShareTimeline`、单次 `wx.showShareMenu`、单一 `wx.onCopyUrl` listener 与 `recognize|map|my` allowlist 均保持。`platform/home-sharing.ts` 分离 `FRIEND_SHARE_IMAGE_URL` 与 `TIMELINE_SHARE_IMAGE_URL`：好友使用 `/assets/share/ichi-share-message.png`，该 RGB PNG 每次都从 320×320 默认头像直接重采样到 520×520，再居中补白为 800×640；相对上一版 400×400 主体的线性缩放系数为 1.30，最终左右各 140px、上下各 60px。朋友圈直接指向既有 `/assets/v1-29/ichi-avatar.png`，原文件不修改、不复制；复制链接只使用 query。上一轮 1254×1254 分享图已移除。后端、CloudBase、数据库迁移、Storage、V2 API、自建 H5／短链服务和 HTTPS 分享图均为零变更。
+
 2026-08-29 `WECHAT_PREMATURE_PROFILE_AUTH_GATE` REVIEW_BLOCKER 技术修订（当前最高事实源）：复用现有 `bootstrap-account` 的 `cloud.getWXContext()` 可信 identity mapping 与事务内 find-or-create，不新增 Guest／Anonymous／临时游客模型、collection 或客户端 owner identity。Account/session readiness 只由这条可信服务端链决定；`profiles.profileState`、`nickname`、`avatarFileId` 仅是展示资料，不得作为首页或功能入口 gate。新 profile 继续由服务端写入 `nickname="ICHI 玩家"`；没有 `avatarFileId` 时客户端使用 `/assets/v1-29/ichi-avatar.png` fallback，不上传默认头像、不做生产 migration。
 
 可选资料更新继续复用 `bind-wechat-profile`、`profile-avatars/` owner-only Storage 与本地 `USER_DATA_PATH` 展示缓存。客户端只把 `chooseAvatar` 临时 path 交给 `wx.cloud.uploadFile`，服务端数据库只接收稳定 `cloud://.../profile-avatars/...` fileID；昵称-only 与头像-only 主动更新都必须由 owner-scoped 服务端按现有 profile 合并，昵称始终经过共享 `PROFILE_NICKNAME`/`msgSecCheck scene=1` 安全检查。bootstrap 网络／函数失败映射为技术失败 UI，不得降级为资料授权请求。

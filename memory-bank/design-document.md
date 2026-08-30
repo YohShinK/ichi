@@ -1,5 +1,7 @@
 # ICHI Product Design Document
 
+2026-08-31 V1.0.1 THREE TAB SPLIT SHARE IMAGE（当前活动产品增量）：公开分享 surface 包含识别、地图与“我的”，允许值固定为 `tab=recognize|map|my`；缺失或其他非法值安全回退识别。三个 Tab 都支持好友转发、朋友圈和微信原生复制链接，标题统一为“ICHI 一奇抽赏助手”。好友固定使用由现有默认头像重新采样到 520×520、居中放入 800×640 纯白画布的唯一包内 5:4 `/assets/share/ichi-share-message.png`；这相对上一版 400×400 主体是精确的线性 30% 放大，中心不偏移、轮廓不裁切。朋友圈直接复用未修改的既有默认头像 `/assets/v1-29/ichi-avatar.png`，不新增 timeline 图片；复制链接只含 query。上一轮裁切不理想且占包体的 1254×1254 高清分享图已删除。“我的”分享只允许 public tab 和固定官方图片，接收方仍以自己的微信可信身份静默 bootstrap 并进入自己的 Profile；任何分享结果都禁止携带版面、记录、提交、账号、owner、微信身份、资料、额度、抽取、照片或识别结果。地图只恢复既有 `map-preview`。本轮不使用腾讯云、HTTPS 网络图片、backend、CloudBase、数据库、Storage 或 ACL，也不修改 V1.0.0 冻结源码与既有 silent-account ownership contract。
+
 2026-08-29 `WECHAT_PREMATURE_PROFILE_AUTH_GATE` REVIEW_BLOCKER 产品修订（当前最高事实源）：新用户首次打开小程序时，必须通过现有 `CloudBase WXContext → bootstrap-account` 可信链静默建立或恢复 ICHI Account，并直接进入首页；头像、昵称、手机号均不参与登录、Account 存在性、ownership、配额、辅助抽赏、仅上传版面、MY_UPLOADS 或 PHOTO verify 权限。新 Account 的服务端默认昵称为 `ICHI 玩家`，`avatarFileId` 不存在／为空时 UI 使用包体 `/assets/v1-29/ichi-avatar.png`，不得为默认头像创建 Storage 对象或批量迁移旧账号。首页 bootstrap、辅助抽赏和仅上传版面都不得因 `profileState`、空头像或默认昵称弹出资料授权墙；静默 bootstrap 技术失败只进入通用连接失败／重试态。
 
 头像与昵称改为“我的”页面中的可选 Profile 编辑：只有用户主动点击头像或昵称时才进入编辑流程，取消编辑不影响任何基础功能。`chooseAvatar` 返回的本机临时路径必须先上传到既有 `profile-avatars/`，再把稳定 CloudBase `fileID` 交给 owner-scoped 服务端更新；临时 path 绝不写数据库。头像替换继续遵守“新对象上传 → DB 更新成功 → 再删除旧对象”的既有安全顺序。昵称更新继续经过服务端 `PROFILE_NICKNAME → msgSecCheck scene=1` 后写入。已有昵称／头像分别保留；缺失字段逐项使用 `ICHI 玩家`／包体默认头像 fallback，不要求老用户重新授权。手机号继续完全不在 ICHI 范围内。

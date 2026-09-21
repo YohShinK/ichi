@@ -700,42 +700,6 @@ const requestBoardLocation = (): Promise<{
     });
   });
 
-const requestCameraAuthorization = (): Promise<void> =>
-  new Promise((resolve, reject) => {
-    const api = wx as unknown as {
-      getSetting(options: {
-        success(result: {
-          authSetting: Record<string, boolean | undefined>;
-        }): void;
-        fail(error: unknown): void;
-      }): void;
-      authorize(options: {
-        scope: "scope.camera";
-        success(): void;
-        fail(error: unknown): void;
-      }): void;
-    };
-    api.getSetting({
-      success(result) {
-        const cameraPermission = result.authSetting["scope.camera"];
-        if (cameraPermission === true) {
-          resolve();
-          return;
-        }
-        if (cameraPermission === false) {
-          reject(new Error("CAMERA_PERMISSION_DENIED"));
-          return;
-        }
-        api.authorize({
-          scope: "scope.camera",
-          success: resolve,
-          fail: reject,
-        });
-      },
-      fail: reject,
-    });
-  });
-
 Page({
   data: {
     currentView: "start" as HomeView,
@@ -1539,7 +1503,6 @@ Page({
       }
       const boardLocation = await requestBoardLocation();
       getApp<IchiApp>().globalData.pendingBoardLocation = boardLocation;
-      await requestCameraAuthorization();
       markCameraTiming("navigationRequestAt");
       this.beginBoardCapture(recognitionMode);
     } catch {

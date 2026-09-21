@@ -763,16 +763,16 @@ describe("V1-E page behavior", () => {
     expect(page.data.currentView).toBe("start");
   });
 
-  it("requests camera permission once and reuses the persisted authorization", async () => {
+  it("lets the embedded camera own first-use permission without opening settings", async () => {
     cameraPermissionState = undefined;
     const page = createRuntimePage();
     await call(page, "onImportBoard");
-    expect(cameraAuthorizationCount).toBe(1);
+    expect(cameraAuthorizationCount).toBe(0);
     expect(locationRequestCount).toBe(1);
     expect(page.data.currentView).toBe("camera-capture");
     call(page, "onBackToStart");
     await call(page, "onImportBoard");
-    expect(cameraAuthorizationCount).toBe(1);
+    expect(cameraAuthorizationCount).toBe(0);
     expect(locationRequestCount).toBe(2);
   });
 

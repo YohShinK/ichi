@@ -3,6 +3,19 @@
 > 当前地图分享约束：`UPLOAD_CONFIRMATION_MAP_SHARING_V2`。原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门；V2已准入数据自动生成Marker，不设二次审核或授权。当前条例覆盖本人此前及以后已上传V1记录。本人记录只显示V1“已上传”，禁止二次分享按钮。现行规范：`docs/decisions/map-upload-sharing-contract.md`。
 
 
+## 2026-10-13 最终唯一工作集：P8-F 移除ICP并重新上传2.0
+
+本人取消地图首页/定位/自动视野设计修订，保持现状。此前P8-F1—F4未实施，不再执行。当前活动区块仍V2-E/TASK22 Phase8；备案展示旧候选由无ICP新包取代，微信版本沿用2.0.0，备注“2.0 版本更新”。
+
+| Step | 本轮目标 | 必须验证/状态 |
+| --- | --- | --- |
+| P8-F1 | 删除小程序和网页ICP编号/查询及无消费者配置/适配 | 运行时无残留引用；差异只含ICP移除，地图实现与初始入口保持；PASS |
+| P8-F2 | 当前源码和必要平台回归 | 1520/1SKIP、26网页复查、类型/Lint/contracts/workflow/分享门/格式/Next/微信编译；PASS |
+| P8-F3 | 重新上传2.0.0开发版本 | 备注“2.0 版本更新”，实际上传成功/1054310字节/130源文件SHA绑定；PASS |
+| P8-F4 | 按原授权归档GitHub | 候选敏感扫描PASS；提交源文件与上传清单匹配、分支推送回执；IN_PROGRESS |
+
+无新生产部署/准入/桥接、提审、正式发布、main合并或tag。此前源码67260be和1056256字节含ICP上传确已成功，当前新包替代该开发候选。
+
 ## 2026-10-13 Phase8 自动回归与公开smoke通过（当前）
 
 P8-A=PASS（候选Gitleaks零凭据；内部证据/凭据/缓存忽略并保留）；P8-B=IMPLEMENTED / NATIVE_LAYOUT_PASS / AWAITING_HUMAN_REVIEW，最后编号“浙ICP备2026084653号-1”按本人更正；P8-C=PASS（1520/1SKIP、146定向、26网页、Lint/TS/contracts/workflow/Next/format/微信预览）；P8-D=PUBLIC_SDK_AND_CONTROL_READ_PASS / PHONE_AND_PLATFORM_DECLARATIONS_PENDING（133/132公开及闭门保持）；P8-E=IN_PROGRESS（本人授权新分支codex/v2-release-2.0.0及2.0.0开发上传/随后GitHub归档）。

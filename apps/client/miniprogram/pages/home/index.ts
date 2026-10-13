@@ -1,6 +1,4 @@
 import { PUBLIC_MAP_CACHE_TTL_MS } from "../../platform/public-map-cache.js";
-import { APP_FILING_NUMBER } from "../../platform/app-filing-config.js";
-import { copyAppFilingQueryUrl } from "../../platform/app-filing.js";
 import {
   captureBoardImage,
   classifyBoardMediaFailure,
@@ -1544,7 +1542,6 @@ const requestCameraAuthorization = (): Promise<void> =>
 
 Page({
   data: {
-    appFilingNumber: APP_FILING_NUMBER,
     currentView: "start" as HomeView,
     activeTab: "recognize" as MainTab,
     topSafePx: 40,
@@ -7823,10 +7820,6 @@ Page({
       continuousUndoCount: 0,
     });
     this.updateOutlook(draft);
-  },
-
-  onCopyAppFilingQueryUrl() {
-    if (this.data.appFilingNumber) copyAppFilingQueryUrl();
   },
 
   onOpenMyPage(event: WechatMiniprogram.BaseEvent) {

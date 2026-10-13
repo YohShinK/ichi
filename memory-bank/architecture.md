@@ -3,6 +3,10 @@
 > 当前地图分享约束：`UPLOAD_CONFIRMATION_MAP_SHARING_V2`。原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门；V2已准入数据自动生成Marker，不设二次审核或授权。当前条例覆盖本人此前及以后已上传V1记录。本人记录只显示V1“已上传”，禁止二次分享按钮。现行规范：`docs/decisions/map-upload-sharing-contract.md`。
 
 
+## 2026-10-13 ICP展示模块撤除，地图保持现状
+
+本人最终取消未实施的地图首页/定位/视野设计修订；不新增public-map-startup模块，home-sharing、public-map-query、原生定位/缩放/聚合实现保持既有版本。撤除app-filing-config.ts/app-filing.ts、home编号与查询handler/WXML/WXSS以及web route镜像；原本机ICP证据和含ICP旧候选保留历史。网页原文件归档与资料用途准确文案继续保留。当前恢复2.0.0开发版本上传和原授权GitHub归档，无新生产资源或后端写入。
+
 ## 2026-10-13 Phase8 实现与回归入口
 
 备案配置最终为本人提供的“浙ICP备2026084653号-1”；app-filing-config与复制平台适配、home页脚/短屏滚动、当前资料用途说明、网页官方链接及仓库内历史UI原文件已搭载。Git忽略内部证据与本地凭据、解除构建缓存跟踪；Vitest只排除历史复制品，CI显式图片解码依赖，.gitleaks.toml仅放行两处确切非秘密说明文字。无新生产schema或部署；开发上传与Git归档通过客户端134源文件SHA清单绑定。当前手机/后台声明/实际PUBLISHED独立待办，详见Phase8报告和progress顶部。

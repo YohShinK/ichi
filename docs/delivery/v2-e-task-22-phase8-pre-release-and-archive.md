@@ -1,6 +1,6 @@
 # TASK22 Phase8 上线前回归、备案展示与代码归档
 
-当前状态：**LOCAL_REGRESSION_PASS / NATIVE_LAYOUT_PASS / PRODUCTION_PUBLIC_SMOKE_PASS / WECHAT_UPLOAD_PENDING / GITHUB_ARCHIVE_PENDING / ACTUAL_PUBLICATION_NOT_CONFIRMED**。当前唯一工作集为V2-E/TASK22 Phase8；不解锁V3。
+当前最新：本人取消未实施的地图设计修改，只移除ICP展示并重新上传2.0.0，备注“2.0 版本更新”。本报告下方ICP实现/布局为旧包历史，原开发上传1056256字节和源码67260be的GitHub分支归档已实际成功。新无ICP候选回归通过并已重新上传2.0.0，1054310字节，备注“2.0 版本更新”；当前结果见`docs/delivery/v2-e-task-22-phase8-no-icp-reupload.md`。无提审或实际发布。当前唯一工作集V2-E/TASK22 Phase8，不解锁V3。
 
 ## 本轮实现
 
@@ -44,3 +44,5 @@ artifacts、exports、.cloudbase、tmp、真实环境/私钥、增量构建缓�
 没有新手机smoke、后台备案/主体/类目/隐私声明核验或实际发布证据。Phase6既有已接受未测范围与成本限制保留，不补手机性能/零成本PASS。必要手机和平台待办为提审/正式发布的后续门；本轮开发包可供本人验收。
 
 本机证据：artifacts/task22/phase8-release-20261013/；只将本脱敏报告与可复现源码归档。敏感扫描、测试摘要、原生日志/截图、预览回执、生产只读摘要、公开smoke失败/成功、客户端源码清单均独立保留。
+
+Git首次归档检查显示历史Markdown硬换行和原版HTML/上游许可证的尾部空格；这些文件按原字节保留，.gitattributes只对上述格式声明白空格规则，未清洗冻结历史或原图/HTML。最终提交差异检查实际通过；此前检查日志保留。新提交使用本人GitHub no-reply身份，未改变全局Git配置。

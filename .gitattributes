@@ -1,0 +1,5 @@
+# Markdown hard breaks and preserved upstream files retain their original bytes.
+*.md whitespace=-blank-at-eol,-blank-at-eof
+apps/web/source/ichi-v1-29.html whitespace=-blank-at-eol
+apps/client/miniprogram/pages/home/marker-font.LICENSE.txt whitespace=-blank-at-eol
+apps/client/miniprogram/platform/marker-oswald-OFL.txt whitespace=-blank-at-eol

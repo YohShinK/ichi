@@ -2,6 +2,13 @@
 
 > 当前地图分享约束：`UPLOAD_CONFIRMATION_MAP_SHARING_V2`。原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门；V2已准入数据自动生成Marker，不设二次审核或授权。当前条例覆盖本人此前及以后已上传V1记录。本人记录只显示V1“已上传”，禁止二次分享按钮。现行规范：`docs/decisions/map-upload-sharing-contract.md`。
 
+## 2026-10-14 V2主分支归档完成，推送前隐私复核通过（最新权威）
+
+- 本人明确授权“将V2分支合并到main并推送”，并追加要求推送前处理项目隐私。当前V2-E/TASK22 Phase8本项MAIN_ARCHIVE_COMPLETE；main从929d189快进合并codex/v2-release-2.0.0至源码合并点990ef9a046d06d9056791d20d1d689afb19f099b，实际推送成功，远端refs/heads/main直接回读一致；后续提交仅补本归档说明。
+- 合并无冲突、无force、源码树与此前已验证V2完全一致。130份微信上传源文件仍逐SHA匹配；沿用当前1520/1SKIP与26网页复查证据，不重复测试或上传。ICP保持移除，地图与其余产品行为不变。
+- 推送前重新扫描953份Git归档文件，源码Gitleaks无凭据命中；全部Git历史6项与既有已核实SDK表达式误报fingerprint一致。手机号/身份证形状0，30项OpenID形状均代码名称/负向代码断言，1邮箱为依赖公开联系人；28张图片元数据核查无GPS/个人作者/相机信息，仅色彩与尺寸。内部artifacts/exports/凭据/私人物料等在Git中0项，保留本机忽略；模式/元数据检查不冒称对全部历史二进制做过OCR语义审查。
+- 无提审、实际微信发布、tag、后端部署/迁移或运维密钥轮换。TASK22整体仍IN_PROGRESS，既有手机和平台声明待办保持。证据artifacts/task22/phase8-main-archive-20261013/，交付见phase8-no-icp-reupload报告的主分支归档节。
+
 ## 2026-10-13 无ICP的2.0.0重新上传与Git归档完成（最新权威）
 
 - 当前仍V2-E/TASK22 Phase8；本轮本人最终指定的ICP移除/重新上传范围已完成，P8-F1—F4全部PASS / REQUESTED_REUPLOAD_COMPLETE。取消的地图首屏/定位/视野提案未实施，默认入口、公开查询、定位、缩放、聚合与供给保持原版本；TASK22整体及手机/实际发布不因此升级为已验收。

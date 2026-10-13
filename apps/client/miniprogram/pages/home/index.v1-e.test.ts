@@ -103,15 +103,14 @@ describe("V1-E native mini-program flow coverage", () => {
     expect(wxml).toContain('class="ticket-peel-swiper');
     expect(wxml).toContain('class="ticket-peel-back"');
     expect(wxml).toContain('class="ticket-cover ticket-peel-front"');
-    expect(wxml).toContain(
-      "right: -{{ticketPeelTier === prize.tier ? ticketPeelProgress : 0}}%;",
-    );
-    expect(wxml).toContain(
-      "width: {{ticketPeelTier === prize.tier ? ticketPeelProgress : 0}}%;",
-    );
-    expect(wxml).toContain(
-      "left: -{{ticketPeelTier === prize.tier ? ticketPeelProgress : 0}}%;",
-    );
+    expect(wxml).toContain("ticket-peel-swiper--active");
+    expect(wxml).toContain('style="{{ticketPeelStyle}}"');
+    expect(wxml.match(/ticketPeelStyle: ticketPeelStyle/g)).toHaveLength(2);
+    expect(wxml).not.toContain("right: -{{ticketPeelTier");
+    expect(wxml).not.toContain("width: {{ticketPeelTier");
+    expect(wxml).not.toContain("left: -{{ticketPeelTier");
+    expect(wxml).toContain('style="{{storageMeterFillStyle}}"');
+    expect(wxml).not.toContain('style="width: {{storagePercent}}%;"');
     expect(ts).toContain("TICKET_PEEL_DISTANCE_PX = 96");
     expect(ts).toContain("TICKET_PEEL_THRESHOLD_PERCENT = 50");
     expect(ts).toContain("TICKET_PEEL_EXIT_PERCENT = 145");
@@ -129,6 +128,15 @@ describe("V1-E native mini-program flow coverage", () => {
     expect(wxss).not.toContain(".prize-ticket--peeling");
     expect(wxss).toMatch(
       /\.ticket-peel-swiper\s*{[\s\S]*?right: 0;[\s\S]*?overflow: hidden;/,
+    );
+    expect(wxss).toMatch(
+      /\.ticket-peel-swiper--active\s*\{[\s\S]*?right: var\(--ticket-peel-offset\);/,
+    );
+    expect(wxss).toMatch(
+      /\.ticket-peel-swiper--active \.ticket-peel-back\s*\{[\s\S]*?width: var\(--ticket-peel-width\);/,
+    );
+    expect(wxss).toMatch(
+      /\.ticket-peel-swiper--active \.ticket-peel-front\s*\{[\s\S]*?left: var\(--ticket-peel-offset\);/,
     );
     expect(wxml).toContain("ticket-peel-swiper--fading");
     expect(wxss).toMatch(
@@ -225,7 +233,7 @@ describe("V1-E native mini-program flow coverage", () => {
     expect(wxml).toContain("modalView === 'board-upload-submitted'");
     expect(
       wxml.match(/后台正在核对。本次提交退出后可导入新的版面。/g),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     expect(wxml).toMatch(
       /modalView === 'board-upload-submitted'[\s\S]*?退出回首页[\s\S]*?<\/view><\/view>/,
     );
@@ -320,7 +328,7 @@ describe("V1-E native mini-program flow coverage", () => {
     expect(wxss).toMatch(
       /\.camera-page,\s*\.fullscreen-state\s*{\s*z-index: 90;/,
     );
-    expect(wxss).toMatch(/\.bottom-nav\s*{[\s\S]*?z-index: 110;/);
+    expect(wxss).toMatch(/\.bottom-nav\s*{[\s\S]*?z-index: 1000;/);
     expect(ts).toMatch(
       /if \(this\.data\.currentView === "recognizing"\) clearRecognitionTimers\(\);/,
     );
@@ -468,6 +476,7 @@ describe("V1-E native mini-program flow coverage", () => {
       /\.capture-button\s*{[\s\S]*?width: 100% !important;[\s\S]*?height: 52px;[\s\S]*?align-items: center;[\s\S]*?justify-content: center;[\s\S]*?font-size: 15px;/,
     );
     expect(wxml).not.toContain("/assets/icons/info-outline-white.svg");
+    // Seven V1 exception surfaces; the map report control is a CSS inert placeholder.
     expect(wxml.match(/\/assets\/icons\/warning-white\.svg/g)).toHaveLength(7);
     expect(wxml).toContain("/assets/icons/arrow-u-up-left-white.svg");
     expect(wxml).toContain("/assets/icons/database-white.svg");

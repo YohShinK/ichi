@@ -1,0 +1,39 @@
+{
+  "status": "LOCAL_CANDIDATE_NOT_APPLIED",
+  "decisionVersion": "d09-approved-v1",
+  "clientDatabaseAccess": false,
+  "collections": [
+    {
+      "name": "publicMapLeads",
+      "permission": "ADMINONLY",
+      "indexes": [
+        {
+          "name": "public_location_point_geo",
+          "type": "GEO",
+          "keys": { "publicLocation.point": "2dsphere" }
+        },
+        {
+          "name": "publicLeadId_servedVersion",
+          "type": "NORMAL",
+          "unique": true,
+          "keys": { "publicLeadId": 1, "servedVersion": -1 }
+        }
+      ]
+    },
+    {
+      "name": "publicMapQuerySnapshots",
+      "permission": "ADMINONLY",
+      "indexes": [
+        {
+          "name": "expiresAt",
+          "type": "NORMAL",
+          "unique": false,
+          "keys": { "expiresAt": 1 }
+        }
+      ]
+    }
+  ],
+  "functions": ["query-public-map-leads", "get-public-map-lead-detail"],
+  "productionManifestMutation": false,
+  "productionResourceMutation": false
+}

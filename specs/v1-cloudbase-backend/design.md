@@ -1,6 +1,8 @@
 # V1 CloudBase 后端技术设计
 
-> 状态：已批准实施；开发环境资源已建立，仓库当前交付为 13 个私有集合、16 个生成事件函数、`recognize-board` 与 `recognize-draw-tickets` 两个独立模型函数，以及 4 个维护触发器；真实模型与真机验收仍待人工门
+> HISTORICAL V1 SPECIFICATION — IMPLEMENTED AND CLOSED. 文中函数数量、待真机／模型门、早期数据图和未来式说明是当时快照；当前以 V1 release manifest、实际代码／测试、deploy/resource manifests 与 Memory Bank Current System Truth Registry 为准。
+
+> 状态：`COMPLETED / HISTORICAL BASELINE`
 >
 > 目标环境：`cloud1-d7gxqfwv783a1f131`
 >

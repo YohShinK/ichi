@@ -1,0 +1,207 @@
+{
+  "task": "TASK-V2-22",
+  "phase": "PHASE2",
+  "status": "LOCAL_CANDIDATE_CLOUD_NOT_APPLIED",
+  "environmentId": "cloud1-d7gxqfwv783a1f131",
+  "collections": [
+    {
+      "name": "mapSourceBridgeState",
+      "action": "CREATE",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "schemaVersion": "source-bridge-phase2-v1",
+      "description": "Private current source revision, applied cursor and irreversible record/account tombstones",
+      "indexes": [
+        {
+          "name": "owner_sweep",
+          "keys": {
+            "kind": 1,
+            "ownerAccountId": 1,
+            "deletionLatch": 1
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "No TTL/purge. Preserve tombstone and replay evidence. Numeric retention remains deferred."
+    },
+    {
+      "name": "mapSourceOutbox",
+      "action": "CREATE",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "schemaVersion": "source-bridge-phase2-v1",
+      "description": "Private source dirty events, processing stages, bounded retry/dead-letter and replay receipts",
+      "indexes": [
+        {
+          "name": "pending_due",
+          "keys": {
+            "status": 1,
+            "nextAttemptAt": 1
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        },
+        {
+          "name": "owner_event",
+          "keys": {
+            "ownerAccountId": 1,
+            "kind": 1,
+            "status": 1
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "No TTL/purge. Preserve tombstone and replay evidence. Numeric retention remains deferred."
+    },
+    {
+      "name": "mapPlayerSourcePermissions",
+      "action": "CREATE",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "schemaVersion": "source-bridge-phase2-v1",
+      "description": "Initial per-record SHARE/DO_NOT_SHARE, applicable account terms and explicit rights attestation",
+      "indexes": [
+        {
+          "name": "owner_record",
+          "keys": {
+            "ownerAccountId": 1,
+            "recordId": 1
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "No TTL/purge. Preserve tombstone and replay evidence. Numeric retention remains deferred."
+    },
+    {
+      "name": "mapSourceBridgeControl",
+      "action": "CREATE",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "schemaVersion": "source-bridge-phase2-v1",
+      "description": "Global bridge switches, versioned public location policy and recovery controls",
+      "indexes": [],
+      "initialRows": [],
+      "retention": "No TTL/purge. Preserve tombstone and replay evidence. Numeric retention remains deferred."
+    }
+  ],
+  "initialControlRows": [
+    {
+      "_id": "global:bridge",
+      "contract": "source-bridge-phase2-v1",
+      "producerEnabled": false,
+      "processorEnabled": false,
+      "ownerEntryEnabled": false,
+      "locationPolicy": null
+    }
+  ],
+  "functions": [
+    {
+      "name": "manage-map-player-source",
+      "action": "CREATE",
+      "factory": "createOwnerEntry",
+      "runtime": "Nodejs20.19",
+      "enabled": false,
+      "secretBindings": [
+        "IDENTITY_HMAC_KEY",
+        "ICHI_V2_ACCOUNT_AUTHORITY_HMAC_KEY"
+      ]
+    },
+    {
+      "name": "process-map-source-bridge",
+      "action": "CREATE",
+      "factory": "createWorker",
+      "runtime": "Nodejs20.19",
+      "enabled": false,
+      "secretBindings": ["ICHI_V2_SOURCE_BRIDGE_HMAC_KEY"]
+    },
+    {
+      "name": "drain-map-source-bridge",
+      "action": "CREATE",
+      "factory": "createDrain",
+      "runtime": "Nodejs20.19",
+      "enabled": false,
+      "secretBindings": ["ICHI_V2_SOURCE_BRIDGE_HMAC_KEY"]
+    },
+    {
+      "name": "finalize-board-observation",
+      "action": "UPDATE_CODE",
+      "runtime": "Nodejs20.19",
+      "producerEnabled": false,
+      "secretBindings": "PRESERVE_ALL_EXISTING",
+      "configChange": {
+        "ICHI_V2_BRIDGE_PRODUCER_ENABLED": "false"
+      }
+    },
+    {
+      "name": "recognize-draw-tickets",
+      "action": "UPDATE_CODE",
+      "runtime": "Nodejs20.19",
+      "producerEnabled": false,
+      "secretBindings": "PRESERVE_ALL_EXISTING",
+      "configChange": {
+        "ICHI_V2_BRIDGE_PRODUCER_ENABLED": "false"
+      }
+    },
+    {
+      "name": "delete-my-record",
+      "action": "UPDATE_CODE",
+      "runtime": "Nodejs20.19",
+      "producerEnabled": false,
+      "secretBindings": "PRESERVE_ALL_EXISTING",
+      "configChange": {
+        "ICHI_V2_BRIDGE_PRODUCER_ENABLED": "false"
+      }
+    },
+    {
+      "name": "delete-my-account",
+      "action": "UPDATE_CODE",
+      "runtime": "Nodejs20.19",
+      "producerEnabled": false,
+      "secretBindings": "PRESERVE_ALL_EXISTING",
+      "configChange": {
+        "ICHI_V2_BRIDGE_PRODUCER_ENABLED": "false"
+      }
+    }
+  ],
+  "secretPlan": {
+    "ICHI_V2_SOURCE_BRIDGE_HMAC_KEY": "NEW >=32 random bytes, memory-only creation only after exact approval, two new bindings; never log/hash/persist value",
+    "IDENTITY_HMAC_KEY": "reuse unchanged identity namespace for new owner entry; no rotation",
+    "ICHI_V2_ACCOUNT_AUTHORITY_HMAC_KEY": "reuse production Account authority binding for new owner entry"
+  },
+  "triggerProposal": {
+    "functionName": "drain-map-source-bridge",
+    "name": "ichi-player-source-bridge-v1",
+    "type": "timer",
+    "cron": "0 * * * * * *",
+    "enable": "CLOSE",
+    "customArgument": "",
+    "runtimeAuthentication": "process.env.TRIGGER_SRC=timer AND trusted invocation environment TRIGGER_SRC=timer AND no trusted WX OPENID/UID/TCB_UUID; never configured as a static env var. Live timer/client separation requires platform rehearsal before enable."
+  },
+  "unchanged": [
+    "Phase1 9 code/config/artifacts",
+    "all V1 private schemas/indexes/ACL",
+    "identity key/account mapping",
+    "shadow/candidate state",
+    "production read-stop/features/policy",
+    "client bindings",
+    "NETWORK"
+  ],
+  "enablePreconditions": [
+    "separate exact approval",
+    "real SDK doc transactions/concurrency and trusted timer context verified",
+    "approved production terms/scope bound with applicable owner consents",
+    "approved numerical location policy bound",
+    "initial source choice client integration and real platform smoke",
+    "rollback remote exact V1 artifacts downloaded/verified",
+    "bounded per-record historical review; no implicit SHARE"
+  ],
+  "initialBusinessRows": 0,
+  "initialPublicRows": 0,
+  "externalWrites": 0
+}

@@ -852,12 +852,20 @@ test("unverified local drafts can be swipe-deleted from both ledgers", async ({
   shell = page.frameLocator(iframe);
 
   const swipeLeft = async (content: Locator) => {
+    // Let the source shell's 300ms route transition finish before the gesture.
+    await page.waitForTimeout(350);
+    // The source shell may replace a draft row while restoring its ledger.
+    // Retry only scroll/readiness; never replay the swipe or delete action.
+    await expect(async () => {
+      await content.scrollIntoViewIfNeeded();
+      await expect(content).toBeInViewport({ ratio: 1 });
+    }).toPass({ timeout: 5_000 });
+    await content.hover();
     const box = await content.boundingBox();
     expect(box).not.toBeNull();
     if (!box) return;
-    await page.mouse.move(box.x + box.width - 18, box.y + box.height / 2);
     await page.mouse.down();
-    await page.mouse.move(box.x + box.width - 104, box.y + box.height / 2, {
+    await page.mouse.move(box.x + box.width / 2 - 86, box.y + box.height / 2, {
       steps: 6,
     });
     await page.mouse.up();

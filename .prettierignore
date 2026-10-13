@@ -15,4 +15,15 @@ apps/client/miniprogram/**/*.wxml
 apps/client/miniprogram/**/*.wxss
 pnpm-lock.yaml
 tmp/
-artifacts/r1-provider-1.1-pokemon-smoke/
+artifacts/
+exports/
+.cloudbase/
+services/cloudbase/.deploy/
+*.tsbuildinfo
+# Preserve the approved original HTML byte for byte.
+apps/web/source/ichi-v1-29.html
+# Frozen, generated deployment evidence retains its original bytes.
+packages/v2-map/resources/cloudbase-candidate-runtime-artifacts-v2.json
+packages/v2-map/resources/cloudbase-candidate-runtime-resource-proposal-v2.json
+packages/v2-map/resources/cloudbase-task21-prepilot-artifacts.json
+packages/v2-map/resources/cloudbase-task21-reporting-artifacts.json

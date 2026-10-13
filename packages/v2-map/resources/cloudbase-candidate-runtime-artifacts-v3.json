@@ -1,0 +1,125 @@
+{
+  "status": "CANDIDATE_APPLIED_READBACK_COMPLETE_REHEARSAL_BLOCKED",
+  "environmentId": "cloud1-d7gxqfwv783a1f131",
+  "deployed": true,
+  "cloudWrite": true,
+  "functions": [
+    {
+      "name": "v2-shadow-submit-candidate-upload",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/candidate-runtime-v3/v2-shadow-submit-candidate-upload.zip",
+      "sha256": "f9424e56736eb49755e3062366982893b896776e8235d4ae580d393adcba50f8",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowCandidateUploads",
+        "v2ShadowSourceFixtures",
+        "v2ShadowControlState"
+      ],
+      "deployed": true,
+      "cloudWrite": true
+    },
+    {
+      "name": "v2-shadow-resolve-observation",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/candidate-runtime-v3/v2-shadow-resolve-observation.zip",
+      "sha256": "75cb5f946f050c93c4fbd9fdba9492a936f301f7c308e8ba98557ed364c87229",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowControlState",
+        "v2ShadowSourceFixtures",
+        "v2ShadowCandidateUploads",
+        "v2ShadowContributionLedger",
+        "v2ShadowBoardInstances",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowProjectionOutbox",
+        "v2ShadowHumanAssistanceRequests"
+      ],
+      "deployed": true,
+      "cloudWrite": true
+    },
+    {
+      "name": "v2-shadow-answer-assistance",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/candidate-runtime-v3/v2-shadow-answer-assistance.zip",
+      "sha256": "1356ba91a2aeb4ec57cb9cd685c8102dac2feb4dc524b1c397eef8e03cb0eb3a",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowControlState",
+        "v2ShadowCandidateUploads",
+        "v2ShadowContributionLedger",
+        "v2ShadowHumanAssistanceRequests",
+        "v2ShadowHumanAssistanceEvidence",
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowProjectionOutbox",
+        "v2ShadowAssociationDecisions"
+      ],
+      "deployed": true,
+      "cloudWrite": true
+    },
+    {
+      "name": "v2-shadow-get-my-assistance",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/candidate-runtime-v3/v2-shadow-get-my-assistance.zip",
+      "sha256": "4b635d9c2d16d7feb955097166f5c554ad4e3502d737ea58d5e9fd488bb30b22",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowControlState",
+        "v2ShadowHumanAssistanceRequests",
+        "v2ShadowSourceFixtures",
+        "v2ShadowCandidateUploads"
+      ],
+      "deployed": true,
+      "cloudWrite": true
+    },
+    {
+      "name": "v2-shadow-reconcile-projection",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/candidate-runtime-v3/v2-shadow-reconcile-projection.zip",
+      "sha256": "ef74a7671babd78c513ba1a4b24cc60554007e0f0dc3bffc87e9e1a6bd3ea098",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowControlState",
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowProjectionOutbox",
+        "v2ShadowPublicMapLeads",
+        "v2ShadowContributionLedger",
+        "v2ShadowCandidateUploads",
+        "v2ShadowMapContributionConsent"
+      ],
+      "deployed": true,
+      "cloudWrite": true
+    },
+    {
+      "name": "v2-shadow-manage-contribution",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/candidate-runtime-v3/v2-shadow-manage-contribution.zip",
+      "sha256": "e32b947155fc93b106c16475fbb0ae2f3e7ae80a0f9ee7aaace460b756e52a7c",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowControlState",
+        "v2ShadowCandidateUploads",
+        "v2ShadowContributionLedger",
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowPublicMapLeads",
+        "v2ShadowProjectionOutbox",
+        "v2ShadowMapContributionConsent"
+      ],
+      "deployed": true,
+      "cloudWrite": true
+    },
+    {
+      "name": "v2-shadow-get-public-map-lead-detail",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/candidate-runtime-v3/v2-shadow-get-public-map-lead-detail.zip",
+      "sha256": "205f0244de750449cdba807f24013fe38eb2785484fa42e9c8b888cfc9dadab5",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "collections": ["v2ShadowControlState", "v2ShadowPublicMapLeads"],
+      "deployed": true,
+      "cloudWrite": true
+    }
+  ]
+}

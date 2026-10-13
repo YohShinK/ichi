@@ -1755,3 +1755,193 @@ describe("V1 CloudBase runtime envelope", () => {
     });
   });
 });
+
+describe("direct upload note safety before completed V1", () => {
+  const setup = (suggest: string | null) => {
+    const domain = require("./domain.js");
+    const accountId = "account-direct-note-test",
+      appId = "wx-direct-note-test",
+      openId = "direct-note-caller",
+      secret = "direct-note-test-secret";
+    const key = "direct-note-retry-key",
+      keyHash = domain.hashIdempotencyKey(accountId, key),
+      jobId = `${accountId}:${keyHash}`,
+      quotaId = `${accountId}:2026-10-04`;
+    const database = createDocumentDatabase({
+      wechatIdentities: {
+        [hashIdentity({ appId, openId, secret })]: { accountId },
+      },
+      accounts: { [accountId]: { status: "active" } },
+      recognitionJobs: {
+        [jobId]: {
+          ownerAccountId: accountId,
+          status: "recognized",
+          sourcePath: "direct-upload",
+          quotaId,
+          keyHash,
+          structuredResult: {
+            draft: {
+              ipName: "测试版面",
+              tiers: [{ label: "A", remainingTickets: 2 }],
+            },
+          },
+        },
+      },
+      dailyQuotas: {
+        [quotaId]: {
+          accountId,
+          dateKey: "2026-10-04",
+          limit: 5,
+          used: 0,
+          reservations: {
+            [keyHash]: {
+              status: "reserved",
+              expiresAt: "2026-10-04T04:00:00.000Z",
+            },
+          },
+        },
+      },
+    });
+    const msgSecCheck = vi.fn(async () => {
+      if (suggest === null) throw new Error("platform unavailable");
+      return { result: { suggest } };
+    });
+    const cloud = {
+      DYNAMIC_CURRENT_ENV: "unit-test",
+      init: () => undefined,
+      database: () => database,
+      getWXContext: () => ({ APPID: appId, OPENID: openId }),
+      openapi: { security: { msgSecCheck } },
+    };
+    const run = createRuntime({
+      cloud,
+      env: { IDENTITY_HMAC_KEY: secret },
+      now: () => Date.parse("2026-10-04T03:00:00.000Z"),
+    });
+    const event = {
+      recognitionJobId: jobId,
+      boardId: "board_direct_note_test",
+      sourcePath: "direct-upload",
+      confirmedSnapshot: {
+        schemaVersion: "board-record-r2-1.0.0",
+        recognitionVersion: "R2",
+        ipName: "测试版面",
+        pricePerDraw: 1,
+        currency: "CNY",
+        tiers: [
+          {
+            tierCode: "A",
+            rawLabel: "A赏",
+            remainingTickets: 2,
+            isGrandPrize: true,
+          },
+        ],
+      },
+      location: {
+        latitude: 31.23,
+        longitude: 121.47,
+        accuracy: 12,
+        source: "camera",
+        capturedAt: "2026-10-04T02:59:00.000Z",
+        consentVersion: "v1-location",
+      },
+      locationNote: "待检查备注",
+      observedAt: "2026-10-04T02:59:00.000Z",
+      promptVersion: "r2",
+      consentVersion: "v1-private",
+      disclosureVersion: "no-image",
+    };
+    return { run, event, database, msgSecCheck, openId, key, jobId };
+  };
+  it.each(["risky", "review", "", null])(
+    "rejects %s before creating V1, code or charging quota",
+    async (suggest) => {
+      const { run, event, database, msgSecCheck, openId } = setup(suggest);
+      expect(await run("finalize-board-observation", event)).toMatchObject({
+        ok: false,
+        error: { code: "LOCATION_NOTE_REVIEW_FAILED" },
+      });
+      expect(msgSecCheck).toHaveBeenCalledWith({
+        content: event.locationNote,
+        version: 2,
+        scene: 2,
+        openid: openId,
+      });
+      expect(
+        (
+          await database
+            .collection("observationCandidates")
+            .orderBy()
+            .limit()
+            .get()
+        ).data,
+      ).toHaveLength(0);
+      expect(
+        (await database.collection("recordCodes").orderBy().limit().get()).data,
+      ).toHaveLength(0);
+      expect(await run("get-quota-status", {})).toMatchObject({
+        ok: true,
+        data: { used: 0, reserved: 1 },
+      });
+    },
+  );
+  it("resumes the same recognized job after rejection, stores exact proof and commits once", async () => {
+    const { run, event, database, msgSecCheck, key, jobId } = setup("risky");
+    const reservation = await run("reserve-recognition", {
+      idempotencyKey: key,
+      sourcePath: "direct-upload",
+    });
+    expect(await run("finalize-board-observation", event)).toMatchObject({
+      ok: false,
+    });
+    expect(
+      await run("release-recognition", {
+        jobId,
+        jobToken: reservation.data.jobToken,
+      }),
+    ).toMatchObject({
+      ok: true,
+      data: { released: true, status: "recognized_released" },
+    });
+    expect(await run("get-quota-status", {})).toMatchObject({
+      data: { used: 0, reserved: 0 },
+    });
+    expect(
+      await run("reserve-recognition", {
+        idempotencyKey: key,
+        sourcePath: "direct-upload",
+      }),
+    ).toMatchObject({ data: { jobId, status: "recognized" } });
+    msgSecCheck.mockResolvedValue({ result: { suggest: "pass" } });
+    const edited = { ...event, locationNote: "修改后的安全备注" };
+    const result = await run("finalize-board-observation", edited);
+    expect(result).toMatchObject({
+      ok: true,
+      data: { status: "clue_submitted", idempotent: false },
+    });
+    const record = (
+      await database
+        .collection("observationCandidates")
+        .doc(result.data.recordId)
+        .get()
+    ).data;
+    expect(record).toMatchObject({
+      locationNote: edited.locationNote,
+      directNoteReview: {
+        status: "NOTE_PASSED",
+        contentHash: require("node:crypto")
+          .createHash("sha256")
+          .update(edited.locationNote)
+          .digest("hex"),
+      },
+    });
+    expect(await run("finalize-board-observation", edited)).toMatchObject({
+      ok: true,
+      data: { idempotent: true },
+    });
+    expect(await run("get-quota-status", {})).toMatchObject({
+      data: { used: 1, reserved: 0 },
+    });
+    expect(msgSecCheck).toHaveBeenCalledTimes(2);
+  });
+});

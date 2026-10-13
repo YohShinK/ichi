@@ -1,6 +1,643 @@
-# ICHI Product Design Document
+# ICHI 产品设计文档
 
-2026-08-31 V1.0.1 THREE TAB SPLIT SHARE IMAGE（当前活动产品增量）：公开分享 surface 包含识别、地图与“我的”，允许值固定为 `tab=recognize|map|my`；缺失或其他非法值安全回退识别。三个 Tab 都支持好友转发、朋友圈和微信原生复制链接，标题统一为“ICHI 一奇抽赏助手”。好友固定使用由现有默认头像重新采样到 520×520、居中放入 800×640 纯白画布的唯一包内 5:4 `/assets/share/ichi-share-message.png`；这相对上一版 400×400 主体是精确的线性 30% 放大，中心不偏移、轮廓不裁切。朋友圈直接复用未修改的既有默认头像 `/assets/v1-29/ichi-avatar.png`，不新增 timeline 图片；复制链接只含 query。上一轮裁切不理想且占包体的 1254×1254 高清分享图已删除。“我的”分享只允许 public tab 和固定官方图片，接收方仍以自己的微信可信身份静默 bootstrap 并进入自己的 Profile；任何分享结果都禁止携带版面、记录、提交、账号、owner、微信身份、资料、额度、抽取、照片或识别结果。地图只恢复既有 `map-preview`。本轮不使用腾讯云、HTTPS 网络图片、backend、CloudBase、数据库、Storage 或 ACL，也不修改 V1.0.0 冻结源码与既有 silent-account ownership contract。
+> 当前地图分享约束：`UPLOAD_CONFIRMATION_MAP_SHARING_V2`。原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门；V2已准入数据自动生成Marker，不设二次审核或授权。当前条例覆盖本人此前及以后已上传V1记录。本人记录只显示V1“已上传”，禁止二次分享按钮。现行规范：`docs/decisions/map-upload-sharing-contract.md`。
+
+
+## 2026-10-13 Phase8 备案号最终由本人更正
+
+本人先提供主体形式编号，随后明确更正为“浙ICP备2026084653号-1”；配置按这串原样展示，不自行补X或其他尾号。本轮“我的”底部灰色12px/完整编号、查询复制与网页官方链接已实现；短屏整页滚动、资料/菜单不压缩裁切。编号来源是本人当前回复，不等同后台完整小程序备案及主体/类目资质核验。当前开发包供本人验收，正式提审/发布仍需对应平台及手机门。
+
+## 2026-10-13 Phase8 上线前回归与备案展示（当前授权）
+
+本人在上线准备窗口明确启动TASK22 Phase8，追加全项目敏感信息扫描/忽略、备案号悬挂、V2分支、微信上传及之后GitHub代码归档。Phase7的132合格NETWORK/133公开记录修订收口为输入；不恢复300数量门，不重复已消费部署/准入/bridge。当前只新增“我的”页面底部居中的备案信息：12px、灰色、无卡片背景、保留安全区，完整真实小程序备案号不省略；工信部查询地址为https://beian.miit.gov.cn/。网页直接链接；小程序提供明确标注的复制查询网址入口。复制入口不冒称已验证的web-view直达或全部平台备案展示合规。真实编号未提供前保持空配置、运行时不展示虚构编号，微信上传前必须补齐并确认主体/备案有效性。
+
+既有个人资料用途文案应与当前条例后安全昵称/独立公开头像投影一致。人工视觉检查由本人完成；本次自动回归不扩大既有手机证据、性能或成本PASS。微信上传、审核通过与实际PUBLISHED分开记录，只有实际PUBLISHED确认后才允许immutable tag，V3保持锁定。
+
+## 2026-10-13 Phase7 数量目标撤销与版面工作集收口（当前）
+
+Founder明确将全国300份改为现有证据库存收口：手头待确认及正在确认的版面完成核验，事实完整且仍合格的实际入图；已回复仍缺必要信息的按此前指令放弃，未回复疑点不能由“全部通过”推造数字、地点或规则。最终以真实当前公开合格独立NETWORK数量交付，不继续为数量扩大采集。来源时钟、去重、null≠0、独立rights、exact版本、安全公开及闭门规则保持。
+
+本人随后明确上线前最终任务在别的窗口执行，本聊天只完成版面实际入图及完整收口，不执行Phase8准备、文件忽略、GitHub上传或上线前回归。全国300不再是本轮收口前置数量门；已接受Phase6未测范围继续保留，未测不得补写PASS。Phase8的既有产品合同及外部动作授权规则留给其他窗口，不把本轮版面收口当作正式上线完成。
+
+当前修订版面工作集已实际收口：132合格独立NETWORK（原50+新82）/133公开记录（PLAYER1），全国及全部现有城市query、分页、133详情、实例/原时钟/隐私/原50及PLAYER保持与最终闭门通过。219项集中疑点15补齐入图、21本人不可用排除或撤回、183必要事实未明确本地关闭，不冒充人工事实确认；当前待办0。真实SDK时延、环境累计成本和既有手机未测边界分别按实际记载，不新增手机/零成本/全部发布门PASS。交付`docs/delivery/v2-e-task-22-phase7-board-scope-closeout-132.md`；TASK22整体仍IN_PROGRESS。
+
+## 2026-10-09 Phase7 全国300授权与准备（历史，数量目标已由10-13指令替代）
+
+用户明确授权TASK22 Phase7全国总计300个独立合格NETWORK版面（包含仍有效上海50），沿用AUTO_CLEAR_ESCALATE_UNCERTAIN及独立rights/exact版本；完整事实自动受托核验，疑点集中Founder。近期7天绑定首次真实发现，30天不续期；多图/多帖同板不重复计数。图片失败须有界刷新公开大图资源、正常下载/页面请求及清晰完整大图截图补取，视频须真实播放帧与时间；未知保持null，未取清证据留待补取。原图仅内部。Phase6范围已接受，其原聊天已完成跨城市缺陷修复/验证/预览并收口；新公开状态无概要不当失效门沿用于全国，不将旧手机PASS扩充为新手机验证。
+
+## 2026-10-09 Phase6 修复版人工验收完成（最新）
+
+用户在修复版1054089字节二维码后明确“人工验收完毕”，本次跨城市修复PHONE_REPAIR_USER_CONFIRMED_PASS；iPhone16Pro/一个账号沿用，系统/微信版本未知，已接受未测边界保持。Phase6=COMPLETE / HUMAN_APPROVED / CROSS_CITY_FIX_PHONE_ACCEPTED / CURRENT_INTEGRATION_PASS / PREVIEW_READY / SAFE_STOP。本次最终集成1481 PASS/1既有SKIP/0 FAIL、types/Lint、Next/26 Playwright及原生/真实SDK地图门通过；仅Phase7新增媒体测试初次缺解码Python环境失败，使用项目现有Pillow运行时后通过且保留失败。
+
+MAP_PICKER_RENDERED_LEAD_REVALIDATION_V1为当前防回退门，杭州真实剩1/另一条已删不可用；旧手机六项与本次修复人工反馈分别绑定，不扩大到新上传/辅助抽赏、全生命周期、未知版本或性能。Phase5后端三文件SHA保持；独立Phase7四份工具源码变更另记，不声称旧28源仍全部相同。收口报告docs/delivery/v2-e-task-22-cross-city-picker-revalidation-repair.md，人工phone-repair-human-acceptance.json与当前final-state.json；TASK22整体IN_PROGRESS，独立Phase7授权保持，Phase8/正式发布未由本聊天解锁，无本轮部署/旧准入/生产来源配置写入/Git。
+
+## 2026-10-09 Phase6 跨城市缩放重叠列表修复（当前）
+
+用户已接受前述未测边界，随后报告从上海缩小至杭州时原重叠列表显示0、放大杭州后显示2，并已删除杭州其中一条；授权找到根因、修复后收口。现已修复并通过当前全量/原生/真实公开读回与新版预览，按已接受边界收口；旧六项手机通过仍标当时版本。本聊天已完成Phase6修复并收口；独立Phase7聊天已另获用户授权，按其当前工作集推进，不覆盖本次缺陷。
+
+MAP_PICKER_RENDERED_LEAD_REVALIDATION_V1：已呈现的公开Marker成员不能仅因新视口查询尚未返回、分页未包含或当前概要缺失就被当成删除。打开列表后仍按可视8行/2并发，通过现有安全公开详情端核验已呈现ID；未知/瞬时失败保留行和已读有效资料，明确不可用、本人删除或已知到期才移除。新查询/关闭/后台的迟到响应不能复活旧数据，当前版本/政策/公开门和2分钟/16项准备区约束保持。若全部成员明确失效，关闭空列表并恢复定位/刷新，不留下“此位置有0个版面”的空壳。用户删除保持，不补造新记录或恢复被删数据。
+
+## 2026-10-09 Phase6 并行验收范围
+
+用户要求Phase5进行时同时推进Phase6，允许先验收已真实入图的上海50个独立版面及现行产品行为；不会重审、重放入库、重新采集凑50或把50文章当50版面。当前50版面来自31篇文章，原本人10条和受托40条审核身份保留，原观察时间/30天期限及门店/商场近似位置提示不改。原7天窗口按各自原发现证据核对，后续补图不续期。
+
+Phase6继承UPLOAD_CONFIRMATION_MAP_SHARING_V2、本人当前条例覆盖本人全部完成上传、近似个人定位、持续恢复控件、列表真实touch边界和准备详情复用。客户端不重新添加SHARE/DO_NOT_SHARE或二次地图分享按钮；本机私有保存/未核验记录仍不公开。Phase5的AUTO_CLEAR_ESCALATE_UNCERTAIN及独立委托/rights/安全门保持。
+
+本次真机范围为用户确认的一个账号/iPhone16Pro。用户对六项地图任务明确回复“全部通过”，记录地图浏览、列表选中、详情内部/外部边界、资料呈现、空结果恢复及前后台PHONE_MAP_SIX_CHECKS_HUMAN_APPROVED；系统/微信版本未知，新上传/辅助抽赏/自有新记录删除未明确反馈，不把此回复或模拟器/SDK延迟延伸成其他PHONE_PASS/真机P95。Phase5最终集成已通过；Phase6未测范围已接受、跨城市缺陷已修复并验证后收口，收口材料docs/delivery/v2-e-task-22-phase6-human-acceptance-and-scope.md。Phase6本轮合同按已接受边界冻结；Phase7独立聊天另获授权，Phase8/正式发布未由本聊天解锁。
+
+
+## 2026-10-09 Phase5 自动录入与仅疑点Founder处理（最新）
+
+用户追加明确指令“现在的目标是自动录入，无法识别或者待确认交由founder处理”。本节取代本轮Phase5下方“未来新候选默认逐条Founder明确决定”的默认。证据完整、每赏余量/原始时间/地点/备注可核清的候选，由Agent依据本次真实用户委托记录AGENT_USER_DELEGATION并自动入图；无法识别、缺字段、遮挡或冲突候选留本地，集中交Founder补数/修正，再按实际确认处理。不伪称真人逐条批准，不以单一confidence分数代替证据完整性。
+
+新工作流委托及地点注册使用独立workflowReviewDelegation/workflowVenueApproximation，不改写旧10/40条授权引用与注册表；trusted operator仅注册已核清exact source/version/content/location摘要，服务器最终事务复读独立rights/备注安全/大赏与审核决定。操作批次最多50条，技术注册容量1000不作为采集数量目标；原50条不重放，Phase6—8的验收/300目标/正式发布仍未解锁。
+
+自动核验须绑定原图SHA和各赏票位/印刷剩余数/全未抽证据；未知数保留null并交审。原时间、30天退出、公开隐私、PLAYER门、受控闭门与撤回不复活仍保持。当前目标包含自动流程完整实现；生产能力若需部署，先冻结真实新远端基线及最小差异，提交具体外部动作审批，不把旧已消费部署当授权。
+
+## 2026-10-09 Phase5 官方网络版面持续工作流（当前已解锁）
+
+用户明确目标“完成Phase5”。Phase4补采目标的50条真实入图与已有核验决定保留。Phase5实现可重复的collect/review/publish流程及本地审核页、exact版本失效、持久重试/幂等/撤回/追溯；本次不新增采集数量目标，不自动解锁Phase6—8、全国300或正式发布。
+
+ICHI_NETWORK_CURATOR_WORKFLOW_V1：collect只保存本地公开来源证据和结构化候选，按canonical URL+版面证据键去重，同帖多板分开，不以相似图/同店强合并。当前默认采集范围上海、原发布至首次发现不超过7天，未知计数保留待修，null不写0，视频封面不作为逐赏证据。原图/截图/原文/来源链接及审核证据保持本地；公开仅沿现行allowlist输出结构化事实。
+
+新批次默认接收Founder明确决定，绑定candidate revision、record digest、证据SHA、reviewVersion与reviewedAt；已核验50条不重复审核。现有AGENT_USER_DELEGATION仅在服务器既有exact授权注册表内复用，Phase5执行指令不扩展成对未来任意文章的自动批准。独立rights、备注安全、原时间和大赏确认仍分别检查。编辑事实/证据后旧批准失效；待修/拒绝不得注册到生产，既有已发布版本保留历史。
+
+publish默认产生可检查计划；实际操作需已有或当次明确的批次/操作/环境授权，消费exact批准输入，先读新鲜policy/control/decision/source再走既有官方ingestion与Verification→Resolution→projection并回读。只改变授权的候选；服务器位置/审核注册表及范围不由客户端静默扩容。中断后先查询相同版本服务器回执，未知提交状态不得盲目重放；撤回使用既有takedown与noResurrection，保留来源/审核/入库审计。正常网络双门和timer保持关闭，临时开门每次操作后恢复并核对，恢复失败优先报告与停止后续写入。
+
+用户本次授权工具实现与自动端到端验证；无新来源入库或真实撤回请求，测试使用隔离数据库和既有真实50条的只读回查，不伪称新的生产写入或真机验收。
+
+## 2026-10-08 补采至50条与用户委托核验（当前）
+
+用户明确目标“继续筛选直至填充50条有效版面信息，无法判断或者待确认在最后统一交由我审核或识别；无需founder识别信息直接登录至地图”。本次授权覆盖补采、核验清楚记录的直接地图准入，以及为总计50条所必需的限定准入策略扩展；取代旧“仅10条、不采集50条、新增必须逐条Founder确认”的本轮限制，不解锁无关后续Phase或微信正式发布。
+
+有效数量按地图内不同实体版面计算：既有10条计入目标，同帖多板分别留原图证据，同板早期照片不重复新增或覆盖较新余量。新候选须有可追溯原始时间、上海地点证据、实物票板及完整准确的各赏余量；新采集按当前7天窗口，旧补核保留原采集窗口与原观察时间，地图30天期限不续期。编辑时间不能冒充首次发布，宣传目录不能冒充实际余量。
+
+核验清楚者记录AGENT_USER_DELEGATION及本次明确用户授权，不伪称逐条真人Founder审核；沿用独立结构化事实rights、exact版本摘要、内容安全与原有共享投影。地点沿用已授权的可追溯门店APPROXIMATE或原帖明确商场AREA，accuracyMeters未知保留null，公开0.001°网格。策略仅绑定本目标最多50个sourceId/sourceVersion/locationDigest，PLAYER门不变。不能判断的记录保留具体疑点及照片，最后统一提交用户，不以猜测补齐数量。
+
+普通网络准入只在受控批次写入时短暂启用并立即恢复关闭，维护/smoke/timer仍关闭；既有10条历史人工决定与原始证据不篡改。旧10条位置规则原样保留，新注册表与旧表合计最多50项。委托核验按本次授权引用、授权时间和每条最终内容摘要限定；同帖多板以原图序号及板号/板型证据区分，canonical URL保持原帖。当前目标IN_PROGRESS，尚未声称50条达成。
+
+## 2026-10-07 当前批次余量人工纠正与 NETWORK 列表内容（当前）
+
+用户确认猎人全版未抽、备注“E 升 LAST”，龙珠DAIMA第2弹C=0、Fantastic Adventure A=0，并要求精准识别余量。原图复核同时纠正番茄口袋火影G=20、暴蒙鬼灭F=11、猎人I=26和Fantastic Adventure G=16。目标10条总余量依原批次顺序为78/70/55/23/68/68/69/80/41/50；猎人A=2来自原图票区印刷且全未抽由用户确认。E升LAST只作活动备注，不重定义大赏或普通赏数量。
+
+NETWORK_PICKER_DETAIL_CONTENT_REUSE_V1：网络版面列表第二行必须与该版面详情展开备注栏共用安全内容，包括安全地点名、已通过内部可信逐内容核验的公开备注、分析理由，按原顺序去重合成单行。地点提示前缀仍不显示。用户纠正“其实也不是备注显示地点”，本规则取代早期仅拿地点当备注的假设。NETWORK列表及详情的展示时间使用该版面的原observedAt，按用户要求在UI标作上传时间；不写成爬取或此次修正时间，不伪造存储中的PLAYER uploadedAt。PLAYER仍用真实首次上传时间和安全备注。
+
+本批已准入数据纠正采用可信运维端的一次性版本化修订：新sourceVersion、Founder exact-digest纠正决定、独立结构化事实rights和备注exact-hash安全决定，绑定原source/lineage/BoardInstance/publicLeadId。复用现有验证与共享link/project，读写集最终事务CAS、历史版本保留、servedVersion递增和读缓存失效；不直接覆盖旧不变sourceVersion、不重复ADMIT、不改变观察时间或30天期限，不扩大10条地点allowlist。网络普通准入、维护、smoke、timer继续关闭；无函数部署、微信正式发布或后续Phase解锁。仅猎人短备注由本次用户提供并经可信curator逐内容检查，不宣称额外微信msgSecCheck回执。
+
+已PRODUCTION_CORRECTED / REAL_PUBLIC_VERIFIED / NATIVE_TEXT_AND_CANVAS_VERIFIED / PREVIEW_READY：5条事实版本纠正保持原BoardInstance/publicLeadId，3条未知余量全部补齐，其他5条未写。真实公开query/detail及原生10条数值、共享备注和观察时间展示通过，2条PLAYER既有10字段保留；旧观察／版本历史和双门关闭回读通过。官方新预览1053453字节。报告docs/delivery/v2-e-task-22-network-count-and-picker-metadata-correction.md，证据artifacts/task22/phase4/remaining-correction-20261007/。旧Phase4草稿中的未知与错误数量仅为历史快照，当前事实以本次纠正回执为准；不声称实时报库存或新真机视觉验收。
+
+## 2026-10-07 NETWORK 地点展示文案简化（当前）
+
+用户在查看已入图版面后明确要求“去除大致、未知等描述”。现行 NETWORK_VENUE_NAME_ONLY_DISPLAY_V1：网络版面详情卡片的折叠摘要与展开地点行只显示安全地点名，去掉既有“大致位置 · 位置误差未知 · ”前缀；本节取代下方该批次要求在详情展示此提示的旧文案规定。商场范围、真实店名及品牌分店名称保留。未知票数、价格及时间等其他业务字段不受本次地点文案修改影响。
+
+该变更只作用于客户端展示：公开回执的precisionMode/areaLabel、后台accuracyMeters=null与地点证据、网格坐标、原观察时间及30天期限均保留，不把近似点改成精确点。PLAYER详情和本人模糊定位提示沿用既有规则。沿用当前活动V2-E/TASK22工作集，不重复生产部署或10条准入，不解锁后续Phase或正式发布。
+
+## 2026-10-07 当前10条 NETWORK 近似地点准入（已入图并收口）
+
+用户在已批准10条版面全部入图后，明确回复“允许”，批准仅当前10条NETWORK使用可追溯门店／原帖明确商场范围的近似位置。该决定取代下方本批次 LOCATION_PRECISION_POLICY_BLOCKED / PENDING_USER_APPROVAL；不整体解锁Phase5—8或50/300目标。
+
+产品规则 NETWORK_BATCH10_VENUE_APPROXIMATION_V1：米级误差未知保留accuracyMeters=null，不伪造0/100米。命名门店吻合时使用APPROXIMATE，原帖明确商场但具体门店未证实则使用AREA；公开点仍按0.001°网格，详情明确展示“大致位置／位置误差未知”及安全地点名。原帖、命名POI、查询时间及地点摘要只作后台证据，不公开原图、原文或内部来源标识。PLAYER原≤100米准入和个人模糊定位流程保持。
+
+技术边界：network policy新增可选、本批次最多10项的sourceId/sourceVersion/locationDigest绑定；只有allowlist精确匹配且真实公开地点证据完整的NETWORK允许null误差。Founder及独立rights继续绑定最终record内容摘要，最终事务复读决定／policy；非本批次及PLAYER未知误差仍拒绝。使用现有public-map-v4的precisionMode/areaLabel承载安全地点提示，客户端详情显式展示，不新增公开私有证据字段。不同文章按既有Resolution分别核验，不以同一商场合并。原sourcePublishedAt决定Freshness及30天publicUntil，不用此次地点补证、审核或入库时间续期。
+
+当前工作集：补齐公开地点证据→实现限定准入及详情提示→自动回归→新鲜远端最小差异部署→现有正常签名准入端口处理10条→真实公开读取及关闭临时准入门。维护/timer/smoke保持关闭，既有PLAYER/Phase1/2桥接及历史Phase3部署不重放；不创建新资源，不自动Git提交或微信正式发布。当前批次 BATCH10_COMPLETE / HUMAN_APPROVED / TEN_PRODUCTION_ADMITTED / PUBLIC_READ_VERIFIED / SAFE_STOP：10个真实NETWORK来源、10个独立BoardInstance/publicLeadId，真实SDK query/detail全部可读；7条门店APPROXIMATE、3条原帖明确商场AREA，米级误差均未知且详情明确提示。原有2条PLAYER公开事实及位置门保持。新鲜远端7函数各只改network/domain两文件，186源码与原配置回读PASS；准入环境及数据库双门已关闭，维护/smoke/timer关闭。先准入8条再准入剩余2条，前8条无重放；原50条目标不伪造达成。自动回归1406通过/1既有跳过、实际七包373通过/5不适用公开入口跳过、Playwright26、类型/Lint/Next/治理/分享门通过；原生模拟器10条与位置提示文本PASS，不充当新增真机人验。官方预览1053042字节已生成；未微信正式发布或Git提交。初次准入未启用、最后两条配置Updating/恢复失败均留原回执，后续仅等待Active及恢复/正常准入，最终关闭回读PASS。证据与批量人工授权位于artifacts/task22/phase4/review/，生产包／准入／公开回执位于artifacts/task22/phase4/map-admission-20261007/。
+
+## 2026-10-07 TASK22 Phase3 已收口（当前断点）
+
+TASK22 Phase3 = **COMPLETE / HUMAN_APPROVED / PRODUCTION_APPLIED / LIVE_SMOKE_PASS / PHONE_PASS / SAFE_STOP**。用户明确“人工核验通过，Phase3 收口”，并指定上述最终状态；PHONE_PASS依据用户确认，设备型号/系统/微信版本/性能未提供，不补造Agent真机实测。当前报告`docs/delivery/v2-e-task-22-phase3-human-acceptance-and-closure.md`，收口证据`artifacts/task22/phase3-close-20261007/`；人验与安全停机均已完成，无Phase3待清理项。
+
+最后构造来源A已通过既有签名维护端口TAKEDOWN；三构造来源均TAKEN_DOWN/noResurrection，Observation/history/audit保留。global:network.smokeEnabled=false、来源allowlist及新Marker ID能力清空；验收账号未来时钟能力撤销，原测试公开ID隔离仍保留。普通NETWORK admission/maintenance环境与数据库双门false，提供方maintenance timer Enable=0/CLOSE。真实生产query无构造条目、两构造detail不可用、原PLAYER详情正常；已签名smoke读取UNAUTHORIZED、已签名旧来源ADMIT返回NETWORK_SERVICE_DISABLED。PLAYER原版面/观察时间/首次上传时间/位置/贡献者/备注等10字段及全局features/bridge回读一致。登录一度失效，用户恢复后完成清理；失败尝试单列保留，不作为成功证据。
+
+工程验收沿用1353PASS/1既有SKIP、七包287/修复两包84、类型/Lint/Next/Playwright26、七函数186源码与190旧artifact保持的已通过证据；本轮只运行清理、真实公开读取、关闭/隐私回读和文档治理，无新部署/索引apply/bridge重放/采集/Git提交。Phase3来源图标与独立rights/Founder/30天/PLAYER fallback确认事实已收口。
+
+Phase4认知对齐已完成：既定本地候选/Review Card/Founder终审的目标、输入、产物、依赖与验收无实质冲突；构造smoke决定不得用于真实文章，独立rights、exact版本、原观察时间及不同URL分别Resolution继续成立。不改写远期计划。本次不启动Phase4—8/50/300/常规NETWORK continuous/正式微信发布；V2-E/TASK22整体仍IN_PROGRESS，后续待明确执行指令。不得重复Phase1/2或Phase3已消费部署/三条smoke/手机验收。
+
+## 2026-10-06 Phase3 生产断点（历史快照；当前人验/收口见上节）
+
+当前状态PRODUCTION_APPLIED / LIVE_SMOKE_PASS / PHONE_PENDING / AWAITING_REVIEW；V2-E/TASK22仍IN_PROGRESS，Phase1/2及既有地图修复HUMAN_APPROVED断点保留。用户本轮明确授权七项生产动作，1—6已完成，7尚缺实际手机证据。报告：`docs/delivery/v2-e-task-22-phase3-production-apply-and-smoke.md`；证据：`artifacts/task22/phase3-live-20261006/`。不重做已消费Phase1/2部署/bridge，不启动Phase4—8、50/300、实际文章采集或正式微信发布。
+
+从当前真实远端捕获新基线，更新五现有函数、新建admit-official-network-source与maintain-official-network-sources，apply两个非TTL索引和独立network policy/control/curator。普通NETWORK准入与维护环境/数据库双开关false，提供方maintenance timer Enable=0/CLOSE；PLAYER features和bridge全字段保持。签名运维、exact决定最终事务重读及受控读取隔离验证通过。受控时钟字段首次被白名单拒绝后，从刚部署远端再次生成仅两行的新diff修复query/detail；未复用旧授权或重复配置。最终七函数186/186源码及配置回读PASS，190旧artifact和此前Phase3本地ZIP保持。
+
+三条用户授权人工构造NETWORK在production准入/公开/期限验证PASS，不声称真实文章Founder审核或rights。B实际时钟跨30天边界后隐藏并退役；C限定deadline维护和未来读取确认真实PLAYER fallback、原publicLeadId及版面/备注/贡献者/首次上传时间/位置保持，随后撤下构造NETWORK；B/C审计保留、禁止复活。A仅指定真实ICHI-001验收账号可见，测试窗口2026-10-07 22:22:46.460+08截止，待实际手机后TAKEDOWN并关闭smoke；期限隐藏不等于timer自动退役。下一轮只补手机/A清理，不重复部署或smoke。
+
+当前源码1353PASS/1既有SKIP、类型/Lint/Next、Playwright26、实际七包287及修复两包84测试PASS。原生模拟器真实生产Marker/详情及私有字段扫描PASS；发现官方图标未挂WXML后补独立来源图标分支并生成新预览，不填造PLAYER头像数组。实际手机PHONE_PENDING，禁止用模拟器充当真机PASS；后续状态以本节和新报告为准。
+
+## 2026-10-06 TASK22 Phase3 本地断点（历史快照；当前生产状态见上节）
+
+用户明确授权从已人工验收Phase2继续执行Phase3。唯一活动区块V2-E / TASK22仍IN_PROGRESS；Phase1/2及地图修复COMPLETE / HUMAN_APPROVED，旧部署和桥接已消费，不重做。Phase3已LOCAL_IMPLEMENTED / LOCAL_GATES_PASS / AWAITING_REVIEW / CLOUD_NOT_APPLIED；Phase4—8、网络采集、真实网络入库、生产新部署及正式微信发布未执行。当前报告：`docs/delivery/v2-e-task-22-phase3-official-network-source.md`，证据：`artifacts/task22/phase3-network-20261006/`；该入口取代下方历史“Phase3未开始”的当前状态描述，不改写旧部署回执。
+
+认知对齐通过：NETWORK_SOURCE保留枚举，sourceMode=OFFICIAL_CURATED、XHS、网络上传、贡献人null；不创建PLAYER Account/Profile，不依赖PLAYER条例。Founder审核只确认准确性，独立item-level rights证明及版本、可信curator/takedown责任和共用公开安全门均须成立。来源使用canonical HTTPS www.xiaohongshu.com/explore/文章ID，无token/query/hash/别名；sourceId由canonical URL派生，不同URL仍分别Resolution。Founder决定、rights、非空备注exact safety来自内部可信决策端口，绑定sourceVersion/contentDigest/reviewVersion/rightsDecisionVersion，并在最终事务复读；未准入/歧义/拒绝留本地，不生成正式V2半成品。
+
+时间政策network-visibility-30d-v1：有可信实拍依据时observedAt取该时刻，否则SOURCE_PUBLISHED_AT_FALLBACK取sourcePublishedAt并保留依据；实拍≤文章发布时间≤fetchedAt≤reviewedAt≤当前时间，均使用规范UTC时间。抓取、审核和验证不刷新observedAt。publicUntil=observedAt+30×24小时，now>=publicUntil时query不返回、detail不可用，history/provenance/audit不删除；新Observation重走门，不改旧时间续命。已准入相同时间版本不能借Founder复审强行relink；纠错工作流留Phase5，不绕过共享Resolution。
+
+公开NETWORK使用public-map-v4的网络上传标签、OFFICIAL_NETWORK图标及期限字段；PLAYER旧v3客户端/后端兼容。实时期限作用于cursor/asOf/includeLowFreshness、离线缓存、准备详情及已经渲染的卡片。网络支撑独立到期，内部有界到期维护复用同一projector；仍有效PLAYER支撑保留原publicLeadId，客户端允许同ID更高servedVersion的PLAYER继续显示；全部支撑退出后新生命周期使用新ID。公开query/detail不join private/source。网络policy版本不匹配时fail closed。
+
+自动验证：当前源码范围Vitest 1347 PASS / 1既有SKIP、Phase3后端37+客户端12专项、旧production集成60；root/Web TypeScript、ESLint、Next build、Playwright26/26、独立compiled ZIP真实Node ESM准入/公开/到期链路通过。190个既有ZIP/资源manifest SHA保持；云端写入、部署、迁移、bridge replay、Git commit/push均0。workflow、上传分享防回退、相关contracts、格式与diff检查均PASS，机器收口回执final-validation.json。未把本地fixture称为真实小红书或生产网络数据，也未制造真机/人工验收证据。
+
+当前产品行为：详情使用“网络上传”和官方网络图标，无普通玩家昵称/头像/贡献人数；来源网址、rights evidence、curator、审核版本、实拍证据与private location只在后台。网络条目不要求玩家条例，也不新增上传/分享按钮。30天是公开可见上限，Freshness仍独立按observedAt计算；includeLowFreshness无法延长公开期限。联网刷新或新审核不能恢复旧已到期版本；有效PLAYER支撑可经统一投影继续。Founder审核不能替代版权/授权，也不能强制选择歧义实例。
+
+## 2026-10-06 TASK22 已完成阶段人工验收与下一步
+
+用户明确“22 人工验收完成”。当前已交付Phase1生产后端、Phase2玩家全局持续桥接及截至本日的地图/上传修复记为COMPLETE / HUMAN_APPROVED。下方历史AWAITING_REVIEW是当时快照，由本次明确人工确认取代；原始测试和部署回执不改写。用户未提供设备型号或新的性能数值，不补造人工实测。
+
+TASK22原计划含八Phase，Phase3—8未执行，故TASK22/V2-E整体仍IN_PROGRESS。下一步Phase3为NETWORK_SOURCE / OFFICIAL_CURATED模型、来源权利/审核版本、30天公开期限与统一投影的本地实现和测试；用户当前要求说明执行方法，尚未要求实施Phase3。不重复Phase1/2部署、桥接、迁移或timer开启，不提前采集50/300或执行正式发布。报告：`docs/delivery/v2-e-task-22-report-and-human-acceptance.md`；人工记录：`artifacts/task22/human-acceptance-20261006/acceptance.json`。
+
+## 2026-10-06 完整详情就绪优化
+
+MAP_DETAIL_READY_REUSE_V1已实现并完成真实公开数据原生验证，step为AWAITING_REVIEW，V2-E/TASK22仍是唯一活动区块。优化目标是完整资料首次显示，而不只是提前展示骨架。地图首次根查询可同时返回前两条已通过现行门禁的完整公开详情；来自本次已读公开资料，无额外数据库读取或授权。没有准备结果时，前台地图至多准备首2个可见ID，列表读取和选择共享同ID在途请求。
+
+最近两分钟（与既有公开列表同TTL）、属于当前查询且版本/政策匹配的公开详情可立即填卡；每次选择仍后台复核，明确失效、拒绝或复核失败即清除详情。准备区最多16项、只存内存；根查询刷新、查询切换、离开地图、后台或卸载时失效，迟到响应不得复活旧选中项。首页不另发详情RPC，但既有首页公开概要查询自身可带回首2条安全公开详情。手动下拉仍强制重读，列表2并发/8可视行、备注和真实首次上传时间、内部触摸边界及现行分享流程保持。
+
+此规则取代历史“picker丢弃完整详情/每次选择必须等待另一次RPC”的实现约束。生产query已做一次远端基线最小代码更新，旧客户端可忽略可选字段，旧服务器省略字段时仍能加载详情。真实两条查询646ms返回完整资料；查询完成后立即选择，完整状态7ms/6ms就绪；普通OS输入7ms/8ms且实际卡片渲染正确。这是开发工具模拟器样本，非真机P95或50条全部瞬时显示承诺。初始15秒准备期已因浏览时过早过期调整为2分钟；不恢复无限期详情缓存。报告：`docs/delivery/v2-e-task-22-detail-ready-reuse-and-first-click-latency.md`。
+
+## 2026-10-06 重叠列表原生点击传播
+
+MAP_PICKER_NATIVE_TAP_PROPAGATION_V1：重叠列表普通点击任一行/图片须打开同一publicLeadId详情，列表保持可切换；列表窗口和详情内部空白/滚动仍不关闭或拖动背景地图，原详情展开/收起、赏级横滚及下拉刷新保持。外层触摸隔离不得取消后代tap：按下/抬起/取消只观察生命周期，move继续阻止泄漏；外部scrim观察start并保留原tap/move关闭。已通过模拟器实际OS指针输入验证，直接Element.tap只能覆盖逻辑、不能代表完整触摸路径。已CLIENT_IMPLEMENTED + NATIVE_POINTER_VERIFIED / AWAITING_REVIEW，官方预览已搭载，真机人工验收仍待用户完成。不得以额外授权、全局串行或修改公开数据解决。证据见docs/delivery/v2-e-task-22-picker-native-tap-propagation-repair.md。
+
+## 2026-10-06 公开读取50并发可靠性
+
+Founder确认PUBLIC_MAP_READ_CONCURRENCY_50_V1：至少50条独立公开信息同时存在，重叠/可视列表与同账号并发读取须可正常返回；技术验收覆盖50条独立投影及50个详情请求突发，后端独立承受，不以客户端串行替代。原query30/min及detail60/min安全额度保持，超过额度返回明确RATE_LIMITED；记录存在数与每分钟读取额度分别计量。可视8行/最多2并发、原地图交互和触摸边界保持。50真实SDK同时发出读取及50独立隔离样例均已验证；真实生产目前2条，不宣称存在50条实际用户记录或已验证50物理函数实例并发。当前TASK22读取修复已应用，50人pilot/Phase3/正式发布仍未解锁。
+
+## 2026-10-06 重叠列表信息恢复与地图窗口触摸边界（串行措施已被顶部后端修复取代）
+
+Founder确认MAP_PICKER_METADATA_RECOVERY_AND_OVERLAY_TOUCH_BOUNDARY_V1：重叠列表仅有界读取安全公开详情；瞬时失败自动有界重试，支持列表内下拉刷新，刷新失败不得擦除已读取的同记录有效备注/首次上传时间。点击/拖动列表窗口或详情卡片内部不关闭、不拖动底层地图；仅窗口/卡片外点击或拖动、原关闭按钮触发关闭。原行选择、详情展开/收起、赏级横滚、备注滚动、筛选/定位/分享及准入不变。已在正式工作区及新版预览搭载，真实公开读取及原生触摸验证通过；状态AWAITING_REVIEW，证据见docs/delivery/v2-e-task-22-picker-metadata-recovery-and-overlay-touch-boundary.md。
+
+## 2026-10-05 Marker标签收紧与重叠列表两行信息
+
+Founder确认MAP_MARKER_COMPACT_TAGS_AND_PICKER_METADATA_V1：地图Marker及重叠列表的状态标签均随文字宽度收紧，仅保留必要内边距。重叠列表第一行在IP/主题后展示分析标签并保持同一基线，空间不足以省略号截断；第二行展示公开安全备注和可信首次上传时间。没有上传时间时标明未知，不把观察时间或桥接更新时间称为上传时间。列表立即显示现有公开概要，备注/时间仅在打开列表后有界读取已有公开详情、随可视行分批补齐；关闭、离开、记录失效或旧响应不得更新新列表。不改真实坐标、聚合、计数、分享或准入。
+
+## 2026-10-05 详情卡片赏级按列正序
+
+Founder确认MAP_DETAIL_COLUMN_FIRST_TIERS_V1：详情卡片保留两排和横向滑动，按每列先上后下阅读，第一列A/B、第二列C/D，依次向右。奇数个赏级的最后一列仅上排有卡片；不补空赏级。每个赏级的剩余数量、概率和完售状态继续与原赏级绑定，数据源保持自然正序。此修复属于当前V2-E/TASK22工作集，不改地图准入、分享或定位行为。
+
+## 2026-10-05 地图定位与刷新入口恢复
+
+MAP_RECOVERY_CONTROLS_ALWAYS_AVAILABLE_V1已CLIENT_IMPLEMENTED + NATIVE_VERIFIED / AWAITING_REVIEW，V2-E/TASK22唯一活动区块仍IN_PROGRESS。原WXML把筛空/搜索空/零选、首次加载、服务错误和native渲染错误耦合到浮动控件的卸载条件，当前已解耦；大致位置本身不是根因。现在只有实际详情壳、重叠列表或modal覆盖时暂时隐藏，关闭后恢复；陈旧cardPhase但sheet CLOSED/detail IDLE不再误隐藏。保留map内原生cover-view及原按钮几何/绑定、重复请求保护、模糊定位和分享合同。34新用例/295home/1252现行PASS、0FAIL/1已有pending，type/lint/Next/分享/工作流/差异及原生20状态/真实定位与刷新点击/详情关闭恢复PASS；SDK恢复、fixture清除、点圆0。正式开发工作区和预览已搭载，包1030938B；本轮无生产部署、配置或用户记录变更，不重复此前部署或桥接，正式微信发布/后续Phase仍锁定。报告docs/delivery/v2-e-task-22-map-controls-availability-repair.md；证据artifacts/task22/phase2-map-controls-20261005/。 普通顶部状态不应阻断恢复入口；旧结构测试中的错误隐藏规则已被现行行为取代。
+
+## 2026-10-04 生产桥接恢复（当前）
+
+MAP_FIRST_OPEN_AND_DETAIL_LATENCY_V1现行行为已应用并原生验证，状态AWAITING_REVIEW：首页账号就绪后一次公开列表预加载，不定位/不预挂原生map/不读取详情；hide/unload取消迟到启动，地图入口复用2分钟有效结果、过期刷新及身份恢复。首次请求未完成时显示顶部紧凑状态，地图可先浏览；点击marker立即显示同一公开列表的版面名称与抽数及骨架屏，完整头像/备注/各赏/时间只在最新公开详情返回后填充，不伪造、不无限缓存，关闭/切换仍隔离迟到响应。当前模糊定位和上传分享准入保持现行。详见docs/delivery/v2-e-task-22-map-first-open-and-detail-latency-repair.md。
+
+CURRENT_LOCATION_APPROXIMATE_ALLOWED_V1取代前轮个人定位≤100米硬门和精确权限要求：用户明确保留微信模糊定位。合法GCJ02回执可供本人地图浏览；模糊权限、误差>100米或未知精度均标明大致位置，返回有效accuracy时显示对应误差圆，未知精度不伪造半径。个人点与定位相机仍用同次回执，不吸附历史marker；本人点/圆不计公开数量。仅前台页面内存/有界刷新、离开后台清点并取消迟到响应，生产公开位置网格和V1→V2准入精度门不变。 当前已实现并通过1208回归及原生定位验证，状态AWAITING_REVIEW；报告docs/delivery/v2-e-task-22-approximate-location-support.md。
+
+直接上传备注审核补充（用户已确认）：直接上传与辅助抽赏一样，备注必须由真实微信security.msgSecCheck明确pass，才完成V1上传。拒绝/异常不创建完成V1记录，不显示已上传、不接入V2；本人已确认的版面及位置作为本地待上传保存。在“我上传的版面”显示“备注未通过”及“修改备注”，复用现有备注弹窗，修改后仅重试备注审核和同一上传，不重新识别照片/不追加位置核验/不再次分享授权。通过后V1已上传，再按本人当前条例自动V1→V2→地图。当前旧CUFZBP备注已真实补审通过，不重写或再次迁移。
+
+地图资料接点已生产应用并真实验证：CUFZBP公开昵称001、头像副本与本人原头像字节一致、备注“测试”、剩余43抽，uploadedAt=2026-10-03T09:55:25.907Z（北京时间17:55），observedAt=09:54:23.351Z（17:54）保持Freshness依据。本人实际调用安全核验得到NOTE_PASSED后，仅既有全局timer处理LEGACY_NOTE_AUDITED事件APPLIED/admitted=true；手动worker/drain=0，真实ACCEPT=0，V1原记录未改。详情只消费公开投影。证据artifacts/task22/phase2-map-display-audit-20261004/owner-notes-timer.json与native-real-metadata-qa.json；独立报告docs/delivery/v2-e-task-22-map-display-and-public-metadata-audit.md。
+
+地图备注当前修正（取代本轮早期worker补审假设）：真实V1 identity只存OpenID哈希，不可从timer还原；新增V1 bind-wechat-profile内部sync-map-metadata action，使用本人实际WXContext的临时OpenID，当前v3条例服务器校验后每批2条只读旧direct文本，实际msgSecCheck、exact-hash proof写入ADMINONLY mapSourceBridgeState并同事务source唤醒。production-map-service仅在GET/ACCEPT验证当前accepted后自动有界分页，无新UI/分享授权/ACCEPT重试，不储存raw OpenID、不改V1原数据；失败deferred，后续onShow再试。worker仅准备头像并消费现成安全proof；尚无proof时板面可准入、备注省略。新direct继续V1首次上传原安全检查，正常后续不依赖设备意图。生产早期rev2/3头像/昵称/时间通过但note未贯通的诊断回执保留，本轮最终以owner补审及最终timer验证为准。
+
+
+本轮用户已确认举报资格：正常active账号可举报；封禁/异常/受限制账号、显式后台资格禁用或无效/过期资格记录不计数。既有10个不同合格账号自动隐藏不变，不授予普通账号维护角色。生产report API必须返回active/hidden/policyVersion并保持幂等、取消、隐藏不可自动复活；实际验证只GET_STATE，不制造真实举报。
+
+
+当前补充工作集：Founder要求检查地图展示全接点，并指出CUFZBP的昵称/备注/头像/时间不匹配。正常PLAYER详情应投影所属本人已安全写入的当前V1资料；默认昵称/头像只用于确实缺资料或暂不可安全投影的字段，不能无条件写占位。直接上传“地点与备注”在当前条例公开安全备注范围内，只有服务端真实NOTE_PASSED且exact内容hash匹配才展示；旧记录缺审核凭据须实际补审，不能伪造PASS。卡片主时间显示可信服务器完成上传时间并明确标注，观察时间继续作为Freshness依据，不用本次桥接/重试更新时间替代。昵称/头像/备注/时间修复属于现有已批准公开范围，不加分享按钮，不修改terms接受。
+
+头像须通过独立public-map-avatars安全副本与不含私有标识/签名的允许域名公开URL；不把原profile-avatars fileID/临时签名链接公开。资料/备注变更触发持久刷新，删除/注销继续撤除，头像副本须纳入清理。重叠点数量、列表条目与详情必须来自同一公开结果集合；不可拆分点用现有列表，不伪造地理位置。举报资格已采用Founder确认的正常active账号规则；封禁/异常/受限制或无效显式资格不计数，10个不同合格用户自动隐藏。
+
+用户已实际同意新版条例，并明确授权恢复此前暂停的生产桥接。授权恢复包括当前真实同意范围内完成上传的历史小批量、实际V1→V2→PublicMapLead→Marker验证与随后continuous。先形成当前具体只读批次并在服务器重新核验，再执行；不替用户接受、不扩展至未接受账号或private_saved、不改变v3范围/位置规则，也不解锁NETWORK/Phase3或正式微信发布。此恢复指令替代此前暂停及额外等待本批重复确认的操作门。
+
+生产已达到PRODUCTION_APPLIED + LIVE_BRIDGE_VERIFIED + GLOBAL_CONTINUOUS_ENABLED。桥接是一套全局后端服务；用户只需本人接受当前条例，后台自动扫描本人此前已完成上传的V1，并持续接收以后的上传、更新与删除，不需为每个账号配置或手工迁移。当前真实接受账号1个，CUFZBP已转化为V2并在实际小程序形成Marker及43抽详情；此前3条direct分别属于另外3个账号，未有各自v3同意，本账号接受不能覆盖他人。未完成上传的22条继续排除。仅上传Marker遵守既有UPLOAD_ONLY显示筛选，默认关闭不等于缺授权。
+
+## 2026-10-03 条例覆盖已上传V1（范围仍现行；暂停状态已被顶部恢复取代）
+
+Founder本轮明确：服务器完成态“已上传”表示记录已经核验并提交到V1，原上传动作即分享确认。当前条例同意覆盖本人此前及以后已上传V1的记录；不把旧版缺失逐条uploadSharingAuthorization字段当额外门禁，不要求原手机补送才能转换。未完成上传、private_saved、失败、删除及注销不因此变成已上传。V1→V2的其他准入条件及V2原子自动投影保持。条例须明确覆盖历史已上传记录及有权分享确认；以新v3/新scope由本人实际同意取得，不把旧v2接受改写成新同意。具体历史批次与continuous启停原门仍保留。
+
+## 2026-10-03 V2准入即自动地图（历史；v3范围及状态以顶部为准）
+
+用户本轮明确确认V2_ADMISSION_AUTO_MAP_V1：审核/授权全部在本地→V1及V1→V2准入完成；合格V2正式来源与地图公开投影自动生成，不再设逐记录审批、发布或授权。关联歧义、事实/定位/安全不合格、缺真实条例或意图的记录留在V1及私有bridge工作队列，不先写V2正式来源再等待审核。删除、注销、过期、已失效来源的地图撤除仍自动传播；这些生命周期处理不是二次授权。Marker只消费V2安全投影，V1正常上传与地图启停无关。
+
+## 2026-10-03 V1 上传与 V2 地图转化（当前修订）
+
+Founder最终澄清：两条正常上传路径的原确认动作即表达分享意愿。同意或不同意地图贡献条例，都可以完成核验并上传至V1；V1数据库不直接形成地图Marker。当前账号同意条例后，已有明确分享意愿且符合公开条件的V1来源，才经bridge转化为V2的boardObservation／BoardInstance／contribution／PublicMapLead，由V2生成Marker。条例是V1→V2的门，不是V1上传保存的门。
+
+本人记录“已上传”表示本次V1上传成功，不依赖V2授权表、转换回执、地图服务或条例状态，不另显示“已公开到地图”。直接上传只完成版面确认及备注安全检查，不启动赏票照片或双位置比较核验；服务端完成直接上传后clue_submitted就是既有V1终态，客户端应显示“已上传”，不能永久显示待核对。失败的备注审核应拒绝本次最终提交，不能伪造通过；旧记录显示上传成功不代表补造历史安全审核。
+
+分享意愿须随原上传确认在V1原子持久化，独立于V2服务／条例状态；设备重试只补交已明确确认的该条意图，不从列表、账号同意或旧核验制造新的历史授权。成功弹窗只保留回首页，说明V1已上传、同意条例后合格记录自动转化进地图；辅助抽赏保持既有分享弹窗并说明分享核验通过后自动上图。禁止旧逐记录分享按钮。
+
+位置公开仍遵守约100米网格、accuracy≤100米及安全／有效性／删除门。V1识别和备注检查不等于地图位置合格。当前修复不自动批准历史小批量、continuous或正式微信发布；生产进展及验证以progress最新记录为准。下方早期“待同步”或依赖V2 SHARE回执才显示已上传的表述已被本条替代。
+
+## 2026-10-03 分享逻辑接点审计（历史；生产状态与实现以本页顶部为准）
+
+本次TASK22已授权的本地分享工作集已补齐（AWAITING_REVIEW）：云端重试／照片重传／备注重审的完成接点统一重试既有上传授权，等待队列公平轮转，并发触发排入下一批；不得从记录列表或账号同意创建新分享意图。已有SHARE必须证明适用当前terms/scope及rights，缺少证明不按新授权确认。用户关闭应用前未落库的本地意图不是服务端后台授权；生产升级必须补服务端上传时接收意图的持久接点，不能宣称核验后自动上图已完整验证。
+
+## 2026-10-03 Founder 分享上传即授权（当前局部修订）
+
+Founder明确要求合并地图分享授权与既有上传确认。抽赏路径为决定收手→分享本次记录→愿意并拍摄赏票→确认上传→核验通过→自动进入地图；同意当前地图贡献条例及位置/备注安全/当前有效性等公开门仍须成立。仅上传路径也由原上传确认表达本条分享授权。Founder后续指定直接上传成功弹窗只保留“退出回首页”按钮，图标、标题、说明与按钮居中并统一间距；取得服务端分享接收回执后说明“本条记录已提交地图，核验通过后会自动展示”，未同步时如实显示待同步，不能把处理中当已公开。分享弹窗补充“同意地图贡献条例后，分享并上传的记录核验通过就会自动进入地图。”，不增加核验后的逐条发布操作；移除本人记录、成功弹窗及独立modal中的“地图分享选择”“我确认有权分享，并分享至地图”入口。继续抽赏/暂不分享并退出不记录地图授权。
+
+条例补充说明：账号同意不是历史批量公开，单次分享授权由本次分享上传动作取得；上传确认同时确认有权公开，核验与公开门通过后自动上图，不再另点地图发布。先上传后同意时，只重试已明确分享上传的本次授权，不遍历私人历史生成SHARE。授权未写入/核验失败/服务关闭时不得冒充已上图。
+
+本轮仅局部本地实现与验证，production控制/历史迁移/continuous仍暂停。条例正文变更采用独立v2候选及对应scope，旧已部署v1政策与冻结证据不覆盖；部署政策同步和真实微信验证仍须从TASK22断点继续。
+
+## 2026-10-03 TASK22 Phase2 production 授权与公开定位确认
+
+Founder授权Phase2 production资源、7函数部署、关闭timer/平台验证、正式贡献条款与client绑定、历史只读preview及验证后的continuous bridge。真实历史小批量须先提交具体preview/批次再批准，不替玩家生成consent/SHARE/rights。正式公开定位使用APPROXIMATE的0.001°网格（约100米），定位accuracyMeters≤100；原始坐标、accuracy与原地址保持私有。未满足来源、权利或授权条件时skip。Phase3/NETWORK/50/300/正式微信发布仍锁定。
+
+## 2026-10-03 TASK22 Phase2｜统一PLAYER来源与持续桥接（当前活动工作集）
+
+Founder明确指令“执行TASK22 Phase2”。唯一活动区块仍V2-E；TASK22 = IN_PROGRESS / PHASE2_LOCAL_IMPLEMENTED / LOCAL_GATES_PASS / AWAITING_REVIEW / CLOUD_NOT_APPLIED / PRODUCTION_DISABLED。P2-A—P2-F均为AWAITING_REVIEW；已完成当前授权的本地实现、独立部署候选、回归与只读审计，真实资源apply/部署/历史迁移/平台验收/开启尚未执行，不能标Phase2/TASK22 COMPLETE。Phase3及NETWORK/采集/50/300/release继续LOCKED。
+
+认知对齐：Phase1-D4的InvokeResult、嵌套EipConfig、512disk与依赖安装差异仅影响部署适配，不改变产品/隐私/identity合同；旧key不轮换，Founder既有风险接受/轮换豁免仍有效。V1实际四个远端函数保留不同历史shared runtime；本轮仅基于各自原始远端ZIP加入目标hook和producer，无关文件逐SHA不变，不能把当前本地shared runtime全量覆盖线上。
+
+实施：P2-A服务端当前PLAYER归一、exact APPROVED draw/finalized direct、SHARE+current terms/scope+rights+APPROXIMATE policy门；P2-B发布/note重审/删除同V1事务dirty outbox、hide-first/revision fence；P2-C SOURCE→RESOLVE→PROJECT复用冻结domain、95 doc budget/8次有界retry/dead-letter/签名replay；P2-D只读historical preview及逐条授权重检/pending-applied幂等；P2-E全量隐私/V1/平台包回归；P2-F4集合/4非TTL索引/1关闭control、7独立ZIP、4真实remote rollback包与最小外部动作清单。
+
+来源规则：DRAW只读P1发布指针对应exact prize-ticket APPROVED版本，核验owner/record/board/version、照片/位置、唯一draw events减法和事实身份；UPLOAD不用伪造draw。R2无制造商初始票位，initialRemainingTickets=null，首次P1余票只用于私有减法。observedAt保留原证据，不由verifiedAt/ingest/retry续命；非事实图片清理/诊断字段不制造新sourceVersion。历史没有每记录SHARE/适用地图条例/rights就SKIP；私有定位consent不是地图授权。默认公共数值位置policy=null，不默认EXACT，不复制shadow consent或假Profile。
+
+生命周期：同lineage兼容location/identity/单调余票延续已建立关联，hard conflict需人工纠错；多人支持复用原projector，旧公开ID不复活。账号删除在原V1事务设置Account tombstone及全局read-stop，然后有界扫支持；worker不自动解除屏障，恢复须另批。timer事件字段不作为授权，候选要求平台env和可信invocation environment两者TRIGGER_SRC=timer、无client principal；live形态未验证前拒绝并保持CLOSE。drain最多20项且45秒停止调度更多调用，未完成事件保留。
+
+验证：新增36/36桥接测试；full Vitest1176PASS+1既有SKIP；Lint/typecheck/contracts/workflow PASS；Next build PASS；Playwright26/26 PASS。7/7artifact逐文件SHA/V1无关文件保持；实际packaged runtime合成5/5；Node20.19.5+wx-server-sdk4.0.2入口ABI7/7，新3函数disabled smoke PASS。SDK本地ABI/fixture不代替live事务并发、timer、客户端与真实历史授权验收。
+
+本轮云端写0/函数invoke0/真实迁移0/新secret生成绑定0/Git提交推送0。只读确认4新集合ABSENT、3新函数ABSENT、Phase1九函数ENABLED=false；4 V1原始ZIP已下载并实际secret扫描0，原secret值/下载URL不记录。Phase1与其他既有基线保持。独立报告：docs/delivery/v2-e-task-22-phase2-local-implementation-and-external-action-review.md；证据：artifacts/task22/phase2。下一最小审批为minimum-external-action-batch.json / PHASE2-A-RESOURCE-ONLY：仅4ADMINONLY集合、4非TTL索引、1全关闭control行，共13声明动作、业务/public新增0；其它外部动作独立审批。
+
+最终保护与泄漏检查：本轮138文件/110ZIP内文件实际secret匹配0，1199受保护历史输入drift0；详情artifacts/task22/phase2/final-protection-and-secret-scan.json。历史identity风险接受记录不改，不宣称此前暴露事件已修复。
+
+以下Phase2 LOCKED或Phase1 current文字为本轮指令前历史，以本节为当前入口。
+
+## 2026-10-02 当前决策｜Production Convergence + Hot-start
+
+本节及修订后的 canonical TASK21/22 是当前路线。Founder 明确授权执行总命令，决定源为 `docs/decisions/v2-production-hot-start-direction.md`；认知对齐见 `docs/delivery/v2-e-task-21-22-knowledge-alignment.md`。旧 Closed Pilot/旧 RC 前置门、一次性约20条 NETWORK seeding 和 TASK22 锁定文字均 `SUPERSEDED BY FOUNDER DECISION 2026-10-02`；下方 dated 阶段记录保留当时事实，不得恢复旧执行路线。
+
+- `TASK-V2-21 = COMPLETE / HUMAN_APPROVED / PRE_PILOT_PASS / CLOSED_PILOT_WAIVED_BY_FOUNDER / EVIDENCE_GAPS_ACCEPTED`。
+- `PRE_PILOT_CLOSURE = PASS / HUMAN_APPROVED / FROZEN`；技术证据限2026-10-01最终已授权工作集，测试入口已关闭。
+- `CLOSED_PILOT = WAIVED_BY_FOUNDER / NOT_RUN`；`CLOSED_PILOT_EVIDENCE = GAP_ACCEPTED_BY_FOUNDER`，没有真实多用户 Pilot/RC PASS。
+- `TASK-V2-22 = READY / NOT_STARTED / PRODUCTION_CONVERGENCE_AND_HOT_START_DIRECTION_APPROVED`。生产方向已批准，本轮只重构文档，TASK22实现等待Founder下一条命令；每次cloud/deploy/data/migration/Git/WeChat/tag外部动作仍须独立授权。
+- One ICHI Backend 保持 Private/Source → V2 Domain/Projection → PublicMapLead；PLAYER（DRAW_RECORD/UPLOAD_RECORD）与 NETWORK_SOURCE/OFFICIAL_CURATED共用验证/解析/机会/时效/公开链路，公开查询不得request-time private join。
+- NETWORK UI label=“网络上传”、官方/网络图标、无PLAYER Account/Profile/contributor；不走PLAYER consent，仍须Founder唯一准确性/入库终审、item-level rights/provenance、curator与public eligibility；拒绝/待审/待修候选local-only。
+- 规划Codex Skill/workflow collect/review/publish持续补充，默认无后台CMS。先上海50个Founder-approved版面production seeding rehearsal，PASS后最终冻结合同，再全国300个Founder-approved成功ingestion并通过PublicMapLead链路的合格版面。
+- NETWORK 30-day public expiry为待实现/验证政策；退出地图而非删历史，不修改旧观察时间续命。sourcePublishedAt/observedAt/basis/anchor关系与版本化schema、生产资源exact diff均待TASK22冻结；不把这些写成已实现。
+- TASK01—20技术语义及历史报告原文保留；既有设备/账号/慢网/成本/真实行为缺口不补PASS。可由50/300生产seeding、真机、read-back/smoke/rollback提供的EDG证据转TASK22；仅Closed Pilot证据项WAIVED_BY_FOUNDER/EVIDENCE_GAP_ACCEPTED。
+- 本轮cloud/data/code deployment=0；实现/采集/迁移/Skill创建运行/Git提交推送/微信发布/tag=0。历史停机证据仍是read-stop=true、HA pause=true、epoch41、PUBLIC0；本轮未做live回读。
+
+### 当前产品验收与来源政策
+
+地图继续表达带时间戳的观察事实、非实时库存，source不改变可信度或Opportunity权重。既有2026-09-30 versioned Opportunity/public-map-v3五状态、null≠0、低机会可上图与Marker/Filters/Detail同源规则不变。PLAYER保持SHARE + 当前一次性版本化地图贡献条例 + 逐记录公开门；历史记录没有适用授权不公开。
+
+NETWORK候选后续限定小红书/上海/文章最近7天/可识别版面照片/可确定抽赏地点/可结构化，持续找到Founder最终APPROVE 50个合格版面。Founder Review Card并排展示原文与structured data，包含文章和版面截图、URL、发布时间/采集时间、地点原文/解析、IP/系列、各赏remaining/总余票、大赏建议、备注、Opportunity/Freshness预览及不确定项；只有Founder APPROVE或FIX_AND_APPROVE的exact reviewVersion可入官方ingestion，Codex不自行审批或确认大赏。
+
+同URL本地去重，不同URL为独立Observation再经保守BoardInstance Resolution，不靠同店/近坐标/同IP/相似图合并，human evidence不能覆盖hard conflict。NETWORK达到30天public ceiling时query/detail/deep-link均退出公开，不删除合法history/provenance；新有效Observation重走current-state门。该政策只作用于NETWORK support，不误隐藏有效PLAYER support。时间依据不可伪造，采集时间不可替代观察时间。
+
+50条整体验收覆盖PLAYER两路径及分享/同意/删除/更新、防复活；NETWORK全字段/标签/无伪玩家/位置/备注安全/机会/时效/筛选；多板/歧义/null≠0/多贡献/latest-valid；30天边界、历史保留与新Observation；V1/V2/security/privacy/rollback/真机。PASS后冻结NETWORK schema、ingestion、30d、UI、review和bridge合同，再按相同标准扩展全国300条并验收性能、成本、consistency/read-back与真机。真实多用户理解/discovery-value/行动与Pilot成本缺口被接受，不能假称已验证；生产技术门仍须实证。
+
+> 以下为既有阶段记录；状态以本文件上方2026-10-02当前决策与当前正式章节为准，历史结论不回填。
+
+2026-10-01 最终人工收口：Founder最后真实微信query/detail检查反馈“符合预期”，随后明确“测试全部关闭，V2-21 全部结束人工验收通过”。TASK-V2-21 = COMPLETE / HUMAN_APPROVED / PRE_PILOT_CLOSURE_PASS / TESTS_CLOSED，完成范围为本轮已授权Pre-Pilot与举报修复真机工作集；UPLOAD_ONLY_AND_REPORTING_PRE_PILOT_CLOSURE=PASS。全部9函数Active且flag=false/caller allowlist空、完整关闭配置回读一致，read-stop=true/HA pause=true/read-epoch41/PUBLIC0，12authority accountActive=false且过期。唯一report输入ZIP SHA 9a9a96a14e3ed314bae6147094fa26539f055239bf6c185039a79253c0c5c6cd未变，16/16 source/config部署回读PASS、远端归档ea132及其它8函数代码SHA最终匹配。真实Founder A举报→取消→再举报→再取消、紧凑按钮灰色已举报/再次点击和状态条取消联动、7请求幂等均PASS（新增AUDIT3/duplicate1，同actionId replay无额外审计，最终CANCELLED/count0）。本轮10合成合格主体9 PUBLIC→10 HIDDEN/唯一AUTO_HIDE，取消count9仍隐藏；迟到sequence2保持原10秒配置，首次超时后一次重试APPLIED/MODERATION_HIDDEN；最后真实query items=[]/detail LEAD_UNAVAILABLE，全部不复活。最终ledger71（22 STATE/3 TARGET/46 AUDIT）保留；20公开响应PRIVATE_LEAKAGE0，49项云端V1与149本地保护文件diff0，P0=0/P1=0。完整回归1096 PASS/1既有SKIP、Lint/双TS/合同/Next/9包validator PASS，最终Web26/26 PASS。Device B/低端及未补齐设备元信息仍EVIDENCE_GAP；CLOSED_PILOT=NOT_RUN/PILOT_PROTOCOL_APPROVAL_REQUIRED、RC=NOT_APPROVED，TASK22=LOCKED/NOT_STARTED，不开启新窗口/发布/commit/push。正式报告docs/delivery/v2-e-task-21-pre-pilot-final-closure.md与独立修复报告v2-e-task-21-report-tcb-context-repair-deploy-closure.md；以下阶段记录均为历史，不能覆盖本段最终状态。
+
+2026-10-01 Founder回复“OK 5 项测试通过”：举报按钮紧凑靠右、灰色已举报与再次点击/状态条取消联动真机PASS。云记录核对可信WXContext Founder A、CANCELLED/active=false/distinct count0、10条交替REPORT/CANCEL审计及18条公开成功响应无私有字段。当前暂停正式地图窗口后继续既有部署授权的真实幂等：隔离6文件一次性miniapp仅调用唯一report函数，7请求包含同actionId重放和新actionId重复，预期新audit3/duplicate1/count0；不进入正式应用、不改后端/资源定义。仅为Founder A开report最小窗口，rehearsal=false，其余8函数关闭/caller空、HA pause=true，E唯一PUBLIC1保留后续threshold；真实幂等及本轮9→10/最终safe-stop/full V1尚待，不记总门PASS。TASK21 IN_PROGRESS / PRE_PILOT_CLOSURE，TASK22 LOCKED；下方窗口和待UI验收文字为历史。
+
+2026-10-01 举报按钮局部修复LOCAL_VERIFIED/AWAITING_FOUNDER_DEVICE_REVIEW：两处详情模板补传mapReportActive/mapReportBusy；举报按钮靠右按图标/文字+左右8px自适应、已举报灰暗含图标并显示“已举报”、按钮再次点击与状态条取消均共用既有cancel。48定向、1069全量+1skip、Lint/双TS/contracts/workflow/Next PASS；Web25/26，保留已接受的V1草稿左滑删除flake，149个V1保护文件hash0diff；正式preview1012639bytes。冻结report ZIP9a9与runtime源码未变，已部署16/16 source/config/SHA PASS。仅为Founder A重开query/detail/report最小窗口、rehearsal=false、其它6函数flag=false/caller空、HA pause=true/read-epoch34；仅正式合成投影测试E 举报按钮PUBLIC1，旧D及旧退休/threshold-hidden均未恢复。等待A新版按钮四命令复测，再完成真实幂等与本轮threshold/最终safe-stop/full V1；不提前记总门PASS/P1清零，不启动TASK22。独立报告docs/delivery/v2-e-task-21-report-button-state-and-width.md及report-tcb-context-repair-deploy-closure.md。以下阶段记录为历史，当前测试窗口以本段为准。
+
+2026-10-01 当前活动区块V2-E、唯一工作集TASK21。Founder已批准并部署唯一report函数tcbContext冻结包SHA 9a9a96a14e3ed314bae6147094fa26539f055239bf6c185039a79253c0c5c6cd；远端16/16 source/config/SHA read-back通过，其它函数代码不变。真实微信已观测REPORT→CANCEL_REPORT→REPORT→CANCEL_REPORT均成功、trusted WXContext为Founder A、最终CANCELLED/count0；Founder明确确认D第一组通过，但反馈按钮状态和宽度。该前端补充由Founder另行明确授权：详情右侧举报按钮按图标+文字+少量内边距自适应宽度，不拉长；已举报时灰暗并显示“已举报”，再次点击或状态条取消均恢复亮色“举报”，在途禁用。当前模板漏传mapReportActive/mapReportBusy，控制器已有正确共享状态和命令；只修两处模板传参与局部WXSS，不扩大云函数冻结diff。已暂停真机窗口：所有相关flag=false/caller空，read-stop=true/HA pause=true/epoch33，Founder authority失效，D临时HIDDEN，按正确lifecycleState=PUBLIC核对PUBLIC0。真实幂等、新版按钮复测及本轮threshold/auto-hide/no-resurrection尚待完成；总closure仍IN_PROGRESS，不记P1清零/整体PASS，TASK22 LOCKED。历史未部署文字以下保留为当时记录，以本段为最新状态。
+
+2026-10-01 TASK21唯一tcbContext修复已获本地构建授权并冻结验证：业务校验前同时剥离userInfo/tcbContext，身份仅可信getWXContext，其它未知字段仍拒绝；举报产品规则、资格/count/audit/幂等/threshold=10与不可自动复活语义不变。独立ZIP SHA 9a9a96a14e3ed314bae6147094fa26539f055239bf6c185039a79253c0c5c6cd，定向50/实际包34/全量1068+1skip等PASS。仅本函数runtime变更，本轮CloudBase部署和管理写入0，当前LOCAL_VERIFIED_FROZEN_NOT_DEPLOYED_STOPPED；未把本地修复当新真机PASS，P1仍1、closure NOT_PASS、TASK22锁定。详见docs/delivery/v2-e-task-21-report-tcb-context-repair-build-validation.md。
+
+2026-10-01 TASK21单次结构诊断已完成：Founder明确批准b10054298bfc04d81318935750084675b3876dc82ec689b325911f3818908962，仅更新report；远端16/16源码与配置PASS、其它8函数SHA不变、资源新增0。独立检测预览只发1次GET_STATE，真实请求f52f2d7b-5ef9-4983-b8e5-1005ca5351c0为BUSINESS_FIELDS/额外键tcbContext，三个业务格式条件均true，Founder反馈读取invalid_request，当前共同入口拒绝根因已确认。取得日志后立即关闭；最终9函数全部flag=false/caller空、read-stop=true/HA pause=true/read-epoch31/PUBLIC0，12authority失效，24ledger结构/active不变且B=0，SAFE_STOP=PASS。再次49项云V1与149本地文件0diff、PRIVATE_LEAKAGE0；P1仍1，真实举报/取消链未通过。拟议修复仅将tcbContext与userInfo一并剥离，不信任字段内容；超出诊断授权，已STOP提交新的拟议exact diff，未改源码/构建/部署修复。已有仅上传/完整气泡/刷新/C隐藏消费和无影响threshold PASS保留。独立报告docs/delivery/v2-e-task-21-report-structure-diagnostic-result.md；建议docs/delivery/v2-e-task-21-report-tcb-context-repair-exact-diff.md。总门NOT_PASS / REPORT_ROOT_CAUSE_CONFIRMED_REPAIR_REQUIRED，TASK21 IN_PROGRESS / PRE_PILOT_CLOSURE，TASK22 LOCKED，不开启Pilot/commit/push。
+
+以下记录保留先前阶段事实；本轮诊断状态以上段为准。
+
+2026-10-01 Founder真机C四动作全部通过：刷新/拖动缩放后C不再出现，旧详情关闭后不可从原区域重开；A/B仍可见。新局部要求：按刷新按钮进入REFRESHING时，筛选器下方状态条显示准确文本“正在刷新，保留已有线索”，右侧显示主题玫红加载环；刷新状态优先于旧举报提示/空筛选提示，成功或失败结束后按现有状态呈现。举报真实请求INVALID_REQUEST仍为P1：忽略userInfo的独立修复已获批准并部署、source/config/SHA核对PASS，但Founder B复测仍失败；完整真机拒绝原因未确认，未进一步扩修。身份仍可信getWXContext，原冻结SHA不覆盖，最终safe-stop/read-epoch31/PUBLIC0/V1_DIFF0，总门NOT_PASS。
+
+2026-09-30 Founder真机A反馈修订（最新）：UPLOAD_ONLY为独立显示门。recordType=UPLOAD_RECORD的Marker只在UPLOAD_ONLY选中时显示，未选中时即使其它Opportunity reason命中也隐藏；选中后该类型可显示，非UPLOAD_RECORD仍按其它机会项OR筛选，搜索仍叠加。默认UPLOAD_ONLY不选，普通chip独立toggle，显示全部全选六项并清词。详情吉祥物气泡列出该记录全部标签，用顿号分隔，顺序为仅上传、LAST机会、大赏占比高、大赏存量足、刚刚拆套、低机会信息，仅显示实际存在项；所有Marker共用原吉祥物旁的玫红色气泡，按整行文本自然宽度伸长，不截断或省略。机会理由和时效数据保留。旧六项纯OR与详情仅primaryStatus表述被本条取代。真机A发现这两处，修复/复测前UPLOAD_ONLY_DEVICE和FILTER不记PASS；举报窗口暂时关闭，threshold停9，TASK22仍锁定。
+
+2026-09-30 Founder筛选交互修正（最新）：六个普通筛选项全部独立toggle，点击选中项只取消自身，点击未选中项只选中自身，任何其它项保持原状态；即使此前六项全选，也不得切换为单选。仅“显示全部”可全选六项并清空搜索。初始UPLOAD_ONLY不选、筛选OR、胶囊与Marker颜色规则保持。
+
+2026-09-30 Founder仅上传筛选外观/默认值修订：Marker的“仅上传”主标签继续灰色；顶部筛选项改为“📤 仅上传”，与其它筛选项共用白底黑字胶囊及选中描边，不继承Marker灰色。初始默认只选中五个Opportunity筛选项，UPLOAD_ONLY不选中；“显示全部”仍是用户显式全选六项并清空搜索，六项组合保持OR。
+
+2026-09-30 Founder条例正文视觉补充：滚动区取消独立白底、描边与圆角底面，直接使用弹窗底色；保留滚动尺寸、标题间距、正文排版、十五条全文和三秒同意／账号绑定。覆盖上一轮有边框正文框的呈现要求，仅本局部样式修订。
+
+2026-09-30 Founder条例正式修订（TASK21）：以Founder本轮提供的十五条《地图贡献条例》为完整正文，涵盖账号规则确认与逐条SHARE选择分离、公开门与安全字段、仅上传主标签/六项筛选、位置/时效/多人贡献/删除/UGC/举报/识别误差/责任及版本提示。弹窗主标题居中、正文前明确间距，长正文使用独立滚动框。每次打开未同意弹窗启动3秒倒计时，按钮显示“同意并开启（3秒）”并在倒计时结束前禁用；提交方法同样检查真实deadline，关闭/离开清理，重开重新计时。成功通过既有账号绑定服务持久化；accepted账号不再出现入口或弹窗。当前正文呈现修订不另开版本、不重置已同意账号、不把本地UI当持久记录；未知/写入失败不得冒充同意。当前临时核验失败示例未获删除批准，继续保留，TASK22不解锁。
+
+## 2026-09-30 TASK21 仅上传与举报补充（当前要求）
+
+仅上传是可信 lineage recordType=UPLOAD_RECORD 的执行维度，Marker 灰色主标签优先于全部 Opportunity reason；详情保留其它机会与时效，六项筛选多选 OR。取消/显示全部恢复所有 Marker。详情互动只保留举报，移除点赞占位。一次点击举报、再次点击或状态条取消均同一 cancel command；服务端 ACTIVE→CANCELLED，trusted account+target+policy 去重，10 个不同合格可信 active reporters 自动隐藏并保留审计。取消不恢复 threshold-hidden 信息。仅 consent/SHARE/current/Verification/location/note/UGC gates 全通过的上传能入 pilot；不公开 V1 private upload。新增资源先 exact diff 待 external approval，云/真机证据未完成不记补充 closure PASS，pilot 暂停，TASK22锁定。
+
+
+2026-09-30 Founder确认地图44px统一横条与240px紧凑首次loading的局部视觉修订完成。当前新增审查范围为本人上传页的条例未同意入口/条例详情及核验失败卡片；本轮只检查展示，不改变一次性不可撤回同意或V1-F各失败状态的恢复动作。现有条例说明卡/灰按钮与地图横条样式不同，交Founder进一步审查。Marker顶部只呈现IP（现有公开label），机会状态由下方彩色标签独立表达；演示数据不得把“状态预览”当IP输入。上传预览示例保留到Founder确认后恢复，非云端新记录。
+
+2026-09-30 首次loading弹窗精简（最新）：Founder要求07-initial-loading移除标题下“首次载入”说明，内容只保留现有吉祥物、标题“正在寻找公开线索”、加载环。标题下直接接加载环，公共gap由12px缩为10px；卡片max-width由300px缩为240px、上下padding由24px缩为20px，高度随剩余内容自适应。16px加载环及原动画保留，其余横条/搜索重置/Marker/详情/错误语义不改。新版仍待视觉确认，不因此批准Pilot或TASK22。
+
+
+## 2026-09-30 Founder 状态条统一修订（当前视觉规则）
+
+除“正在寻找公开线索”的首次loading中心卡保留外，正式地图的全部异常/空/恢复/提示状态统一使用同一顶部横条：left/right16px、top108px、height44px、radius16px、padding6px 12px，继承既有字体，正文11px/700/16px line-height、简短单行文案。服务失败/native render失败/搜索/筛选/零选/empty/offline/location/stale/refreshing/cursor recovery/pagination/更多或缩小视野提示均不得再用独立弹窗或底部差异化框。所有操作是条内最右侧固定72×28px、radius8px的品牌粉底白字按钮；无操作不新增按钮。搜索无匹配仅一个“显示全部”；点击同时清空搜索关键词并恢复全部状态。过长文案精简，不以截断/缩小字号代替完整表达。单个状态槽按native error→discovery→offline→service/error→分页失败→refresh/recovery→stale→定位提示→more/truncated→empty择一，避免提示互盖；首次loading只显示中心卡。公开机会、Freshness、权限恢复、重试/分页/cursor/删除安全语义不变，Marker/Picker/详情结构不改。
+
+这次Founder要求调整上一轮待审截图，不等于视觉批准。完成后更新微信DevTools新图集，保留旧图证据；不自动通过视觉门，不部署云端或开启Pilot。
+
+
+## 2026-09-30 TASK21 最终 Opportunity 规则（Founder 已决定）
+
+当前工作集为 TASK21 Pre-Pilot，规则门已通过，继续本地实现；TASK22 仍锁定。五状态独立可并存，不统一评分。R=所有赏级当前 remaining 合计；G=V1 上传中用户选择的 isGrandPrize 集合当前 remaining 合计。任何必要项 null 保留 unknown；空大赏集合不假定为已确认零。首版 LAST_CHANCE：R≤12；GRAND_PRIZE_REMAINS：G≥3；GRAND_PRIZE_RATIO：R>0 且 G/R≥8%；SPLIT_SET（刚刚拆套）：R≥60，覆盖此前 initialTotal/85% 延后方案。LOW_OPPORTUNITY：已知 R>12 且（G=0 或有效 G/R≤3%），以及必要事实完整但没有命中任何正向状态时的默认状态。最新 Founder 的“未命中标签就等于低机会信息”覆盖此前禁止完整事实无标签回落的限制；缺失数据不得产生低机会。主状态顺序 LAST > 密度 > 存量 > 拆套 > 低。所有阈值进入版本化可调 policy。年龄不改变 Opportunity，Freshness 独立。
+
+低机会可上图并可筛选；各 source/current、verification、授权、rights、位置、moderation、删除和安全门仍独立成立。移除公开 HIGH/MEDIUM/LOW/INSUFFICIENT，更新为 public-map-v3 的 primaryStatus（unknown 为 null）、reasonCodes、policyVersion、evaluatedAt；不从 leadId 或 synthetic alias 推状态。信息不足不反推低机会，已有独立公开门保持。旧 serving 合同不能静默转换成新结果。
+
+
+## 2026-09-30 TASK21 Opportunity 首版规则补充（历史两项待决，已由最终规则覆盖）
+
+Founder 后续给定：当前总余票 R 为所有赏级 remaining 求和；大赏余票 G 为用户在 V1 上传时自行选择的 `isGrandPrize` 集合 remaining 求和。必要求和项有 null 则该合计 unknown，不把 null 当 0。五状态独立、可并存、不统一分数，Opportunity 与 Freshness 分开。首版 `LAST机会` 为已知 R≤12；`大赏占比高` 为已知 G/R≥8%（R必须>0）；`低机会信息` 为已知非LAST，且已知G=0或有效G/R≤3%。任一未知不能反推对应条件；否定LAST同样需要可信R，不能用“没有标签”代替。R=0不判比例，不悄悄改写R≤12的边界。
+
+`大赏存量足`的两份同批答复分别写G≥3和G≥2，冲突未裁定，不默认采用较后条目。V1无原装总票，因此`刚刚拆套`首版不判定／不展示；未来有可信initialTotal后，R/initialTotal≥85%是Founder提出的初始规则，当前DEFER，不新增initialTotal、更不拿上传时余票充当它。最新Marker主状态顺序为 `LAST机会 > 大赏占比高 > 大赏存量足 > 刚刚拆套 > 低机会信息`，覆盖之前“低在拆套前”的建议；详情展示全部命中reason。所有阈值进入versioned可调policy/config，pilot后仅据真实证据与Founder批准调整。
+
+Founder选择调整公开合同移除 HIGH/MEDIUM/LOW/INSUFFICIENT 四级；不保留暗中等级映射或由五标签算分。当前正式runtime仍是旧合同，需versioned public wire／query/filter／evaluation／serializer／client同步迁移。无标签但事实完整、低机会是否上图／可筛选尚未给定，正等待独立答复；公开资格仍是独立source/verification/rights/consent/location/safety/lifecycle门，不能由无score推导自动PASS。首版存量阈值冲突＋这项上图资格确认前，仍 `OPPORTUNITY_RULE_FOUNDER_DECISION_REQUIRED`，不实现假的evaluator。
+
+### 先前语义答复（历史；上述精确规则和最新优先级覆盖）
+
+Founder 在本次任务中明确：OpportunityEvaluation 不做统一分数；五种独立状态可并存。`LAST机会`描述尾盘，`大赏存量足`描述用户定义的大赏集合当前剩余量，`大赏占比高`描述该集合当前余量／当前总余票的密度，`低机会信息`只在明确负向证据时成立，不能由缺失数据或无其他标签推导，`刚刚拆套`描述早期消耗阶段而非刚上传。大赏集合沿用 V1 用户上传时选择的 `isGrandPrize`，例如 A+B，不固定 A/B/C、字母或票数分类。详情可展示多理由；Marker 主状态按 Founder 给出的建议顺序采用 `LAST机会 > 大赏占比高 > 大赏存量足 > 低机会信息 > 刚刚拆套`。`null=unknown`、`0=confirmed zero`；未知不得反推状态；Opportunity 与 Freshness 分开评价。
+
+规则参数必须 versioned、可调整，不把阈值写死为算法常量。当前仍未确定首版尾盘／存量／密度／早期消耗参数和精确边界、低机会的具体负向条件与上图资格、旧 HIGH/MEDIUM/LOW/INSUFFICIENT 合同兼容方式、无标签时的上图资格。V1 R2 只有当前余票，无原装总票数，不能用上传时余票或 `initialRemainingTickets` 的字段名证明原装基线。需要原装基线的“刚刚拆套”规则须批准真实基线来源或无证据不展示。精确规则冻结前仍 `OPPORTUNITY_RULE_FOUNDER_DECISION_REQUIRED`；只更新语义，不实现预设／假的 evaluator，不读 V1 private bridge、不绕过独立 public eligibility。详见 `docs/delivery/v2-e-task-21-opportunity-rule-decision-sheet.md`，Founder 后续回答在同一 TASK21 延续。
+
+## 2026-09-29 TASK-V2-20 分享选择与上传列表语义修正
+
+在一番赏抽赏版面点击“决定收手”后，“暂不分享并退出”只将当前抽赏状态保存为本机草稿，供识别首页草稿区和“我的记录”恢复，不能生成“我上传的版面”条目；“继续抽赏”保持在当前版面。用户选择“愿意并拍摄赏票”并提交证据后，同一规范记录才进入“我上传的版面”接受位置、赏票照片和备注三项核验；核验中与失败按既有可信状态显示待核对、对应失败及可用重试操作，全部通过后显示“已上传”徽标。列表不显示“已选择分享至地图”或“暂不分享”之类的逐记录分享意图文案。候选 synthetic 测试数据中的 `DO_NOT_SHARE` 不属于该页面的可见上传记录，不计入云端数量；历史测试行可保留作审计，但不能被客户端当作用户主动上传成果。`SHARE` 候选仍须明确标注为合成测试数据，且其 UI 徽标必须依据可信验证状态，不可仅凭分享意图推断已公开。核验通过后记录状态为“已上传”；若用户已同意当前版本地图贡献条例且现有公开安全资格全部满足，系统自动将其投影到地图，不增加逐条发布按钮。若用户尚未同意条例，已上传记录留在本人上传列表等待；日后同意当前版本后再自动进入公开资格判断和投影。核验未通过的记录保留在上传列表显示具体失败项及相应重试入口，不公开到地图。
+
+## 2026-09-29 TASK-V2-20 我上传的版面统一云端列表
+
+“我的 → 我上传的版面”中的候选上传与既有云端上传都是本人上传记录，必须在“云端”计数下的同一个滚动列表呈现，不再于列表上方另设“候选测试上传记录”区块。候选项直接沿用现有云端上传卡片的外观、左滑露出垃圾桶及点击后删除确认；页面上的云端计数与空态覆盖两类记录。两种记录的服务端身份、权限和删除接口仍须各自保持可信，不得把候选 ref 当作 V1 recordId 或用 V1 删除接口处理候选上传。候选记录缺少的标题、版面统计等字段不得推断为真实内容，可用明确的合成测试文案。条例加载态不改变上传列表的归属。删除仅在用户对具体卡片确认后执行，继续遵守多人贡献与 no-resurrection 语义。
+
+## 2026-09-29 TASK-V2-20 地图贡献条例真机修正
+
+“我的 → 我上传的版面”必须从可信候选服务读取本人当前条例状态；读取失败或服务关闭时显示“条例状态暂不可用”和重新读取入口，不得把未知状态写成“未同意”，也不得打开无法操作的同意弹窗。已同意的账号不再显示同意卡片。未同意时打开的条例弹窗应按标题、可滚动正文、操作按钮的正常纵向顺序排布，主按钮固定在正文下方且可点击；按钮失败时显示明确错误。此修正只修客户端呈现与候选测试窗口配置，不改变一次性同意语义、版本资格、真实上传或公开投影。
+
+## 2026-09-29 TASK-V2-20 真机空区域浏览修正
+
+地图定位或平移到没有公开线索的区域时，终态可以是零 Marker，但仍须完整显示可拖动、可缩放的地图，并保留定位与刷新按钮。不得用“当前范围暂无公开线索”的全屏遮罩覆盖底图或拦截手势；从该空区域继续拖动或缩放、进入 `VIEWPORT_REFRESHING` 时也不得因暂时零 Marker 且没有真实错误而显示“地图状态需要恢复”的全屏遮罩。明确输入搜索或筛选且没有匹配结果时，仍可显示现有无结果提示；首次载入、地图渲染错误及真实服务异常各按原有恢复语义处理。此修正不改变公开查询、真实位置、Marker 与详情数据。
+
+## 2026-09-25 TASK-V2-19 Human Assistance 双入口 coverage correction
+
+稀缺、可跳过的结构化双卡 Human Assistance 在本轮跨层补全时必须同时覆盖①上传成功态和②「我的 → 我上传的版面」本人列表入口；只有可信服务端确认该次上传有仍有效、可回答的 request 才展示，列表进入／刷新时读取本人仍有效的 request，两处进入同一回答流程，支持 `SAME_BOARD / DIFFERENT_BOARD / CANNOT_TELL / SKIP`。没有 request、已答、过期、撤回或版本变化时不展示或安全关闭；回答只是版本化 evidence，不是强制合板命令。候选阶段只对获准测试身份和 synthetic upload 开放，不向 V1 真实上传／线上列表注入测试问题。HA cooldown／budget 数值仅为 `CANDIDATE_TEST_ONLY / PILOT_CALIBRATION_REQUIRED`，本轮不冻结产品参数；两处前端入口及其验证属于 TASK-V2-19 未完成的 coverage correction。
+
+## 2026-09-25 TASK-V2-19 公开地图范围完整性
+
+继承 D09 已批准的50条／页、500条快照和 `truncated` 合同。正式 `map-preview` 必须让用户继续加载同一快照的后续页；达到500上限且 `truncated=true` 时明确提示通过放大地图或缩小筛选范围继续找，不把已取回的 Marker 聚合数误称为区域内全部版面。用户放大到当前已加载 bbox 内部的更小范围时，若当前快照仍有后续页或已截断，应重新发起更小 bbox 的根查询；已取全结果的纯展示性缩放仍遵守原有请求抑制。此条只落实既有查询合同，不更改 BoardInstance、Marker 视觉或性能容量值。
+
+## 2026-09-24 TASK-V2-17 Founder 批准后的 Marker 承载
+
+Founder 已人工批准当前 PNG Marker 与地图交互。正式路径仅以 Canvas PNG 承载普通、选中、聚合 Marker，选择列表使用同一 renderer 的 PICKER 输出；固定 PNG 保留为自适应关闭时的安全回退。早期 A/B 实验中的 CSS `customCallout` 视觉回退已退役；下方旧实验说明保留为历史，不再定义当前产品行为。真实位置、可分离放大／不可分离列表、详情和筛选语义不变。
+
+## 2026-09-24 TASK-V2-17 地图原生操作按钮与弹层层级
+
+定位与刷新是地图空闲态操作，视觉上仅处于底图之上；打开 Marker 详情卡、聚合选择、地图空态提示或任一页面模态弹窗时，不得穿透或压在这些界面之上。详情卡继续使用现有可动 CSS/WXML，不改其结构与动画。由于真机原生 `<map>` 内 `cover-view` 与普通视图不共用可靠的 CSS 层叠顺序，按钮保持原生地图内的点击路径，但在上层界面存在时从原生地图子树卸载，界面退出后恢复；不得仅靠 `z-index` 数值宣称修复。
+
+## 2026-09-24 TASK-V2-17 地图空筛选弹窗
+
+地图已有公开线索、但用户未选任何机会筛选条件时，不再在地图中央显示普通状态文字和灰色按钮，而显示沿用 V1 `light-capsule` 视觉的模态弹窗：主标题“未选择筛选条件”、简短说明和黑色胶囊主按钮“显示全部”。点击按钮沿用原有重置筛选行为，恢复全部筛选项并关闭弹窗；无结果的搜索／筛选组合仍使用原有提示，不改变查询、Marker 或地图业务。
+
+## 2026-09-23 TASK-V2-17 聚合选择持续浏览
+
+不可自然分离的聚合选择弹窗在选择任一版面后保持打开，并继续保留该组列表和滚动位置。选中项打开既有详情卡；点详情卡外区域只收起详情，不退出选择；直接点另一条列表项则切换到其详情。弹窗的关闭按钮是退出整组浏览的明确操作，退出时同时清除详情选择；遮罩上的空白点击不退出列表。详情打开期间列表与详情卡都须可见、可触达，不让详情遮住全部列表。弹窗副标题“此位置有 XX 个版面”的视觉下沿与主标题下沿对齐。保留真实坐标、既有详情和camera业务链，不改变cluster判定、marker数据或后端。
+
+## 2026-09-23 TASK-V2-17 选择版面弹窗信息密度与数字规范
+
+“选择版面”标题行右侧在同一行底边对齐显示“此位置有 XX 个版面”，不重复写操作说明；列表从标题下方开始，增加可见条目空间。地图 Marker 仍仅显示一个主标签，弹窗可展示该版面当前已有的多个发现标签；弹窗内各标签按最长可用标签设置统一紧凑宽度，不把标签背景拉满卡片。不推断公开合同未提供的标签。地图及弹窗的抽赏剩余数字 0—9 显示前导零（00—09）；未知值保留未知标识，10及以上保持原数字。
+
+## 2026-09-23 TASK-V2-17 选择弹窗视觉复核
+
+版面选择弹窗复用 V1 的 light-capsule 底框、标题字体、灰底关闭图标和遮罩，不另建弹窗视觉系统。列表信息条直接复用已验收 PNG Marker 的 Canvas 绘制：等高圆弧青色背板、黑色数字区、真实 Oswald 700 字形、标题与状态色；仅扩展右侧文字区并去掉地理尖尾。不得用 CSS 色条或系统数字字体模拟。选择、关闭和详情业务语义保持不变。
+
+## 2026-09-23 TASK-V2-17 不可自然分离 Cluster 与 IP/主题
+
+业务 Marker 的地图位置必须以真实坐标为准。点击聚合点时，以最大有效 scale 18、当前最大档 PNG footprint 和 screen-space collision 重投影其真实成员：若可形成多个真实子组，继续按既有 camera 逻辑放大；若全部成员仍为同一碰撞组，保留一个真实位置聚合点，并打开该组的可滚动版面选择面板，不再把成员 spiderfy 到虚假地点。面板仅列当前最终子组，信息条沿用 PNG Marker 的青色背板、深色余量区、IP/主题与状态色但无地理尖尾。选择条目复用原有 selectLead／Info Card，关闭不选不打开详情。聚合角标一位数圆形、两至三位胶囊，最多显示 999。详情 IP/主题仅由真实 IP 与可选主题组成；缺主题只显示 IP，内部 fixture/task/sourceLabel 不得进入用户可见区域。Marker 列表预览目前只有公开 boardShortLabel，没有独立主题字段，不得臆造主题。
+
+## TASK-V2-17 PNG Marker Zoom Adaptive（2026-09-23）
+
+Founder 本轮任务文件确认固定 PNG 视觉及稳定性已人工通过。在实验开关内，取代此前 observation-only／必须 Pan 才 reconcile 的限制：缩放中限频按当前屏幕 footprint 更新聚合及文字档位，缩放结束保证最终投影。保持已验收数字、背板、尾尖、状态颜色及身份语义；最小文字区至少一个真实字符，不只剩省略号。聚合仍为代表 Marker 加数量角标，exact-overlap／spiderfy 按现行规则。先使用有限档位原子切换，不引入逐帧桥接或位移动画；关闭实验开关恢复固定 PNG 及原稳定调度。新版稳定性待真机验收，不能由静态图推定。
+
+2026-09-23 TASK-V2-17 视觉修订：以 Founder 最新 P2 为准；青色为与白卡等高、左侧露出的背板，选中范围包含背板。短尾改为黑色，置于黑色数字区正下方，与主卡形成连续外轮廓。数字使用真实 Oswald 700、-0.05em 字距和光学垂直校准。聚合延续代表性普通主体加数量角标，不使用叠放图标或背卡。仅调整 Canvas 视觉，不改变点击、camera、详情或数据语义。
+
+## 2026-09-22 TASK-V2-17 Canvas Marker 视觉 v2
+
+Canvas PNG Marker 的视觉以 Gemini `marker (2).html` 为首要参考，以 Founder 提供的真机截图为几何校准参考；不再把既有 customCallout 的 WXSS 尺寸当作设计输入。普通 Marker 采用更宽的白色圆角卡体、精细阴影、深色数字区、连续青绿色左强调边、右侧标题与状态 pill；数字、标题和状态各自使用 Canvas 字面框测量与 baseline，不依赖 CSS line-height。箭头是主卡底边正中向下的独立白色三角，尖端与 anchor 同一点，底边不偏向左侧，也不与卡体断开。
+
+聚合 Marker 使用独立的多层叠放背板、主卡 stack 图形和红色数量角标，不能由普通 Lead Marker 仅追加一个 badge 得到。PNG logical size、DPR、透明 padding 和 anchor 统一由 renderer 导出；render key 版本升级后旧视觉缓存自然失效。数据、cluster、camera、点击、详情和稳定性策略不变。
+
+## 2026-09-22 TASK-V2-17 详情卡固定与赏级横向滚动
+
+地图详情卡主体是固定位置、固定高度的卡片，不响应整卡上下拖动；卡片的垂直定位由地图安全区和底部导航间距决定。只有卡片内部明确的内容区域可以滚动：赏级区块允许横向滑动，展开的现场备注可以在自身区域内纵向查看。
+
+赏级区块保持两行 column-first（按列先上后下）布局。当前 A-F 等六个赏级按第一列A/B、第二列C/D、第三列E/F排列；未来新增赏级继续增加横向列，奇数末项处于上排，不改变卡片高度。赏级轨道使用原生横向 `scroll-view`，保留 `enhanced`、`bounces` 的边界回弹，使用户可以左右滑动查看更多，而不会把详情卡整体带动上下移动。
+
+## 2026-09-22 TASK-V2-17 地图手势／空白点击清除选择
+
+普通 Marker 详情打开后，用户开始真实地图手势（拖动或缩放）即表示离开当前选择：页面必须同步关闭详情卡、清除 detail selection，并移除 Marker 的玫红选中描边。点击地图空白区域具有同样语义；即使详情仍在 `OPENING` 或普通 Marker camera tween 尚未完全 settle，独立空白点击也必须取消选择并停止该 Marker 的相机动画。
+
+Marker 点击后由 Native Map 为同一物理触摸补发的伴随 surface tap 不是独立空白点击，只允许在短时窗口内一次性消费；不得再用长时间 guard 或笼统的 `CAMERA_ANIMATING` 状态门屏蔽后续真实空白点击。程序化 Marker camera 与 cluster expansion 产生的 `regionchange` 不属于用户手势，不能自动关闭刚打开的详情；用户手势必须优先抢占程序化动画。
+
+## 2026-09-22 TASK-V2-17 详情选择跨视口刷新与缓入缓出相机
+
+本节修正下方“Marker 详情稳定与相机平移”的根因判断与相机实现。普通 Marker A→B 切换期间，相机移动产生的 `regionchange` 可以触发新的 viewport query，但 root query 只能更新地图点位集合，不得重置当前 detail selection、递增 detail selection generation 或把详情卡关闭。详情选择只能由用户点击空白、关闭按钮、点击聚合点、明确切换筛选／搜索，或 detail 返回 `LEAD_UNAVAILABLE` 等既有显式语义清除；viewport refresh 成功、失败或竞态响应均不得让当前卡片闪现后消失。A→B 的 detail response 继续遵守 latest-selection-wins。
+
+普通 Marker 的相机移动采用无 overshoot 的缓入缓出曲线：起步慢、中段快、末段减速，并允许新 Marker 点击从当前视觉位置抢占旧动画。动画只插值 display-only camera center，不改变 Marker 的真实坐标、PublicLocation、`publicLeadId` 或 detail identity；动画期间的中间 region observation 不触发中途 viewport query，完成后只允许最终稳定视口参与一次既有 bbox containment/query 判断。平台 context 不可用时仍以最终受控中心作为回退。
+
+## 2026-09-22 TASK-V2-17 Canvas PNG Marker A/B 实验
+
+本轮只替换原生地图 Marker 的视觉承载层：`PublicMarker`、`PublicMapMarkerPresentation`、cluster engine、`publicLeadId`、`markerId`、spiderfy、camera、详情卡和全部点击业务语义保持不变。实验开关开启时，普通、聚合和选中 Marker 由离屏 Canvas 栅格化为 PNG，再作为 native marker `iconPath` 显示；关闭开关时继续使用既有透明 icon + `customCallout`。旧 WXML/WXSS 不删除，作为显式 A/B 回退。Canvas 实验模式不再在生成等待期挂载 CSS callout，避免把旧视觉误认为 PNG 结果；生成失败表现为日志错误与空 binding，切回开关即可恢复旧实现。
+
+PNG 的复用身份只允许包含视觉字段：Marker 类型、数量、标题、状态标签／色调和 selected；不得包含经纬度、viewport、camera scale 或动画帧。缩放和拖动只改变原生地图的位置变换，不触发逐帧出图。初次进入先显示旧 callout，当前投影需要的 PNG 全部完成后再切换，避免生成窗口出现空 Marker；生成失败必须恢复旧视觉。第一阶段不实现展开／收拢动画，只验证静态普通、聚合和选中三类资产的真机稳定性。
+
+## 2026-09-22 TASK-V2-17 Marker 详情稳定与相机平移（根因判断已由上节修正）
+
+点击普通 Marker 后，同一物理触摸由 Native Map 继续派发的底图 `tap` 不得被解释为新的“点击空白关闭详情”；Marker 激活后的短保护窗口以及详情 `OPENING`／相机 `CAMERA_ANIMATING` 阶段都必须保留当前选择。只有详情与相机稳定后发生的独立底图点击，才关闭详情并清除选择。A→B 快速切换继续由 B 抢占 A，不能出现 B 卡片闪现后被 A 的残余事件关闭。
+
+普通 Marker 选择不得再通过一次受控 `latitude/longitude` 写入瞬移地图中心。页面先同步更新 Marker 选中态和详情加载态，再使用微信原生 MapContext camera command 从当前视野平移到新的 display-only target；若原生 context 尚未建立或命令失败，才允许回退到受控中心写入。平移期间 Marker、详情 identity、真实坐标、PublicLocation 与 `publicLeadId` 均不改变；连续点击另一个 Marker 时，新 camera command 从当前原生视野继续抢占前一移动。
+
+## 2026-09-22 TASK-V2-17 Marker 箭头与详情卡贴合修正
+
+本节取代下方“CSS 双层三角尖尾”和“屏幕中心上方 76px”描述。Marker 主卡、文字、Badge 与命中仍由原生地图 `customCallout + cover-view` 承载，但底部指向必须是与白色卡体连续的白色箭头，不得在真机退化成矩形。普通态箭头使用中性浅灰侧边轮廓；选中态的 `#f20aa4` 玫红轮廓必须从卡体连续包住箭头，不能只描矩形卡体。
+
+custom callout 根节点不得再叠加 `translate(-50%, -50%)` 二次居中；只允许应用 cluster/spiderfy 的 `visualOffsetX/Y`。Marker 由原生 callout anchor 负责居中，点击普通 Marker 后 camera target 使用其真实地理锚点且额外 Y offset 为 0，使箭头尖端落在详情卡上沿正中上方并近乎贴合。该调整只改变屏幕展示位置，不写回 PublicLocation、真实坐标或 `publicLeadId`。详情已打开时点击另一普通 Marker 的抢占、即时选中态和 latest-selection-wins 保持不变。
+
+当页面已打开普通 Marker 详情时，点击聚合 Marker 不得被旧的 `CAMERA_ANIMATING` 状态拒绝；详情卡要同步关闭，聚合点一次点击至少启动一次相机扩展，并把目标投影推进到首次能分离成员的 scale。该点击反馈属于 cluster expansion（聚合展开），不要求用户重复点击地图或等待第二次聚合命中。
+
+## 2026-09-22 TASK-V2-17 Marker 真机字体与几何回归修正
+
+本节取代下方同日 88×40px Marker、青绿选中态、96px 详情目标位和“全部状态仅高亮固定按钮”的描述。Founder 真机证据确认 Native Map `customCallout + cover-view` 不能把 WebView 中成功加载的可变 WOFF2 字体视为稳定字体合同；Marker 不得再依赖 `Marker Jakarta`、隐式字体回退或直接文本节点的 baseline。数字改用开发者工具与 iOS 均有的 `Helvetica Neue / Arial` 明确字体栈、固定 38px 字面框与独立横向压缩；中文标题和状态显式使用 `PingFang SC`，全部文字用固定高度/line-height 容器定位。聚合 Badge 的边框必须纳入 18×18px `border-box`，字符放入独立 14×14px 字面框，避免边框扩张和直接文本基线造成角标与数字漂移。
+
+Marker 主卡固定为 118×48px：左侧数字区 36px，右侧文案区 82px，shell 122×60px，`anchorY=-30`。右侧必须完整显示当前主要筛选状态，包括“刚刚拆套”；青色装饰是沿左上、左边、左下连续的 2px 弧形轮廓，不是实心竖条。普通状态保留青色左轮廓，选中 Marker 使用高饱和玫红 `#f20aa4` 整卡描边。底部尖尾继续与卡体相连。
+
+单点打开详情时的 display-only camera offset 从屏幕中心上方 96px 收紧为 76px，使 Marker 更靠近详情卡片；真实坐标、PublicLocation 和 `publicLeadId` 不变。顶部“🔥 显示全部”被选择时，固定按钮与后续五个筛选项全部显示选中态；筛选横向 viewport 高度必须为按钮外描边和阴影保留上下空间，不得裁切高亮边缘。
+
+详情卡已打开或前一 Marker 的 camera move 尚未 settle 时，点击另一个普通 Marker 必须立即抢占旧选择：取消旧的 camera sampling、fallback、pending cluster 与 transition generation，先同步更新 Marker 选中态，再以新 Marker 坐标下发 76px camera target 和新的 detail selection。旧 Marker 的 camera 状态不得吞掉新点击；异步详情继续遵守既有 latest-selection-wins，迟到的旧详情不得覆盖新卡片。重复点击当前 Marker 或 camera transition 中点击 cluster 继续使用原去重／保护规则。
+
+## 2026-09-22 TASK-V2-17 Marker 与地图交互优化
+
+本节取代本文更早的 108×48px Native Marker、三项筛选和玫红选中描边视觉。Marker 主卡固定为约缩小 20% 的 88×40px：左侧 30px 数字区保持固定宽高并显式垂直居中，右侧 58px 保留一行 IP 与一行状态，外壳只比真实视觉宽 4px；底部使用与卡体连续的双层三角尖尾，不再用旋转方块。native icon 继续完全透明，custom callout anchor 与 50px shell 高度共同校准到地理点。状态颜色为 LAST 机会=玫红、大赏存量足/大赏占比高=青绿、低机会信息=灰蓝、拆套=琥珀；不改变任何公开业务事实。
+
+单点 Marker 的有效命中区域接近其 92×50px shell。touch start/move/end 以 8px 位移与 350ms 时长区分 tap 和 map drag；tap 必须在首次触摸结束时打开既有详情卡，并以当前 scale 的 Web Mercator display-only offset 把该 Marker 放到屏幕中心上方 96px。该 camera offset 不写回 PublicLocation，不改变 `publicLeadId` 或详情选择。cluster 点击继续只产生一次 center + expansion scale camera intent，但选中 cluster 的卡片与后层轮廓必须立即扇开展示反馈；最大倍率 exact overlap 继续 spiderfy。
+
+顶部筛选固定左侧“🔥 显示全部”，其余 `💎 LAST 机会 / 📦 大赏存量足 / 🏆 大赏占比高 / 🧩 拆套 / 🌫️ 低机会信息` 在右侧横向滚动；不再显示“全部恢复”。全部状态时只高亮固定按钮，选择单项后使用高亮、高饱和青绿色描边。筛选继续是 synthetic/public-only prototype，不扩张 public query contract，不从 private 数据推导。
+
+## 2026-09-21 TASK-V2-17 Map Loading Overlay
+
+地图首次进入且没有任何可显示数据时，继续使用 `INITIAL_LOADING` 和“正在载入公开线索”全屏遮罩。用户已经进入地图后，拖动到新 viewport 触发的 `QUERY_CHANGE` 必须使用非阻断的 `VIEWPORT_REFRESHING`；地图、已有 Marker、搜索筛选和其他交互保持可见，只允许顶部轻量状态提示。新 viewport 请求成功后一次替换最终数据，请求失败时保留旧 Marker 并提供非阻断恢复信息。viewport refresh 不得复用首次加载遮罩、清空稳定 Marker、重新初始化地图或改变 Marker/cluster 生命周期。
+
+## 2026-09-21 TASK-V2-17 Zoom Deferred Marker Presentation
+
+本节取代本文此前“Zoom 期间以 live scale 持续刷新 Marker Presentation”的行为。用户 pinch/zoom 时，原生 `<map>` 独立缩放；Camera 只更新 `observedScale`，Marker 外观、文本宽度、cluster membership、native binding 与 `presentationScale` 保持上一份稳定状态。Zoom end、settle sample 或固定 timeout 不得自动刷新 Marker，也不得把 scale observation 直接绑定到 Projection / `setData`。
+
+下一次检测到真实地图平移后，只有 `abs(observedScale - presentationScale) > 0.005` 才建立一次 deferred reconcile，并把 `targetPresentationScale` 固定为当时最新 `observedScale`。动画使用确定性的 `easeOutCubic`，目标时长 240ms，生成 7 个候选视觉帧；Native 提交保持单在途，pending 只保留最新帧。普通 pan 若无 scale 差值，不建立动画、不重算 topology，也不产生 Marker visual commit。动画期间再次观察到新的 scale 变化时，取消旧 generation，最后一份实际提交的 Projection 成为下一次视觉起点。
+
+一次 reconcile 只按最终 target scale 计算一次 topology。topology 不变时不得写 `mapNativeMarkers`；split 先一次安装最终 child bindings，children 以 display-only offset 从 cluster 中心展开；merge 保持旧 child bindings，先以 display-only offset 收拢，完成后一次替换为 cluster binding。每次 reconcile 的 Marker 视觉提交最多 8 次、native binding replacement 最多 1 次。程序化 cluster zoom 同样不逐 sample 刷新，只在 camera settle 后自动执行一次相同 reconcile，不要求用户额外拖动。exact-overlap、max-scale spiderfy、真实坐标、`publicLeadId`、BoardInstance、Info Card、公开数据链与 retained map / 独立“我的”页面条件不变。
+
+## 2026-09-21 TASK-V2-17 Zoom 同步与空投影修复
+
+地图展示 scale 不再由单次 `getScale()` 独占决定。程序化 camera 操作提供 target scale，地图回调提供 observed scale，手势／camera 稳定后的最终状态形成 settled scale；Presentation Scheduler 根据当前交互阶段选择有效 scale。新鲜的 region scale 不得被紧随其后的旧 native read 回退，程序化 zoom 也不得等待额外 pan 才更新 Marker 宽度、文本与 split/merge。
+
+viewport query、refresh 或 cursor recovery 进入 loading 时，地图继续显示上一份稳定公开 Marker projection；临时 `0 markers` 不得清空 Native Map。只有新查询进入终态后才一次替换稳定 projection，合法 `EMPTY` 终态仍可显示空地图。Zoom 期间允许内部计算多个 topology，但 Native Marker binding 只在短稳定窗口后提交最新 generation；中间 generation 不逐个替换原生 binding。此修复不改变 cluster 算法、`publicLeadId`、真实坐标、Info Card、搜索／筛选语义或最大倍率 spiderfy。
+
+## 2026-09-20 TASK-V2-17 真机渲染修复
+
+本修复不改变已批准的信息架构或交互语义：搜索、品牌、筛选、Info Card 与 Bottom Nav 仍是普通页面 UI；定位／刷新仍是 map 内可触摸的原生覆盖控件。Marker 的地理锚点在一次 split/merge 动画内保持稳定，展开／归并只呈现为卡片的屏幕空间 transform；最终 topology、cluster 点击语义、最大倍率 spiderfy、真实坐标和 `publicLeadId` 不变。角标必须位于 Marker shell 内、不得依赖负溢出；Marker 字重不得超出已打包字体声明范围。地图原生层渲染失败时显示“地图渲染暂时不可用”并允许刷新，不伪造可用状态。
+
+## 2026-09-20 TASK-V2-17 原生地图交互结构重建
+
+本节取代本文中 2026-09-19 的固定 `LEVEL_0/1/2`、最大倍率 overlap stack／业务选择器及先切拓扑再补 ghost 的旧行为描述。地图聚合是当前相机状态下的临时屏幕空间展示，不是产品层级：缩放手势或 camera command 进行期间主动读取实时 scale，以公开线索投影点、当前连续 Marker 宽度、固定左栏、Marker 高度、横纵间距和小幅滞回判断 footprint 能否共存。不同真实坐标一旦可分离就自动成为独立 Marker；缩小时按相反关系归并，不要求拖动地图或等待另一轮 settled event 才刷新。
+
+Marker 左侧 36px 数字块固定，右侧在 48—96px 之间由真实 scale 的连续归一化进度和平滑但无 overshoot 的 easing 插值；IP 与发现标签始终使用同一真实字符串，由宽度、裁切和 ellipsis 自然控制可见量，不存在 COMPACT/NORMAL/EXPANDED 文案档位。纯展示插值不得触发公开数据请求；只有最终 viewport 超出已加载 bbox 时才请求新的 viewport。
+
+聚合点点击只产生 camera expansion intent：从实际成员首次可分离的屏幕空间条件计算目标 scale，并以聚合中心 + 目标 scale 作为一次原子 native camera command；不得打开详情或任何“此位置有 N 个版面”列表。最大合理倍率仍不可分离的成员才允许 spiderfy/fan-out；display coordinate 只存在于展示投影，`publicLeadId`、BoardInstance 和真实经纬度保持不变，每个 fan-out 子 Marker 直接打开既有 Info Card。地图空白、再次缩放、平移或离开地图折叠 fan-out。
+
+split/merge 使用 camera-scale 驱动的可取消空间过渡：页面在 `regionchange begin/end` 之间及 programmatic camera command 期间以短周期读取 `MapContext.getScale()`；每个采样帧依次执行 `scale → presentation progress → current footprint → collision topology → transition frame`。拆分时 child 的屏幕投影位置使用 `parent + (target - parent) × cameraProgress`，归并时使用同一公式反向聚拢；最终稳定帧仍保证每个 eligible lead 只出现一次。新手势或反向缩放会取消／重基准未完成 transition，end 后保留短尾采样，避免 native camera 仍在收敛时停在旧宽度或旧拓扑。页面不得在手势期间回写绑定 scale，因此不会形成缩放反馈循环。地图节点离开 Tab 时不使用 `display:none`，而是在原位置保活并禁用可见性和触摸，复用唯一 map context、client subscription、projection 与 cache。
+
+原生 marker 仍保留平台要求的 `iconPath` 作为 custom callout 锚点，但该 icon layer 必须为完全透明；只显示已批准的代码绘制 Marker card、顶部 ICHI 吉祥物与 Info Card，不得露出额外 1px／小尺寸品牌头像。
+
+## 2026-09-19 地图浮动按钮同步一番赏快捷操作样式
+
+地图右下“回到我的位置”和“刷新当前地图”继续保留原有操作与权限语义，但改为一番赏版面同一套轻量圆形按钮语言：`48×48px` 白底、黑色 `20px` Phosphor 轮廓图标、中性 `0 5px 16px rgba(17,17,17,.14)` 阴影、`12px` 垂直间距，并使用窄屏右侧安全定位。由于微信原生 `cover-view` 对 flex `gap` 支持不稳定，按钮间距使用相邻项 `margin-top:12px`；地图组相对上一版下移 `16px`，使用 `bottom-clearance + 56px`。定位加载态只保留现有轻微透明度变化，不改变点击逻辑；按钮不再有玫红底色或玫红阴影。
+
+## 2026-09-19 原生地图聚合的空间连续性
+
+地图聚合行为以 Leaflet.markercluster 为唯一行为参考，但实现继续使用微信原生 `<map>`。用户缩放或平移时保持当前 topology；手势结束后再根据最终 viewport 一次性更新。聚合点点击先按其子 marker bounds 调整镜头，再展开为带 parent 来源的 child cluster/marker；缩小时执行相反的归并。达到最大 zoom 或多个公开点坐标完全相同时，不继续放大，改用圆形／螺旋 spiderfy，保留真实地理坐标并以连线表达 display position 与真实位置的关系。聚合展示不能改变 `publicLeadId`、BoardInstance 或真实坐标语义；每个 spiderfied marker 都可独立打开详情。
+
+## 2026-09-19 地图上下边缘渐隐
+
+地图底图在顶部与底部使用不拦截触摸的渐变遮罩，平滑过渡到地图页安全区和 stage 共用的界面底色 `#e8e9e5`。顶部遮罩的透明边界严格对齐筛选按钮下沿，并向上逐渐增强至界面底色；底部遮罩的透明边界严格对齐 Bottom Nav 上沿，并向下逐渐增强至界面底色。所有透明色标必须使用同一 `232/233/229` RGB 基色，避免遮罩顶端与安全区出现色阶分界。搜索、筛选、Marker、定位／刷新、详情卡和 Bottom Nav 本身保持清晰且不参与渐隐。
+
+## 2026-09-19 地图品牌吉祥物统一
+
+地图顶部 `ICHI` 品牌锁定中的旧识别图片吉祥物，替换为详情卡左上角同款代码绘制圆眼吉祥物：黑色圆角主体、两枚白色圆眼和右侧挖口保持一致。品牌版本不得倾斜，视觉高度与 32px `ICHI` 字标等高；只统一品牌识别，不改变详情卡装饰锚点、搜索框位置或地图交互。
+
+## 2026-09-19 原生地图手势、Marker 与覆盖控件修正
+
+地图双指缩放期间不得由页面状态持续回写 scale；手势结束后只读取最终 zoom，用于响应式 Marker 投影和 viewport query。单 Marker 点击直接打开既有详情卡；近距离聚合点点击让原生地图扩大可见范围，同坐标聚合点达到高 zoom 后 spiderfy/fan-out，不出现 chooser。定位与刷新必须位于微信原生地图可交互的覆盖层，不能被地图原生层吞掉触摸。地图底图上沿向系统胶囊方向延伸 8px，但搜索／品牌／筛选 overlay 的物理位置保持不变，形成底图位于搜索框与系统胶囊之间的连续视觉。
+
+## 2026-09-19 聚合点 Zoom-to-Expand 与烟花散开
+
+点击带数量 Badge 的聚合 Marker 后，不显示横向选择条、选择弹层或“X 条线索”提示。交互分为连续两阶段：先以聚合点为视觉焦点让地图底图短促放大，同时顶层聚合卡轻微放大并淡出；随后每个 distinct `publicLeadId` 从原聚合坐标径向散开，成为与普通点完全相同的余抽/IP 信息 Marker。用户直接点击任一散开 Marker 打开对应详情；点击地图空白处收拢聚合态。散开只改变展示坐标和动画，不合并 identity、不产生推荐顺序，也不改变真实 PublicLocation。
+
+## 2026-09-19 Marker 信息卡样式与重叠聚合识别
+
+Founder 授权把 V2 地图中的全部可见 marker 改为同一张代码绘制的信息卡：左侧深色数字区显示该公开版面的真实剩余抽数，右侧上方显示安全短 IP 名，右侧下方显示既有正向发现标签或公开 Opportunity 文案；青色边缘、白色圆角卡体与底部尖尾共同表达地图锚点。公开 viewport marker 因此通过 `public-map-v2` 增加 `totalRemaining: number | null`，其值必须由同一已核对版面的 tier remaining 事实确定性推导；`null` 继续表示未知，禁止从 detail fixture、UI 常量或私有数据猜测。
+
+同坐标／近坐标聚合继续只是展示分组，不合并 `publicLeadId`。聚合点在顶层信息卡后增加两层向右上错位、无尖尾的卡片轮廓，并在右上角显示粉色数字 Badge；主卡仍显示该展示代表项自身的剩余抽数和 IP。桌面 hover 与小程序触摸按压时，后层轮廓轻微扇形展开；点击继续进入既有 fan-out，每个展开子项仍使用相同信息卡视觉。聚合代表项不被描述为推荐或排名结果。
+
+## 2026-09-18 Marker 卡片页头与进入动效修正
+
+单 marker 详情卡左上装饰使用代码绘制的圆角黑色圆眼 mascot，固定在卡片外缘 anchor；特殊评价标签是独立可选元素，不能参与 mascot 布局。卡片 summary header 迁移既有“一番赏抽赏” `draw-status` 的左右分栏、数值层级、圆角胶囊和黄色顶部 highlight 语言，并按卡内空间缩小。卡片首次插入时从底部以 `translateY + scaleY + opacity` 平滑进入，不改变最终几何或地图点击状态。
+
+## 2026-09-18 Marker HTML Fidelity First（最新执行约束）
+
+Founder 的 `CODEX_Rebuild_Marker_InfoCard_From_Gemini_MarkerHTML_Fidelity_First.txt` 明确废止旧低保真 footprint 上限。单张 Marker 卡按 `/Users/cunfu/Downloads/marker.html` 重建：外浮星眼装饰和 speech tag，独立白色 summary，32px 剩余数字、22px LAST 金额，86×54px column-first 赏级（现行第一列A/B、第二列C/D），48↔130px 暗色备注面板。卡体在系统安全区与 Bottom Nav 之间按视口限高滚动，不同比缩小内容。关闭按钮在任何备注状态均关闭整卡。真实 note 首句作为 headline，后文作为 body；缺字段不伪造。允许无数据的次级心形容器以破折号显示不可用；不创建点赞行为。只改信息卡及直接 presentation；不修改其他地图控件、V1、backend/contract，不解锁 TASK17。
+
+## 2026-09-18 TASK-V2-16-C 单 marker 信息卡局部视觉集成（当前入口）
+
+Founder 提供的 `marker.html` 与两张截图分别定义同一底部现场备注面板的收起态和展开态，不是第二个公开详情页面。marker 选中后仍只出现一张地图锚定信息卡；默认收起，点击整条面板或“详情信息”胶囊后，暗色面板在 300ms 内从 48px 展开到 130px，胶囊以宽度、内边距、外边距和透明度联合退场，详细备注随后淡入；再次点击暗色面板反向收起。展开态允许外卡在既有低保真最大高度内由 `366×257` 增至 `366×339`，Bottom Nav inset、左右 12px 锚点和单卡结构不变。
+
+收起摘要和展开正文都只消费公开 `venueNote`，单行摘要由该字段规范化、截断生成；没有备注时使用真实 `sourceLabel` 或明确的无备注文案。相对时间继续来自 `freshness.observedAt`，举报只显示“当前不可提交”的 inert placeholder。截图中的点赞数、中奖概率、独立短标题和精确时钟均无当前 public contract 字段，属于 `DESIGN_DATA_GAP`，不得用 fixture 常量伪造。本次 Founder 授权只覆盖此单卡片局部视觉及动效，不代表完整 16-C 或 Founder visual gate 已批准，也不解锁 TASK-V2-17。
+
+## 2026-09-14 TASK-V2-16-A Founder Map-only / Single-card Refinement（当前入口）
+
+本轮 Founder 决策取代此前 MAP/LIST 与 preview/expanded 假设。既有 V1 **地图** Tab、`pages/home/index` / `map-preview` 仍是唯一宿主；用户界面只保留地图，不显示 LIST 或 mode toggle。顶部筛选严格为 `LAST 机会 / 大厂存量足 / 大赏占比高`，44px 搜索与 28px 白底黑字 chip 构成明确层级，选中态只增加既有 ICHI 玫红描边。
+
+marker 使用带尖尾 pin；低倍 count cluster 与同坐标 fan-out 仅为 16-A synthetic prototype，display grouping 不合并 `publicLeadId`。点单 marker 直接打开唯一完整信息卡：IP/theme 最大，随后为总剩余、一个 deterministic synthetic primary tag、相对时间、可选玩家备注、两列赏级（0 隐藏、null=`未知`）与 canonical `fullPackCost`。没有“查看完整/公开详情”、地图贡献管理、owner CTA 或 report modal；举报只留无行为图标占位。TASK 14/15 行为边界不变，production clustering/native map 仍锁定在后续任务。
+
+## 2026-09-13 TASK-V2-16-A Map-first Discovery Layout Refinement（当前入口）
+
+Founder 已冻结 `MAP IS THE PAGE`：既有 V1 **地图** Tab 与 `pages/home/index` / `map-preview` 保持唯一正式宿主，地图从合法顶部安全区下方成为整页主表面，并在视觉上延伸到浮动 V1 Bottom Nav 后方；marker、右侧定位/刷新和 sheet 使用一个 `interactive-bottom-inset` 避让导航，不建立第二套 bottom reservation。开发 kicker、大标题、大刷新、固定“上海/当前浏览范围/合成数据”卡、移动地图按钮、搜索此区域按钮和地图中央载入更多 CTA 均退出产品视觉流。
+
+2026-09-14 Founder refinement：顶部品牌／搜索行必须与 V1 识别页首张卡片共用同一 `top-safe` 上沿，不再额外下移。品牌组合继续使用真实 V1 小吉祥物 + `ICHI`，但移除白色胶囊、边框和阴影，放大吉祥物与字标并压缩搜索框可用宽度；搜索框增加 Phosphor Icons Regular `magnifying-glass` 前置图标。该图标沿用当前 V1 已采用的 Phosphor/MIT 系统，不引入第二套图标语言，也不改变搜索行为、字段或 public contract gap。
+
+顶部只保留真实 V1 吉祥物 + 文本 `ICHI`、带清空的 IP/关键词搜索、横向正向机会多选胶囊与紧凑 MAP/LIST switch。默认全部标签选中等价于不限制标签，主动少选按 inclusive OR，搜索与标签按 AND，0 选显示明确空态且不暗中恢复全部。当前公开 marker 只有 `boardShortLabel` 可作为安全文本，但 V2-C query 没有 keyword field，marker 也没有 canonical `discoveryTags`，故 IP 搜索与四个机会标签仅是 deterministic synthetic/public-only prototype，并显式记录 contract gap；只有“近期更新”可直接由 `PublicMarker.freshness.band === RECENT` 支持。禁止 private join、raw OCR、概率/推荐/保证措辞和 public contract 静默扩张。
+
+synthetic pan 在 touch end 后 180ms debounce 并切换 viewport query；右侧定位通过可替换 synthetic adapter 演示 `READY/LOADING/PERMISSION_NEEDED/UNAVAILABLE`，不调用 `wx.getLocation`；刷新继续复用 TASK 14 current-query fresh-root semantics。fixture 为 10 个 public markers、两组 overlap、DRAW/UPLOAD、新旧 Freshness、多个正向标签和一个无标签 lead。当前仅 `LOGIC_INTERACTION_GATE=PASS / STRUCTURAL_LAYOUT_AUTOMATED_GATE=PASS / MAP_FIRST_LAYOUT_IMPLEMENTED=YES`，Founder structural visual gate 仍待验收，16-B/16-C/17 继续锁定。
+
+## 2026-09-13 TASK-V2-16-A 结构布局修复（已被 Map-first refinement 继承）
+
+16-A 的产品逻辑与交互语义未改写；本轮只把既有 `map-preview` 修复为可验收的 map-first 空间结构。页面在 V1 顶部安全区、44px header、紧凑 toolbar、fixed bottom nav 与底部 safe-area/clearance 各只保留一次后，把全部剩余高度交给 `map-content-stage`；MAP surface 在其中弹性增长，LIST 继续为内部滚动区。map-native refresh、location、mode、filter、marker、overlap 与 detail controls 都有显式、内容驱动的几何，不再继承微信 184px 默认按钮宽度，也不借用 V1 CTA/card 的大尺寸语义。
+
+preview/detail 是同一 stage 内的 map-context overlay；MAP 状态 banner 以有界 overlay 显示，retained-data 状态只显示一条最高优先级信息，避免挤压主地图。390×844 微信开发者工具实测 map=`358×475`、toolbar=`358×96`、未分配空白=`0`；五类视口模型均保留正 map 高度。当前状态为 `IN_PROGRESS / 16A_LOGIC_COMPLETE / 16A_LAYOUT_REPAIRED / AWAITING_FOUNDER_STRUCTURAL_VISUAL_REVIEW`。自动布局证据已完成不等于 Founder 视觉批准；16-B/16-C/TASK-V2-17—22 继续锁定。
+
+## 2026-09-13 TASK-V2-16-A 结构视觉失败与布局审计（当前入口）
+
+Founder 已批准 TASK-V2-15=`COMPLETE / HUMAN_APPROVED`。16-A 已在既有 `map-preview` 内建立完整 map-based discovery 逻辑结构：map/list 共用选择与列表滚动恢复、可操作 Opportunity/Freshness 筛选、marker/overlap、selected preview、expanded detail、synthetic “搜索此区域”、report shell 与 trusted owner-control 入口。Opportunity、Freshness、RecordType 继续正交，不表达 trust/推荐/保证；server Freshness 与 client cache stale 分开。Founder 的真实微信开发者工具检查现将 16-A 判定为 `LOGIC_INTERACTION_GATE=PASS / STRUCTURAL_VISUAL_GATE=FAIL`；根因审计已完成，但未修 UI。当前状态为 `IN_PROGRESS / 16A_LOGIC_COMPLETE / STRUCTURAL_VISUAL_REWORK_REQUIRED / LAYOUT_ROOT_CAUSE_AUDIT_COMPLETE`，16-B/16-C/17 继续锁定。后续 16-A 结构修复必须让地图成为首屏剩余高度的唯一主内容、safe area 与 bottom nav 各只计一次、所有 map-native button 拥有显式计算尺寸、marker 明显小于 CTA、detail 作为 map context overlay，并通过独立 Founder structural visual review。
+
+## 2026-09-13 TASK-V2-15 Consent / Owner-Control UX（当前入口）
+
+TASK-V2-14 已由 Founder 正式批准为 `COMPLETE / HUMAN_APPROVED`。V2-D host truth 继续冻结为真实 V1 既有 **地图** 导航 → `pages/home/index` → `map-preview`，不存在第二个地图 route/page、hidden/dev map route 或 release redirect。
+
+地图浏览与地图贡献授权是正交能力：trusted silent Account 可浏览地图；尚未接受、拒绝、暂不决定或撤回贡献授权均不得阻断地图与 V1 核心功能。`VERSIONED_MAP_CONTRIBUTION_AUTHORIZATION` 是一次版本化 scope，覆盖适用的历史+未来 PLAYER 记录、PublicLocation、合格备注与 safe nickname/avatar attribution，不是逐记录 consent；只有 material scope/version 变化才要求 reauthorization，Profile/手机号不构成门禁。
+
+TASK-V2-15 在既有 **我的上传** owner surface 内提供主动授权管理与逐项 owner controls，不新增 auth route。Withdraw 与 Delete 分离：二者都先产生 public hide intent，Delete 另建立 no-resurrection；客户端 tombstone 只防 stale/late response 复活，不代替 server truth。TASK-V2-15 已 `COMPLETE / HUMAN_APPROVED`；TASK-V2-16 处于 16-A Founder Review，TASK-V2-17—22 仍锁定。
+
+## 2026-09-13 TASK-V2-14 现有地图宿主约束（当前入口）
+
+V1 已存在正式的 **地图** 自定义导航入口，点击关系固定为 `data-tab="map" → onSelectTab → activeTab="map" + currentView="map-preview"`，宿主为现有 `pages/home/index`。TASK-V2-14 必须直接在该 `map-preview` 分支内部把旧占位内容升级为低保真 V2 Map Page Shell，保持分享落地和普通 Tab 导航关系不变；不得新增第二个地图 page/route、hidden/dev route 或 release redirect。当前分支不部署，因此 TASK-V2-14 不以运行时跳转阻断既有页面；真实 pilot/release exposure 继续由 TASK-V2-21/22 管理。
+
+TASK-V2-14 只冻结 public map client 的 query identity、generation/latest-response-wins、opaque cursor、pagination、public-only memory cache、client stale disclosure、stable errors 和 detail selection race 行为。页面使用 synthetic surface，不接 native `<map>`、`wx.getLocation`、生产 API、最终 marker/bottom-sheet 视觉，也不开始 TASK-V2-15。
+
+## 2026-09-13 V2-C Final Approval 与 V2-D Knowledge Alignment（当前入口）
+
+V1 Current Truth 已由 runtime、tests、frozen contracts、Git 与 release evidence 验证，并继续作为冻结基线。Founder 于 2026-09-13 明确批准 TASK-V2-10—13 `APPROVE AS RECONCILED` 与 V2-C；TASK-V2-01—13、V2-A/B/C 均已 `COMPLETE / HUMAN_APPROVED`。本段的 V2-D=`READY / NOT_STARTED`、TASK-V2-14=`READY / NOT_STARTED` 是启动前历史快照；当前执行状态以上方 TASK-V2-14 入口和 `progress.md` 为准。TASK-V2-15—22 与 V2-E 仍为 `LOCKED / NOT_STARTED`；未执行 CloudBase deploy、生产集合／索引 mutation、migration/backfill、Storage/ACL 变更、secret binding、commit 或 push；`V2_IMPLEMENTATION_STARTED=YES / LOCAL_ONLY`。
+
+V2-C Completion Reconciliation 把已批准产品语义落实为不可绕过的本地服务边界：source adapter 只产生 `VerificationInput`，ICHI Verification 产生 exact-version `VerifiedBoard`，OpportunityEvaluation 必须绑定同一 VerifiedBoard/version；PublicCandidate builder 另行检查独立的 Opportunity public gate PASS、Rights、Authorization、Location 和 public eligibility。`HIGH/MEDIUM/LOW/INSUFFICIENT` 是信息等级，不自动决定 public PASS。BoardInstance resolver 只消费 VerifiedBoard structured facts，拒绝 raw/stale observation。PLAYER 头像从 private stable `avatarFileId` 经 trusted server 签发短时公开 locator，客户端不接触 fileID；reporter/moderator/owner identity、eligibility/spam/credible classification、rate count、global read stop 与 HMAC secret 全部来自 server-trusted ports。该边界现已 Founder 批准，但仍是 local-only；V2-D 客户端不得重新发明或绕过这些语义。
+
+V2 是“版面机会情报地图”，不是传统“地图找店”。地图展示的是 ICHI 自有数据库中经过处理的版面观察信息，而不是外部地图 POI 数据。前端采用微信原生 `<map>`，负责基础底图、markers、callout、pan/zoom、`regionchange` 与 viewport；用户移动地图后，以 viewport 调用 ICHI Map Query API，只返回 bounded `PublicMapLead` 并渲染 marker。地图打开后不得依赖腾讯地点搜索、POI 数据或店铺数据库取数。
+
+腾讯位置服务降为 `Optional Location Enhancement`：未来可用于地址解析、POI 辅助、用户主动地点搜索或地理信息增强，但不属于 V2 MVP 核心依赖。用户确认的地点搜索额度约 200 次／日只影响未来主动增强调用，不影响不调用地点搜索的地图浏览链路。
+
+产品名称固定采用 `ICHI Dynamic Board Opportunity Map`，内部最小价值对象继续保留 `VerifiedBoardOpportunity`。它不是普通地点目录，也不把地图 marker 当作真实性或机会判断来源；地图只是信息探索入口。
+
+V2 地图的数据核心是 ICHI 自有数据库。统一来源为 `V1_HISTORY / PLAYER_DIRECT / PLAYER_ASSISTED / NETWORK_SOURCE`；来源只用于溯源，不参与可信度分层。正确组合是 `Source + ICHI Verification + Freshness`：未完成 ICHI 图片识别、结构化提取和版面校验为 `NOT_VERIFIED`，完成后为 `VERIFIED`；只有 VERIFIED 数据可以进入地图展示资格评估。
+
+当前NETWORK_SOURCE/OFFICIAL_CURATED路线由2026-10-02 Founder decision取代原一次性约20条Initial Data Seeding：上海50条production rehearsal → 全国300条正式热启动，并由Codex collect/review/publish workflow支持上线后持续补充；Founder逐条终审，拒绝候选local-only，地图显示“网络上传”且不伪造玩家。该方向尚未实现。
+
+V2-A 的信息表达由三层组合：
+
+1. `VerifiedBoard` 只表示版面结构化事实已经完成 ICHI 统一验证；V1_HISTORY 可以复用满足条件的 V1 核对事实，其他来源必须经过同一处理链。它不表示机会等级、时效性或公开资格。
+2. `Freshness` 只表示情报相对当前时点的参考程度；它与 retention 分离，低 Freshness 不自动删除底层事实。V2-A 研究连续衰减方向，但不冻结生产公式或参数。
+3. `OpportunityReason` 使用可解释规则把已核对事实组织成候选等级 `HIGH / MEDIUM / LOW / INSUFFICIENT` 与 reason codes。理由只能引用大奖剩余数／比例、总余票、单抽价、确定性包套总价、观察时间和 Freshness 等事实，不得输出到店、抽取、包套、中奖或消费建议。
+
+`Verified=YES` 可以同时 `Opportunity=LOW`；`null` 表示未知，`0` 表示已确认的零，二者不能互换。每个表达都必须明确“最近观察、不是实时库存、不是中奖保证、不是消费建议”。
+
+V2 数据闭环为：`BoardObservation → Verification → VerifiedBoard → OpportunityEvaluation → FreshnessEvaluation → V2 Public Eligibility → Public Projection → PublicMapLead → 微信原生 <map>`。玩家来源的版本化地图贡献授权 applicability、withdraw/delete，NETWORK_SOURCE 的使用依据／标签／takedown，以及所有来源的 public location/public fields/privacy/moderation 都由 Public Eligibility 分别裁决。
+
+TASK-V2-08 已批准把 `PublicMapLead` 分成轻量 marker 与按 opaque `publicLeadId` 获取的 detail 视图。PLAYER marker 必须携带 `DRAW_RECORD/抽赏记录` 或 `UPLOAD_RECORD/上传记录`，并让执行度视觉层级与 Opportunity/Freshness 分开；detail 才加入 authorization-applicable public-safe contributor displayName/avatar、allowlisted tiers、Grand Prize/total remaining、规范化 price、确定性 full-pack cost、reason trace、合格 venueNote 和非实时／非推荐说明。公开序列化必须从 allowlist 构造；D08-01—18 已按 adjusted proposal 人工批准。
+
+TASK-V2-06 已批准的 Source/Rights 模型使用 `VERSIONED_MAP_CONTRIBUTION_AUTHORIZATION`：用户接受当前版本后，该版本明确说明范围内符合条件的 V1_HISTORY 与未来 PLAYER_DIRECT/PLAYER_ASSISTED 记录可以无逐条弹窗地自动进入各自 Public Eligibility；未接受时 fail closed。统一授权不等于自动公开，也不合并记录 Rights lineage；每条 Observation/source version 仍独立判断 provenance、owner、rights applicability、withdraw/delete、takedown、Location、Safety 与 Eligibility。只有图片、位置精度、个人／贡献者信息、用途等发生 material public-scope expansion 时才要求新授权版本；venueNote 在当前版本已明确覆盖“公开安全审核后的备注”时不逐条重签，未覆盖或公开范围实质变化时仍是 material expansion。纯技术变化不自动使授权失效。
+
+PLAYER 公开记录类型固定为“抽赏记录／上传记录”，detail 可按 D06-A1 投影安全 nickname/avatar；NETWORK_SOURCE 当前文案为“网络上传”（旧“网络来源”由2026-10-02决定取代），不伪造玩家 Profile，network URL 默认 private。用户删除“我的上传”中的云端来源记录时，对应地图投影必须 hide-first、不等待异步清理，并只保留最小 no-resurrection fact；普通举报达到 `10 distinct eligible reporters` 时触发 auto-hide + moderation review，不直接物理删除或改写 Verification。
+
+BoardInstance Resolution 是 Verified structured facts 形成后、Public Projection 选择 current state 前的独立连续性判断。`BoardInstance` 表达现实中某地点、某时间连续存在的一张具体实体版面；多个不同来源、用户和时间的 BoardObservation 可以关联同一实例，但 Observation、Source 和 Rights lineage 永远不被合并、覆盖或删除。`BoardInstance != BoardObservation != VerifiedBoard`，也不等于 Venue、PublicMapLead 或 CanonicalBoard；CanonicalBoard 和更高层自动规范化继续 `DEFER`。
+
+V2 MVP 采用保守唯一继承：Location 只生成附近候选，不能单独证明 identity；Board Identity Signature 只引用 verified structured facts，Board State Transition 以 observedAt 检查余票和各赏级变化的物理合理性。只有唯一无冲突候选才建立同一实例关联；没有候选创建新实例；两个或更多合理候选保持 `AMBIGUOUS`。False Merge 的成本高于 False Split，“当前无法辨认”是合法结论，系统不得为了地图简洁强行合并。同店、同位置、同 IP、同款版面都可以同时存在多个 BoardInstance。
+
+BoardInstance MVP 不依赖长期保存原图、缩略图、image hash 或视觉 fingerprint。稀缺 Human Assistance 只通过一次可跳过的结构化双卡比较产生 `SAME_BOARD / DIFFERENT_BOARD / CANNOT_TELL` evidence；回答不是 merge command，不能覆盖结构化 hard conflict，也不能导致不可逆 destructive merge。精确预算、cooldown、频率和 UI 留给 V2-D/pilot。
+
+三个判断必须分开：Verified Board 回答“这个版面数据是否真实”；Opportunity Evaluation 回答“这个真实版面是否具有抽赏机会价值”；V2 Public Authorization 回答“这个 exact public preview 是否适合公开”。真实版面可以是低机会价值，具有机会价值的版面也不能绕过 consent 和公开安全。因此只有 Opportunity Evaluation 满足未来获批的 deterministic PASS 规则才可进入 Public Eligibility；`PublicCandidate` 已由 D04-05 批准为可选 service workflow concept，不进入固定核心链路，也不能自动成为 PublicMapLead。
+
+Opportunity Evaluation 第一阶段只定义信息表达模型和可解释的 `Rule-based Opportunity Evaluation` 方向。TASK-V2-01 不比较方案 C 是否比方案 B 更有价值，也不承担市场需求比较；它以脱敏合成场景和内部 walkthrough 验证 VerifiedBoard、Freshness 与 OpportunityReason 是否可理解。当前不决定 score 公式、权重、ranking、推荐排序、AI／黑盒评分或离散状态到 PASS 的映射；外部用户样本原始证据仍为 `EXTERNAL_USER_N=0 / LOWER_CONFIDENCE`；TASK21真实Closed Pilot复验已由Founder显式豁免，缺口接受，不能写 empirical PASS。
+
+当前 V2 产品差量已取得信息表达可理解性、统一数据来源／Verification／Freshness 生命周期、平台／Geo／成本／包体 Evidence，并由 7 个 Product Decision Gates 冻结 audience、`Public Contribution Attribution Policy`、历史范围、network rights、public image、exact public fields、CanonicalBoard 与 completion extras。TASK-V2-02 负责 V1_HISTORY、两条玩家未来贡献和 NETWORK_SOURCE Initial Data Seeding 的统一设计；不建立来源可信度等级。30/10/14与单区域约20条是历史Pilot/seeding target，非当前mandatory gate，亦非V2-A/V2-B完成条件；当前为上海50/全国300 Founder-approved热启动。PublicLocationCoverageUnit技术方向保留，生产coverage/去重与成本政策转TASK22验收。
+
+V1 private authority 采用 source-specific input：抽赏记录为 `P1 → publishedSubmissionVersion → exact APPROVED Submission`，上传记录为 finalized direct P1 的用户确认/修正 snapshot、recognition/correction provenance、observedAt/location/source/delete state。两者都只是未来 V2 Verification 输入，不能因“已有数据”自动公开；Direct 也不因没有 assisted submission 而永久排除。Public Eligibility 继续检查 VerifiedBoard、Opportunity PASS、MapContributionAuthorization、allowlist、PublicLocation、Freshness、privacy、moderation 与 withdrawal/delete。`PublicMapLead` 保持 storage-agnostic public service boundary。
+
+TASK-V2-04 已批准 Observation/VerifiedBoard 分离、immutable versioned lineage、exact-version evaluation binding、Opportunity/Public PASS 分离、PublicCandidate 非核心、每 lineage 最多一个 active lead、CanonicalBoard DEFER 和 split authority；D04-A1 追加 BoardInstance、保守唯一继承、歧义保留、可纠错 association 和 human-evidence boundary，不重开前述决定。TASK-V2-05 已批准五个正交生命周期语义维度且不冻结完整生产状态枚举：Observation、Verification、Evaluation、Eligibility 和 Public Visibility 可以独立变化；BoardInstance association 是独立可纠错关系；Freshness、retention、hide、withdraw、takedown 与 delete 不得合并成同一状态。
+
+地图 current state 以已解析 BoardInstance 为单位安全选择：同一已解析实例的历史 Observation 默认不重复产生 current marker；同地点不同实例允许并存；AMBIGUOUS 不得伪装成一个确认实例。D05-09 固定：任何会影响公开事实或 current-map interpretation 的新 immutable Observation revision，立即使旧 current lead 退出地图；新版本重新通过适用门禁后才可出现。完全内部 metadata 变化不得伪造 Observation revision。Freshness 只表示距离最近可信观察过去多久，不保证现实状态未变化，地图不得暗示实时库存。
+
+身份继续复用 V1 silent WeChat Account find-or-create；MVP 地图读需要 trusted silent Account，但不显示登录按钮、不要求手机号或 Profile 完成。D06-A1 已批准 PLAYER detail 公开安全 nickname/avatar，缺自定义资料使用 `ICHI 玩家` 与 ICHI fallback avatar；private account/profile identity 和 avatar fileID 不公开。上传核心输入仍是拍摄／观察位置、版面信息与可选 `venueNote`。
+
+TASK-V2-07 已批准把位置分为 `ObservationLocation → LocationResolution → PublicLocationProjection` 与独立 `OptionalLocationEnhancement`：Observation Location 是内部真实观察位置／断言及证据，Public Location 是经授权、隐私和安全规则处理后给地图用户看的投影，二者都不等于 Venue。Location 只能产生 BoardInstance candidates，不能单独证明 identity；同一 Location cluster 允许多个 BoardInstance。公开精度语义为 EXACT/APPROXIMATE/AREA/NOT_PUBLIC，采用最低必要安全精度，但具体米数、网格、offset 与适用场景仍 deferred。没有合格 Public Location 时保留内部事实但不生成 marker。venueNote 采用 `PUBLIC_FROM_SAFETY_VERIFIED_SOURCE`：完全相同的玩家 V1 文本只在可验证的 content/version safety provenance、适用授权、Rights、Eligibility 与 lifecycle 均有效时条件公开；安全结论随内容 provenance 而非字段名继承。新内容和 NETWORK_SOURCE/provider/admin 文本需要等价新安全门，失败只省略 note，不自动移除合格 marker。venueNote 始终不是 Venue 或 BoardInstance identity proof。腾讯 POI／腾讯位置服务继续只是 Optional Enhancement，不阻塞 core。
+
+2026-09-08 的完整 V2 草案保留在 `memory-bank/v2-planning-draft-pre-v1-truth-review.md`，状态仍为 `HISTORICAL / BLOCKED DRAFT — NOT EXECUTABLE`；其每个旧任务已在新审核包中逐项 KEEP/MODIFY/SPLIT/MERGE/MOVE/DELETE/DEFER/ALREADY_COMPLETED/BLOCKED 映射。本文中较早的 dated V2 账号、提醒、图片、`ContributionDraft`、`wx.login` 或 page-first 描述只作历史，不能覆盖当前 plan、Current Truth Registry 或 frozen contracts。
+
+2026-08-31 V1.0.1 三 Tab 分流分享图（已合入 `main` 的源码基线；`UPLOADED=YES`、`APPROVED=YES`、`PUBLISHED=UNCONFIRMED`，不得创建标签或 Release）：公开分享界面包含识别、地图与“我的”，允许值固定为 `tab=recognize|map|my`；缺失或其他非法值安全回退识别。三个 Tab 都支持好友转发、朋友圈和微信原生复制链接，标题统一为“ICHI 一奇抽赏助手”。好友固定使用由现有默认头像重新采样到 520×520、居中放入 800×640 纯白画布的唯一包内 5:4 `/assets/share/ichi-share-message.png`；这相对上一版 400×400 主体是精确的线性 30% 放大，中心不偏移、轮廓不裁切。朋友圈直接复用未修改的既有默认头像 `/assets/v1-29/ichi-avatar.png`，不新增朋友圈图片；复制链接只含 query。上一轮裁切不理想且占包体的 1254×1254 高清分享图已删除。“我的”分享只允许公开 Tab 和固定官方图片，接收方仍以自己的微信可信身份静默启动账号并进入自己的 Profile；任何分享结果都禁止携带版面、记录、提交、账号、owner、微信身份、资料、额度、抽取、照片或识别结果。地图只恢复既有 `map-preview`。该源码已由 `929d189…` 合入 `main`；微信已上传并审核通过，但实际发布仍未确认，故不得创建 `v1.0.1` 标签或 Release。
 
 2026-08-29 `WECHAT_PREMATURE_PROFILE_AUTH_GATE` REVIEW_BLOCKER 产品修订（当前最高事实源）：新用户首次打开小程序时，必须通过现有 `CloudBase WXContext → bootstrap-account` 可信链静默建立或恢复 ICHI Account，并直接进入首页；头像、昵称、手机号均不参与登录、Account 存在性、ownership、配额、辅助抽赏、仅上传版面、MY_UPLOADS 或 PHOTO verify 权限。新 Account 的服务端默认昵称为 `ICHI 玩家`，`avatarFileId` 不存在／为空时 UI 使用包体 `/assets/v1-29/ichi-avatar.png`，不得为默认头像创建 Storage 对象或批量迁移旧账号。首页 bootstrap、辅助抽赏和仅上传版面都不得因 `profileState`、空头像或默认昵称弹出资料授权墙；静默 bootstrap 技术失败只进入通用连接失败／重试态。
 
@@ -64,7 +701,9 @@ R2 赏级状态球的初始数量等于用户确认的 `remainingTickets`，初�
 
 2026-08-23 V1-F 真实识别验收规则：四张授权实体版面构成当前完整 Golden Set；总票数与已贴数必须逐赏 exact match，不能用“差 1”或可编辑草稿替代准确率通过。真实请求必须保存并检查 Qwen `message.content`、Provider AJV、Normalize、RecognitionContract 与客户端结果，首错层必须有证据。当前 `qwen3.7-flash` 单图基线在两张复杂图上仍于 raw 层失败；不允许用文件名／赏级特判、伪造 fixture、恢复视觉校正页、增加目标赏级页或静默换模型掩盖失败。V1-F 继续 `IN_PROGRESS`，识别结果仍须允许用户人工校正。
 
-## 1. 产品定义
+## 1. 历史产品定义（非当前 V2 执行输入）
+
+> 本节至“3. 版本策略”末尾保留早期总览，其中门店／店员专属身份、门店直传、完全匿名浏览等内容已被 V2-B current contract 取代，不得用于解锁或实现。当前 V2 只使用顶部收口基线中的四类 Source、silent Account、Location≠Venue 与 PublicMapLead 服务边界；第 4 节恢复为已冻结 V1 历史基线。
 
 ICHI 是一套面向一番赏玩家，并连接经核验线下门店供给者的现场决策与版面发现产品。它从“用户已经站在真实版面前，如何做决策”开始，再将同一个版面在使用中产生、经用户授权与核对的当前状态，用于回答“出发前去哪里找到想抽的 IP 和值得现场核对的版面”。除玩家现场观察外，持有一番赏授权的线下门店及其经核验员工，也可以直接拍摄店内完整当前版面，提供与真实销售场所直接相连的一手现场来源。产品从可独立成立的私人即时计算开始，只有前一阶段价值与风险门通过后，才增加公共线索和多人协作能力。
 
@@ -198,6 +837,8 @@ V1 版面识别采用阿里云百炼 `qwen3.7-flash` 的单模型、单次整版
 
 ### 3.2 V2：好版线索地图与核对式共享
 
+当前执行与完成定义以2026-10-02 production convergence/hot-start决定及canonical TASK22为准，旧Closed Pilot路线已supersede。
+
 核心假设：地图可以由两类一手现场供给共同支撑。第一类是决策工具中已为玩家本人产生价值的真实版面，在不要求重复录入的前提下，经主动授权、集中举证、隐私处理和审核转化为地图线索。第二类是经核验的授权门店或店员，直接拍摄店内完整现场版面，经身份／任职关系、位置、时间、版面证据和审核后发布。只有来源类型、来源核验状态、观察时间和证据状态同时清楚时，线索才有价值且不易被误读为实时库存。
 
 V2 的两条供给主路径是“版面决策使用 → 玩家本人授权贡献 → 核对审核 → 地图发布”和“授权门店／经核验店员直接拍摄 → 识别校正 → 来源与版面审核 → 地图发布”；官方 API、平台合作或人工策展仍可作为其他合法补充。V2 复用 V1 已建立的账号、私有观察候选、规范记录和删除能力，在此基础上增加公共地图、来源核验、审核、现实版面匹配、版本和发布。用户可以不登录浏览地图或继续使用本机抽赏能力，但玩家贡献、玩家现场直传、门店／店员直传都必须由既有认证会话绑定 `ownerAccountId`；客户端短码不得决定归属。账号不承担论坛、发帖、评论、关注、私信、群组或动态流。
@@ -210,7 +851,9 @@ V2 前端扩展玩家的“收手 → 是否共享 → 集中拍摄已抽赏票�
 
 V3 必须经过受控试验，不直接开放公共写入。
 
-## 4. V1 功能设计
+## 4. V1 功能设计（发布历史基线）
+
+> 本章保留 V1 从旧识别协议到最终 R2 的设计演进。涉及 v3/v4/v5、H0/R1、T/P/U、Base64、旧上传或旧列表语义的段落只解释历史，不是当前运行合同；当前事实只认本文顶部 reconciliation、V1 release manifest、实际代码／测试和冻结 R2 三项 SHA。
 
 ### 4.1 信息架构
 
@@ -438,7 +1081,6 @@ V1 保存以下本地实体：
 | DrawRound           | ID、时间、奖项与数量、成本、状态                                                                           |
 | LocalDrawDraft      | `boardId`、保存时间、当前票位、抽取记录、累计花费和最近撤销状态；同一 `boardId` 再次保存时覆盖旧草稿       |
 | LocalRecordIdentity | `recordId`／`boardId`、六位字母数字辅助编码、记录类型、IP、拍摄时间与可选提交时间；辅助编码是当前记录域内的稳定查找码，不作为鉴权凭证 |
-| ContributionDraft   | `boardId`、最近提交时间、当前票位快照、抽取记录快照、地点备注与核对状态；同一 `boardId` 只保留最新一次提交 |
 | LocationSnapshot    | GCJ-02 坐标、定位精度、获取时间、来源路径、用户确认地点与隐私同意版本；V1 版面输入只允许相机，来源固定标记拍摄时位置 |
 | FormulaSnapshot     | 公式版本、输入摘要、输出摘要                                                                               |
 | BoardDraft          | 图像完整性、奖级、券位观察、价格、辅助区块、二维排布和字段置信度                                           |
@@ -448,7 +1090,7 @@ V1 保存以下本地实体：
 
 - 网页中间层使用浏览器本地存储适配层验证会话行为；最终产品使用微信小程序 Storage 适配层，二者通过同一领域状态契约对齐；
 - V1 网页在正式本地存储接入前，使用当前浏览器会话缓存保留一番赏版面、抽取记录和最近 50 抽撤销栈；离开后重新回到版面可恢复这些临时状态，但不代表云端保存或账号记录；
-- V1-D 已验收网页实现在识别确认时生成仅本机可用的 `boardId`，并在每次提交核对时保存当前版面和抽取记录快照；同一版面再次提交覆盖该快照，重新导入并确认的版面才获得新 ID；
+- V1-D 曾验收网页低保真以 `boardId` 覆盖贡献草稿；该历史交互占位已被最终 V1 的 Local Board / versioned Upload Submission / Current Publication 三层语义取代，不再承担云端数据契约；
 - 记录身份分为四层，职责不能混用：`boardId` 标识一次版面确认链路并承担同版面草稿的幂等覆盖；`recordId` 在接入服务端后标识跨列表、跨状态的同一条规范记录；六位辅助编码只供用户查找与交流；未来 `ownerAccountId`／来源主体由已认证服务端会话绑定，承担贡献归属。重新导入同一物理版面仍可能获得新的 `boardId`，因此 `boardId` 或六位辅助编码都不等于对现实版面的排他所有权；
 - V1 接入账号后，创建者归属必须由服务端从认证会话写入并保持不可由客户端短码改写。未来贡献成就、奖励资格和其他用户点赞都引用规范 `recordId` 与账号归属：点赞附着于同一条已发布贡献，奖励通过可审计事件结算，均不得直接以六位记录码作为账户键或授权依据。成就、奖励与点赞仍属后续待批准能力，V1 只建立可承接它们的身份边界；
 - 六位辅助编码只解决记录辨认与归因入口，不单独阻止脏信息进入好版地图。公共信息池必须同时通过来源类型与身份核验、初始版面结构、抽赏事实、字段守恒、多来源重复／冲突检测、审核状态、观察时间披露和版本处理；待上传、待核对、来源不明或仅凭短码关联的记录始终留在私人记录域，不进入地图；
@@ -530,17 +1172,21 @@ V1 的异常页面与阻塞式异常弹窗必须保留各自的状态语义：�
 - 一番赏版面上的奖级概率只显示百分比，统一保留三位小数；每次抽取后按最新余票重新计算并更新显示。
 - 颜色不得是唯一状态表达；网页以高对比度、可读文字、足够触控目标、键盘顺序和语义 HTML 为可访问性目标。
 
-## 5. V2 功能设计
+## 5. V2 功能设计（当前边界 + 历史探索）
+
+2026-09-08 blocked draft 曾提议：private P1 + exact approved Submission 作为私有事实、另建最小可撤销 serving projection/API、区分 device/venue/public coordinate/precision、公开前明确同意与审核，并把提醒/海报等延后。以上仅是待后续从 V1 truth 重建的候选，不是当前已批准 V2 设计或完成门。
+
+> HISTORICAL DESIGN EXPLORATION — NOT EXECUTABLE. 下方 5.1—5.9 保留旧 V2 账号、提醒、分享、BoardLead、ContributionDraft、门店和玩家流程细节。它们不得用于解锁或实现；可复用内容必须在 V1 truth 人工审阅后的完整 V2 planning 中重新证实和批准。
 
 ### 5.1 账号扩展与贡献归属
 
 - V1 已建立微信身份、稳定内部 `accountId`、服务端会话、本人私有观察、退出和删除基础；以下公开资料、地图贡献与提醒扩展仍须在 V2-A 人工验收时批准；
-- V2 复用并扩展 V1 账号能力，增加公开 `ICHI ID`、资料编辑、地图贡献归属、审核状态同步、本人贡献撤回／删除和公共线索删除链路；
-- 小程序以 `wx.login` 获取一次性登录凭证，由可信服务端／云函数换取并校验微信身份，再映射到 ICHI 账号。客户端不得提交 `openid`、`unionid` 或其他自报字段作为登录结果；微信昵称和头像不是身份凭证；
-- V1 服务端首次建号时生成不可枚举、不可变的内部 `accountId`，只用于账号、私有观察和删除关系，不向普通用户展示、复制或编辑。V2 启用公开资料时再为既有账号生成全局唯一、可复制且不可编辑的公开 `ICHI ID`，用于用户查找本人账号和必要的贡献者展示；稳定身份不能随昵称、头像或设备变化；
-- V1 的昵称和头像由用户通过当前微信小程序支持的显式头像选择与昵称填写能力一次性绑定，不依赖已废弃的自动资料获取。账号建立与鉴权不依赖昵称或头像，拒绝授权时继续使用系统默认资料；绑定成功后页面立即使用服务端返回资料，重新进入时从服务端恢复，V1 不提供自由编辑入口，服务端重复绑定返回现有资料，不允许客户端借资料字段改变所有者；
+- V2 复用 V1 已完成的公开 `ICHI ID`、可选资料编辑和静默 Account，只增量实现地图贡献归属、公开资料 allowlist、审核状态同步、本人贡献撤回／删除和公共线索删除链路；
+- 小程序调用云函数时由 `cloud.getWXContext()` 提供可信微信身份，服务端幂等 find-or-create ICHI Account。客户端不得提交 `openid`、`unionid` 或其他自报字段作为登录结果；微信昵称和头像不是身份凭证；
+- V1 服务端首次建号时已经生成不可枚举、不可变的内部 `accountId` 和全局唯一、可复制的公开 `ICHI ID`；V2 不重复生成，只决定地图是否展示最小贡献者标识。稳定身份不能随昵称、头像或设备变化；
+- 昵称和头像由用户主动编辑，拒绝、取消或缺失时继续使用默认昵称与包体 avatar fallback；Profile 完整度不阻断地图浏览、V1 工具或已允许的贡献入口，也不允许客户端借资料字段改变所有者；
 - 账号数据、身份映射、会话、贡献状态和提醒规则保存在服务端数据库；V1/V2 版面与赏票照片只允许进入识别专用私有临时对象目录，不得形成长期对象或数据库引用，头像等非版面资产若未来使用对象存储必须独立评审权限与生命周期。微信身份凭证、私有结构化记录不得写入公开地图文档；
-- 地图浏览、线索筛选和 V1 本机抽赏不要求登录；本机草稿可以在未登录状态继续保存，但任何会创建服务端贡献草稿或可能影响地图的个人提交都必须先完成登录；
+- 地图浏览、线索筛选和 V1 本机抽赏不要求 Profile 完整；V2 MVP 使用 silent trusted Account read，完全 unauthenticated public API 留待未来新合同。任何会创建服务端 Submission 或可能影响地图的个人提交都必须先由 silent Account 建立可信所有权；
 - 服务端必须从当前认证会话写入 `ownerAccountId`，忽略或拒绝客户端自行声明的拥有者。`boardId` 只承担同版面草稿幂等，`recordId`／`contributionId` 承担规范记录引用，六位辅助编码只用于查找，三者都不能替代账号认证；
 - 玩家贡献、玩家现场直传以及门店／店员直传均保留可审计的账号归属。门店来源标记还必须额外通过门店授权或任职关系核验，普通账号登录不能自动获得门店身份；
 - 地图可显示经过隐私规则批准的最小贡献者标识和来源类型，用于说明“这条观察由哪个账号提交”；真实 `accountId`、登录凭据、联系方式和私有记录不公开。是否公开昵称或头像由 V2-00 的隐私决策确定；
@@ -558,7 +1204,7 @@ V1 的异常页面与阻塞式异常弹窗必须保留各自的状态语义：�
 ### 5.3 分享
 
 - 以下转发与海报路径是待 V2-00／V2-03 批准的推荐基线；目标基础库、客户端与平台审核结果必须在实现前复核；
-- V2 统一术语：“提交贡献”指创建私有 `ContributionDraft` 并进入核对／审核；“社交分享”指转发地图详情或导出抽赏海报。两者使用独立按钮、状态和埋点，任何一个动作都不得默认触发另一个；
+- V2 统一术语：“提交贡献”指创建 versioned private Upload Submission 并进入核对／审核；“社交分享”指转发已公开地图详情或导出抽赏海报。两者使用独立按钮、状态和埋点，任何一个动作都不得默认触发另一个；
 - 打开已公开地图详情、转发该详情以及从本机抽赏记录生成海报均不要求登录；保存云端关注规则、订阅微信提醒和提交贡献才进入账号门禁；
 - 地图版面详情提供微信原生转发入口，分享路径只指向可公开访问的 `BoardLead` 详情。接收者打开时读取当前审核、观察时间和下线状态，不把分享时的旧状态伪装为实时库存；
 - 一次抽赏记录结束后，用户可以主动生成固定尺寸的抽赏结果分享海报。海报默认只包含 IP／系列、抽取时间、初始与剩余票数、本轮抽数、用户选择公开的奖级结果、ICHI 品牌与“结果仅代表本次记录”提示；累计花费、精确门店、账号资料和六位记录码默认不进入海报，只有明确选择后才能加入允许公开的字段；
@@ -598,10 +1244,12 @@ V1-F 的赏票送审采用版本化增量合并：每次提交以同一 `recordI
 3. 用户点击“提交核对”时，未登录用户先完成账号登录，已登录用户直接继续；取消登录不会丢失本机草稿，也不会创建服务端记录。服务端以认证会话中的 `ownerAccountId` 与 `boardId` 创建或更新私有、可取消的贡献草稿；同一账号对同一版面的再次提交必须用最新的当前票位和完整抽取记录覆盖原草稿，不能产生第二条贡献。OCR 按 A—Z／SP1—SP4／OTHER 汇总赏票数量，并与该最新快照逐项比对；前端仍停留在一番赏版面，中央状态框显示“已提交”“后台正在核对本次提交”和“退出后可导入新的版面”，并提供“继续”关闭提示与“退出”返回导入版面；不在前台等待或查看结果页。
 
 共享取证拍摄页的操作行始终同时显示主操作与右侧圆形“撤回”按钮：主胶囊自身在取景框正下方水平居中，宽度放大至 Design Tokens 规定的 `212px`，文字在胶囊内部双轴居中；撤回按钮固定在主胶囊右侧但不得把主胶囊推离页面中线。未拍摄时主操作文字为“拍摄赏票”，拍摄后变为“已拍摄”；撤回清空拍摄状态并重新挂载取景框内相机。拍摄所得照片使用等比裁切填充整个取景框，四边与取景框四边贴合并由同一圆角裁切，不得以缩略图或小图标形式停留在中央。主胶囊在可用状态始终为纯黑底白字且不显示光晕；只有已拍摄且地点与备注去除首尾空格后非空，右侧提交对勾才变为黑底白图标并显示玫红／紫色外缘光晕，其余时间保持灰色禁用态。已提交状态框使用网页的标准内容节奏，两个底部操作保持 `16px` 组间距且整组位于卡片内容之后，不向卡片底部挤压或留出无意义大块空白。辅助抽赏共享取证与“仅上传版面”的已提交状态卡正文统一为“后台正在核对。本次提交退出后可导入新的版面。”，两条路径不得出现不同说明。
-4. 后台核对中的记录继续保留在“我的 → 我的记录”，并显示“待核对”；主动提交核对的记录同时出现在“我的 → 我上传的版面”。赏票与本机抽取历史核对一致后，同一规范记录更新为“已上传”，不能复制第二份记录；不一致、失败或取消不自动补正、不进入地图，并允许账号本人重拍、撤回或删除。V2 后续审核并发布地图时再增加独立“已公开”维度。
+4. 后台核对中的记录继续保留在“我的 → 我的记录”，并显示“待核对”；主动提交核对的记录同时出现在“我的 → 我上传的版面”。赏票与本机抽取历史核对一致后，同一规范记录更新为“已上传”，不能复制第二份记录；不一致、失败或取消不自动补正、不进入地图，并允许账号本人重拍、撤回或删除。“已上传”只说明该条记录核验通过；地图公开是独立的服务端资格维度，按本节第 5 项及当前版本条例同意状态自动判断，不在上传卡片上添加逐条发布操作。
 5. 服务端只把核对通过且已审核的历史版面观察写入好版地图。地图不公开逐抽记录、抽中赏级或赏票原图；通过证据、隐私和发布规则后才显示“已公开”，用户可以请求删除其证据和地图线索。观察时间早不构成单独拒绝理由，但页面必须明确显示时间并提示不代表当前库存。
 
 ### 5.8 历史观察时间
+
+当前NETWORK公开可见性由2026-10-02决定增加30天ceiling（待实现/验证）；本节较早无年龄门禁描述不覆盖该来源专用政策。PLAYER未被本轮增加相同期限，Freshness与history retention继续分离。
 
 好版地图展示的是带时间戳的历史现场观察，不承诺当前库存。公开候选默认按 `observedAt` 从新到旧排序，但不设置“超过若干小时自动归档”或“过旧不得公开”的产品门禁：
 
@@ -690,7 +1338,7 @@ V1-F 的赏票送审采用版本化增量合并：每次提交以同一 `recordI
 - 区块内 step 可以共享尚待区块验收的中间产物；只有整区块通过后，这些产物和新认知才成为后续区块可依赖的已批准基线；
 - 每个页面需要在真实手机宽度下审阅；
 - V1 用真实抽取任务验证理解度和操作摩擦；
-- V2 按来源类型分别验证玩家贡献转化、门店／店员直传覆盖和更新频率、供给密度、观察时间理解度、发现到到店核对的转化、新贡献回流，以及用户是否把任一来源线索误解为实时库存；
+- V2 当前人工门为TASK21 Pre-Pilot已批准、Closed Pilot显式waiver/真实行为缺口接受，以及TASK22 PLAYER/NETWORK production seeding、真机与release验收；原真实多用户转化/误解研究不是mandatory predecessor，不记录为PASS；门店/店员正式身份仍DEFER；
 - V3 先在受控范围验证多人票池绑定、版本冲突、证据质量和审核成本。
 
 ## 9. 决策门
@@ -714,3 +1362,20 @@ V1 产品基线已于 2026-08-05 通过用户人工验收；其中 UI 主端与�
 6. V3 默认使用门店、系列、时间和现场版面照片的弱绑定；编号或证据链经验证后才可升级为强绑定。
 
 V1-01A 的产品目录覆盖政策已被 2026-08-05 的版面语法认知取代并保留为历史记录，不再承担 V1 发布门禁。识别效果仍需在后续步骤使用少量经授权图片做质量评估，但这些图片不是运行时产品目录。
+# 2026-09-18 单 marker 信息卡展示修正
+
+赏级卡片可以展示由公开余票事实派生的抽取概率：`tier.remainingTickets / board.totalRemaining`，以两位小数百分比呈现；总余量为零时显示 `0.00%`，赏级余量或总余量未知时显示 `—`，不得使用截图中的示例数字替代真实数据。赏级网格维持两行 column-first 排列（第一列A/B、第二列C/D），可横向滑动并保留平台弹性回弹。详情信息按钮使用包内文件图标资源。该展示修正仍限制在单 marker 信息卡，不扩展推荐、地图或后端语义。
+# 2026-09-19 地图交互行为修订（历史，已被 2026-09-20 重建取代）
+
+地图聚合只采用三级语义缩放：远景 `LEVEL_0`、中景 `LEVEL_1`、近景 `LEVEL_2`。手势进行时保持当前 topology，`regionchange=end` 后一次性计算最终 level；点击聚合点先选中，再按其成员 bounds 调整 camera，camera 到位后切换子层。split/merge 通过轻量屏幕 ghost 保留来源感；ghost 不代表真实地理对象。LEVEL_2 的同坐标 marker 不继续放大、不 spiderfy，而显示数量 stack，点击后由业务层选择具体版面。地图真实位置、marker 视觉和详情卡信息结构保持不变。
+## 2026-09-28 TASK-V2-19 candidate runtime 公开字段门禁（Founder 决策）
+
+沿用已批准的单一地图信息卡交互：不恢复 LIST/MAP 切换、不新增独立展开详情或地图内可提交举报入口；当前举报图标继续为无动作占位。TASK19 的 runtime 审计将这些历史原型路径标为不可达，不能把禁用态计作正向测试 PASS。现有正向机会筛选 chip 的标签由本地 synthetic leadId 映射得到，缺少真实公开字段 authority；在 candidate 正常产品路径中暂时停用这些 chip，待后续产品决定。任何公开标签、primary tag 或筛选结果都不得继续从 opaque publicLeadId、fixture 别名或本地硬编码推断。地图基本 public query/detail、真实位置与已批准 Marker/聚合/单卡语义保持候选接线目标。
+
+## 2026-09-28 TASK-V2-19 多贡献者与上传 lineage 修订（Founder 决策）
+
+上传流程中的“分享至地图／暂不分享”是该条上传记录的公开意图；`SHARE` 可在验证通过后形成 `ACTIVE` contribution，但公开资格还必须同时满足该用户已同意**当前版本**的“地图贡献条例”、verification/location/note/UGC safety gates 全部 PASS。条例是用户级、版本化 consent，覆盖其合格贡献，不是逐记录 `ACCEPT`、`WITHDRAW`、发布或撤回动作。用户关闭条例或版本过期时，其全部 contribution 失去公开资格并触发重投影；同一 BoardInstance 其他用户的有效 contribution 不得被撤销或删除。“我上传的版面”展示条例卡片与“了解并选择”；记录列表仍仅可查看和删除本人云端记录。此前 v2 无条例 candidate exact diff 与七个包均为 `SUPERSEDED_DO_NOT_DEPLOY`，不得部署。生产 V1 私有记录到 V2 的迁移仍须后续独立授权。
+
+贡献实体归属于本人上传记录，BoardInstance 与 PublicMapLead 可由多人的 `ACTIVE + eligible + SHARE` contribution 共同支持，不归任一单独用户。“我上传的版面”仅看本人记录与状态并删除本人原始上传；删除传播到该 contribution 后重投影。仍有其他有效贡献时 lead/marker 保留、贡献者展示与最新安全备注回退；最后一个有效贡献被删除时先隐藏再退役，快照与 cursor 失效，迟到事件不得复活。详情卡在现有单卡中展示当前有效贡献者的安全头像叠加及可配置数量截断，备注选服务端可信观察／版本时序下最新合法安全备注。缺失 Profile 使用既有安全 fallback，不成为浏览门禁。
+
+Candidate-only synthetic upload 必须由服务端签发 `candidateRecordRef`，并让上传成功态／我上传的版面、Verification、VerifiedBoard、Resolver、HA request/get-my/answer、Contribution、Projection 指向同一可信版本链。客户端自报身份、owner、version、V1 `recordId` 均不是 shadow authority；不读取或复制 V1 private records。HA 可跳过，失败不影响上传成功，回答仅作为 evidence。机会最终判定和机会筛选 chip 继续延后。

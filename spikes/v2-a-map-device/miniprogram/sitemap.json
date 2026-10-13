@@ -1,0 +1,4 @@
+{
+  "desc": "TASK-V2-03 isolated development spike",
+  "rules": [{ "action": "disallow", "page": "*" }]
+}

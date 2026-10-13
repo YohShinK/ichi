@@ -1,0 +1,20 @@
+{
+  "status": "B2_R4_DEPLOYED_READBACK_VERIFIED_TEST_CLOSED",
+  "environmentId": "cloud1-d7gxqfwv783a1f131",
+  "function": {
+    "name": "v2-shadow-get-my-assistance",
+    "artifact": "packages/v2-map/resources/shadow-functions/artifacts/b2-r4/v2-shadow-get-my-assistance.zip",
+    "sha256": "ad193cbc00074ef5500643b1b46430ceb574bf012e6e634e4c7711c94f228681",
+    "runtime": "nodejs20.19",
+    "entry": "index.main",
+    "collections": [
+      "v2ShadowSourceFixtures",
+      "v2ShadowHumanAssistanceRequests",
+      "v2ShadowControlState"
+    ],
+    "sourceVersion": "v2-19-b2-r4-enrollment",
+    "deployed": true,
+    "remoteCodeSha256": "971a49b6236694f539befbf51addc1d695f8c64303e0623c65a5f3f41abfcc38",
+    "approvedSourceFilesMatched": 14
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "status": "LOCAL_ARTIFACTS_ONLY_PENDING_REVIEW",
+  "environmentId": "cloud1-d7gxqfwv783a1f131",
+  "proposalVersion": "v2-19-shadow-2-exact-contract",
+  "deployed": false,
+  "cloudWrite": false,
+  "functions": [
+    {
+      "name": "v2-shadow-query-public-map-leads",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/v2-shadow-query-public-map-leads.zip",
+      "sha256": "0e96dc89951cf425fd9f8f361f16c645c228a4f3a45f823120de4621ffc036bc",
+      "runtime": "nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowPublicMapLeads",
+        "v2ShadowPublicMapQuerySnapshots",
+        "v2ShadowControlState"
+      ],
+      "sourceVersion": "v2-19-b2-r1-local",
+      "deployed": false,
+      "cloudWrite": false
+    },
+    {
+      "name": "v2-shadow-get-public-map-lead-detail",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/v2-shadow-get-public-map-lead-detail.zip",
+      "sha256": "7cf7f42d3d23a18fc6429b4730a0ca69bf4ce6684bfa7ccaf640b73ba542a47a",
+      "runtime": "nodejs20.19",
+      "entry": "index.main",
+      "collections": ["v2ShadowPublicMapLeads", "v2ShadowControlState"],
+      "sourceVersion": "v2-19-b2-r1-local",
+      "deployed": false,
+      "cloudWrite": false
+    },
+    {
+      "name": "v2-shadow-resolve-observation",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/v2-shadow-resolve-observation.zip",
+      "sha256": "95434faa8422fb4709cb9482c0037d8e171f0950b14e0225f06636f1d1d0ce34",
+      "runtime": "nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowHumanAssistanceRequests",
+        "v2ShadowControlState",
+        "v2ShadowProjectionOutbox"
+      ],
+      "sourceVersion": "v2-19-b2-r1-local",
+      "deployed": false,
+      "cloudWrite": false
+    },
+    {
+      "name": "v2-shadow-get-my-assistance",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/v2-shadow-get-my-assistance.zip",
+      "sha256": "b6c00fbf455a4e0b54322e0afcfaca4dca887da67f290b67c72305eeed5eea13",
+      "runtime": "nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowSourceFixtures",
+        "v2ShadowHumanAssistanceRequests",
+        "v2ShadowControlState"
+      ],
+      "sourceVersion": "v2-19-b2-r1-local",
+      "deployed": false,
+      "cloudWrite": false
+    },
+    {
+      "name": "v2-shadow-answer-assistance",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/v2-shadow-answer-assistance.zip",
+      "sha256": "90b9ed7c91dec9385acb6d61bc5f560b28015800da411b3e979134165bc3b908",
+      "runtime": "nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowHumanAssistanceRequests",
+        "v2ShadowHumanAssistanceEvidence",
+        "v2ShadowControlState",
+        "v2ShadowProjectionOutbox"
+      ],
+      "sourceVersion": "v2-19-b2-r1-local",
+      "deployed": false,
+      "cloudWrite": false
+    },
+    {
+      "name": "v2-shadow-reconcile-projection",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/v2-shadow-reconcile-projection.zip",
+      "sha256": "e040c45f8663fdfcbffcf4f18d00edcd6aed8ada1199ec74aef9f66f04b6c616",
+      "runtime": "nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowProjectionOutbox",
+        "v2ShadowPublicMapLeads",
+        "v2ShadowPublicMapQuerySnapshots",
+        "v2ShadowControlState"
+      ],
+      "sourceVersion": "v2-19-b2-r1-local",
+      "deployed": false,
+      "cloudWrite": false
+    }
+  ]
+}

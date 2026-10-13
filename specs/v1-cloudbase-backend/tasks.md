@@ -1,6 +1,8 @@
 # V1 CloudBase 后端任务拆分
 
-> 状态：已批准实施
+> HISTORICAL V1 TASK LIST — NOT EXECUTABLE. 勾选状态和未勾选黄金样本项是当时实施快照；V1 已按 release evidence 关闭。不得从本文件重新打开 V1、解锁 V2 或覆盖当前 Implementation Plan。
+
+> 状态：`COMPLETED / HISTORICAL BASELINE`
 >
 > 执行方式：先在仓库中整体完成并验证，再作为一个受控部署批次写入 CloudBase；以下细分项用于开发、测试和追踪，不要求逐项在控制台操作。
 

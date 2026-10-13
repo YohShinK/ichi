@@ -1,10 +1,19 @@
 import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { NextResponse } from "next/server";
 import { buildBoardOutlook } from "../../board-outlook";
+import {
+  APP_FILING_NUMBER,
+  APP_FILING_QUERY_URL,
+} from "../../../../client/miniprogram/platform/app-filing-config";
 
 export const dynamic = "force-dynamic";
 
-const sourcePath = "/Users/cunfu/Downloads/网页 ui.html";
+const sourcePath = path.join(process.cwd(), "source", "ichi-v1-29.html");
+
+const appFilingMarkup = APP_FILING_NUMBER
+  ? `<footer class="ichi-app-filing" data-testid="app-filing-footer"><span>${APP_FILING_NUMBER}</span><a href="${APP_FILING_QUERY_URL}" target="_blank" rel="noopener noreferrer">工信部备案查询</a></footer>`
+  : "";
 
 const toastMascotMarkup = String.raw`<!-- 轻提醒吉祥物：大赏四芒星眼、中赏现有圆点眼、小赏眯眼 -->
                 <div id="toast-mascot" class="ichi-toast-mascot relative flex justify-center items-center w-12 h-12 flex-shrink-0 mr-3" data-presentation="medium" aria-hidden="true">
@@ -94,10 +103,14 @@ const bridgeStyle = String.raw`<style id="ichi-v1-29-fixes">
   body[data-ichi-page="my"] { height: 100dvh; overflow: hidden !important; }
   body[data-ichi-page="my"] main { height: 100dvh !important; overflow: hidden !important; }
   body[data-ichi-page="my"] #pages-container { height: calc(100dvh - var(--ichi-bottom-nav-clearance)); padding: var(--ichi-top-safe-area) var(--ichi-page-gutter) 0 !important; overflow: hidden !important; }
-  body[data-ichi-page="my"] #page-my { height: 100%; overflow: hidden; }
+  body[data-ichi-page="my"] #page-my { display: flex; height: 100%; overflow-y: auto; flex-direction: column; }
   body[data-ichi-page="my"] #page-my > div:first-child { margin: 0 0 16px !important; gap: 16px !important; }
   body[data-ichi-page="my"] #page-my .light-capsule { padding: 6px !important; gap: 0 !important; margin-bottom: 12px !important; }
   body[data-ichi-page="my"] #page-my a { min-height: 55px; padding: 10px 12px !important; }
+  body[data-ichi-page="my"] #page-my > * { flex-shrink: 0; }
+  .ichi-app-filing { display: flex; margin-top: auto; padding: 24px 8px 12px; align-items: center; flex-direction: column; gap: 2px; color: #6b7280; font-size: 12px; font-weight: 400; line-height: 18px; text-align: center; }
+  .ichi-app-filing span { overflow-wrap: anywhere; }
+  body[data-ichi-page="my"] #page-my .ichi-app-filing a { min-height: 36px; padding: 8px 12px !important; color: inherit; line-height: 20px; }
   body[data-ichi-page="method"] { height: 100dvh; overflow: hidden !important; }
   body[data-ichi-page="method"] #pages-container { padding: var(--ichi-top-safe-area) var(--ichi-page-gutter) 0 !important; }
   body[data-ichi-page="method"] #page-method { height: calc(100dvh - 94px); overflow: hidden; }
@@ -1575,6 +1588,10 @@ export async function GET(request: Request) {
       ? requestedView
       : "start";
   const html = source
+    .replace(
+      /(<section id="page-my"[\s\S]*?)(<\/section>)/u,
+      `$1${appFilingMarkup}$2`,
+    )
     .replace("</head>", `${bridgeStyle}</head>`)
     .replace("<body ", `<body data-ichi-page="${initialView}" `)
     .replace(

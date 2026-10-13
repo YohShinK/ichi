@@ -17,7 +17,8 @@
   "requiredConfiguration": ["PRIZE_TICKET_LOCATION_RADIUS_METERS"],
   "openApiPermissions": {
     "bind-wechat-profile": ["security.msgSecCheck"],
-    "recognize-draw-tickets": ["security.msgSecCheck"]
+    "recognize-draw-tickets": ["security.msgSecCheck"],
+    "finalize-board-observation": ["security.msgSecCheck"]
   },
   "functions": [
     "bootstrap-account",

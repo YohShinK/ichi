@@ -1,0 +1,410 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ichi-network-workflow-v1",
+  "$defs": {
+    "collect": {
+      "type": "object",
+      "required": ["schemaVersion", "candidates"],
+      "properties": {
+        "schemaVersion": {
+          "const": "ichi-network-collect-v1"
+        },
+        "candidates": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "required": ["record", "evidence"],
+            "properties": {
+              "record": {
+                "type": "object"
+              },
+              "evidence": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "object",
+                  "required": ["path", "sha256", "kind"],
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "kind": {
+                      "enum": [
+                        "PHOTO",
+                        "CAPTURE",
+                        "LOCATION",
+                        "SCREENSHOT",
+                        "VIDEO_FRAME",
+                        "VIDEO_METADATA",
+                        "HUMAN_RECOGNITION",
+                        "PROFILE",
+                        "POI",
+                        "VIDEO_COVER"
+                      ]
+                    },
+                    "originalFile": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "videoMetadataSha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              },
+              "firstDiscoveredAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "similarityHints": {
+                "type": "array"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "searches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["query", "coverage", "coverageStatus"],
+            "properties": {
+              "query": {
+                "type": "string",
+                "minLength": 1
+              },
+              "coverage": {
+                "type": "array"
+              },
+              "coverageStatus": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "replacement": {
+      "type": "object",
+      "required": ["record", "evidence"],
+      "properties": {
+        "record": {
+          "type": "object"
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["path", "sha256", "kind"],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "kind": {
+                "enum": [
+                  "PHOTO",
+                  "CAPTURE",
+                  "LOCATION",
+                  "SCREENSHOT",
+                  "VIDEO_FRAME",
+                  "VIDEO_METADATA",
+                  "HUMAN_RECOGNITION",
+                  "PROFILE",
+                  "POI",
+                  "VIDEO_COVER"
+                ]
+              },
+              "originalFile": {
+                "type": "string",
+                "minLength": 1
+              },
+              "videoMetadataSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "grant": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "actor",
+        "scope",
+        "mode",
+        "environment",
+        "authorizationRef",
+        "authorizedAt",
+        "userInstructionRef",
+        "curatorAuthorityId",
+        "maxBatchSize",
+        "operations"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "ichi-network-auto-delegation-v1"
+        },
+        "actor": {
+          "const": "USER"
+        },
+        "scope": {
+          "const": "ICHI_NETWORK_PHASE5"
+        },
+        "mode": {
+          "const": "AUTO_CLEAR_ESCALATE_UNCERTAIN"
+        },
+        "environment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authorizationRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authorizedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userInstructionRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "curatorAuthorityId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "maxBatchSize": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 50
+        },
+        "operations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "const": "PUBLISH"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "recognition": {
+      "type": "object",
+      "required": ["schemaVersion", "items"],
+      "properties": {
+        "schemaVersion": {
+          "const": "ichi-network-recognition-v1"
+        },
+        "items": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "required": ["id", "binding"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "binding": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "complete": {
+                "type": "boolean"
+              },
+              "boardImageSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "tiers": {
+                "type": "object"
+              },
+              "locationEvidenceSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "locationDigest": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "locationConfirmed": {
+                "type": "boolean"
+              },
+              "highPrizeTiersConfirmed": {
+                "type": "boolean"
+              },
+              "noteSafetyConfirmed": {
+                "type": "boolean"
+              },
+              "noteSafety": {
+                "type": ["object", "null"]
+              },
+              "rights": {
+                "type": "object"
+              },
+              "confidence": {
+                "type": "number"
+              },
+              "grandPrizeEvidence": {
+                "type": "object"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "review": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "batchRevision",
+        "userInstructionRef",
+        "decisions"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "ichi-network-review-v1"
+        },
+        "batchRevision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "userInstructionRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decisions": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "authorization": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "actor",
+        "operation",
+        "environment",
+        "planDigest",
+        "expiresAt",
+        "userInstructionRef"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "ichi-network-external-authorization-v1"
+        },
+        "actor": {
+          "const": "USER"
+        },
+        "operation": {
+          "enum": ["PUBLISH", "CORRECT", "TAKEDOWN"]
+        },
+        "environment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "planDigest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "userInstructionRef": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "fixes": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "batchRevision",
+        "userInstructionRef",
+        "items"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": "ichi-network-founder-fixes-v1"
+        },
+        "batchRevision": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "userInstructionRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "items": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "revision",
+              "binding",
+              "imageSha256",
+              "remaining"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "binding": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "imageSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "remaining": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

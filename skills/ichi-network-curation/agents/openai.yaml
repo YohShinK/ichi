@@ -1,0 +1,6 @@
+interface:
+  display_name: "ICHI 自动录入"
+  short_description: "自动识别与录入清楚的网络版面，将数量、地点或证据疑点集中交给 Founder 处理"
+  default_prompt: "使用 $ichi-network-curation 自动采集并录入证据完整的 ICHI 版面，将无法识别或待确认项集中交给 Founder。"
+policy:
+  allow_implicit_invocation: true

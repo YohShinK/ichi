@@ -1,0 +1,12 @@
+{
+  "name": "reconcile-map-projection",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": ">=20.19.0 <21"
+  },
+  "dependencies": {
+    "wx-server-sdk": "4.0.2"
+  }
+}

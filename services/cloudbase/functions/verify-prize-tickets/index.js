@@ -9,6 +9,11 @@ const domain = require(
     ? "./shared/domain"
     : "../../shared/domain",
 );
+const sourceBridge = require(
+  fs.existsSync(path.join(__dirname, "shared", "source-bridge-producer.js"))
+    ? "./shared/source-bridge-producer"
+    : "../../shared/source-bridge-producer",
+);
 const { TEXT_SAFETY_USAGE, reviewTextSafety } = require(
   fs.existsSync(path.join(__dirname, "shared", "text-safety-review.js"))
     ? "./shared/text-safety-review"
@@ -709,6 +714,14 @@ const main = async (event = {}, runtime = {}) => {
               updatedAt: nowIso(),
             },
           });
+        await sourceBridge.enqueueSourceChange({
+          tx,
+          env,
+          recordId,
+          ownerAccountId: freshObservation.ownerAccountId,
+          reason: "CHANGED",
+          nowMs: Date.parse(nowIso()),
+        });
       });
       const noteReview = await reviewUserNote({
         cloud,
@@ -775,6 +788,18 @@ const main = async (event = {}, runtime = {}) => {
                 updatedAt: timestamp,
               },
             });
+        if (
+          status === "APPROVED" &&
+          version >= Number(fresh.publishedSubmissionVersion || 0)
+        )
+          await sourceBridge.enqueueSourceChange({
+            tx,
+            env,
+            recordId,
+            ownerAccountId: fresh.ownerAccountId,
+            reason: "PUBLISHED",
+            nowMs: Date.parse(timestamp),
+          });
       });
       metrics.providerStage = "RESULT_PERSISTED";
       terminalCompleted = true;
@@ -1021,6 +1046,18 @@ const main = async (event = {}, runtime = {}) => {
               updatedAt: nowIso(),
             },
           });
+      if (
+        status === "APPROVED" &&
+        version >= Number(fresh.publishedSubmissionVersion || 0)
+      )
+        await sourceBridge.enqueueSourceChange({
+          tx,
+          env,
+          recordId,
+          ownerAccountId: fresh.ownerAccountId,
+          reason: "PUBLISHED",
+          nowMs: Date.parse(nowIso()),
+        });
     });
     metrics.providerStage = "RESULT_PERSISTED";
     terminalCompleted = true;

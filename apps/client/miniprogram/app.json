@@ -10,7 +10,7 @@
   "style": "v2",
   "permission": {
     "scope.userLocation": {
-      "desc": "用于把版面拍摄地点写入本次私有版面记录"
+      "desc": "用于记录版面拍摄地点和在地图中显示我的当前位置"
     }
   },
   "requiredPrivateInfos": ["getLocation"],

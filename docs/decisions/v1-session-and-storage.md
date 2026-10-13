@@ -1,5 +1,7 @@
 # V1 会话、版面兼容与本地存储决策
 
+> HISTORICAL V1 DECISION. 本文件中的旧 qwen3.5 准确率和早期存储候选只保留当时语境；当前运行事实以 V1 release manifest、R2 三项冻结 SHA、实际代码／测试和 Memory Bank Current System Truth Registry 为准。
+
 > 状态：APPROVED
 >
 > 日期：2026-08-06

@@ -9,6 +9,7 @@
     "es6": true,
     "enhance": true,
     "postcss": true,
+    "coverView": true,
     "minified": true,
     "minifyWXSS": true,
     "minifyWXML": true,
@@ -29,9 +30,17 @@
     }
   },
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "cli-agent-run"
+      }
+    ],
     "include": []
   },
   "simulatorPluginLibVersion": {},
-  "editorSetting": {}
+  "editorSetting": {},
+  "watchOptions": {
+    "ignore": ["cli-agent-run/**/*"]
+  }
 }

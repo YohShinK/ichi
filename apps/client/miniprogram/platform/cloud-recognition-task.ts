@@ -157,6 +157,10 @@ export const finalizeCloudObservation = (
     readonly promptVersion: string;
     readonly consentVersion: string;
     readonly disclosureVersion: string;
+    readonly uploadSharing?: {
+      readonly disclosureVersion: string;
+      readonly rightsAttested: true;
+    };
   },
 ): Promise<{
   readonly recordId: string;
@@ -164,6 +168,7 @@ export const finalizeCloudObservation = (
   readonly boardId: string;
   readonly status: string;
   readonly idempotent: boolean;
+  readonly uploadSharingAcknowledged?: boolean;
 }> => callCloudFunction(api, "finalize-board-observation", input);
 
 export const prepareCloudObservationForUpload = (
@@ -185,6 +190,10 @@ export const prepareCloudObservationForUpload = (
     readonly promptVersion: string;
     readonly consentVersion: string;
     readonly disclosureVersion: string;
+    readonly uploadSharing?: {
+      readonly disclosureVersion: string;
+      readonly rightsAttested: true;
+    };
   },
 ): Promise<{
   readonly recordId: string;
@@ -193,6 +202,7 @@ export const prepareCloudObservationForUpload = (
   readonly status: string;
   readonly idempotent: boolean;
   readonly created: boolean;
+  readonly uploadSharingAcknowledged?: boolean;
 }> =>
   callCloudFunction(api, "finalize-board-observation", {
     action: "prepare-new-upload",

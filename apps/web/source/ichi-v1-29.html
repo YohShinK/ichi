@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ICHI - 浅色高光交互原型</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap');
+        
+        :root {
+            --bg-light: #f0f2f5;
+            --text-dark: #111111;
+        }
+
+        body {
+            font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-dark);
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+            overflow-x: hidden;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+        .page-enter { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(15px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-enter { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes slideUp {
+            0% { opacity: 0; transform: translateY(100%); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .light-capsule {
+            position: relative;
+            background-color: rgba(255, 255, 255, 0.98);
+            border-radius: 32px;
+            box-shadow: 
+                0 8px 30px rgba(0, 0, 0, 0.05), 
+                0 2px 8px rgba(0, 0, 0, 0.03),  
+                inset 0 1px 2px rgba(255, 255, 255, 1);
+            z-index: 1;
+        }
+        
+        .light-capsule::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse 150px 80px at 70% 0%, rgba(255, 180, 50, 0.08) 0%, transparent 100%),
+                linear-gradient(90deg, rgba(80, 120, 255, 0.05) 0%, transparent 30%);
+            pointer-events: none;
+        }
+
+        .btn-wrapper {
+            position: relative;
+            display: flex;
+            width: 100%;
+        }
+
+        .btn-glow {
+            position: absolute;
+            top: -2px; left: -2px; right: -2px; bottom: -2px;
+            border-radius: 99px;
+            z-index: 1;
+            background: 
+                radial-gradient(circle at 8% 42%, #e014a0 0%, #e014a0 18%, transparent 40%),
+                radial-gradient(circle at 92% 85%, #5528c2 0%, #5528c2 25%, transparent 50%);
+            filter: blur(2px); 
+            pointer-events: none;
+            opacity: 0.85;
+            transition: opacity 0.3s ease;
+        }
+        .btn-wrapper:hover .btn-glow { opacity: 1; filter: blur(3px); }
+
+        .action-button {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 52px;
+            border-radius: 99px;
+            background: #111111;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .action-button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+            background: #000000;
+        }
+        .action-button:active { transform: scale(0.98); }
+
+        .ghost-button {
+            width: 100%; height: 52px; border-radius: 99px;
+            background: rgba(0,0,0,0.05); color: #111; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .ghost-button:active { background: rgba(0,0,0,0.1); }
+
+        @keyframes slideDownToast {
+            0% { opacity: 0; transform: translate(-50%, -20px) scale(0.95); }
+            10% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+            90% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -20px) scale(0.95); }
+        }
+        .toast-animate { animation: slideDownToast 3.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    </style>
+</head>
+<body class="flex min-h-screen pb-32 md:pb-8">
+
+    <aside class="hidden md:flex flex-col w-64 bg-white/60 backdrop-blur-2xl border-r border-black/5 p-6 h-screen sticky top-0 overflow-y-auto z-40 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+        <div class="mb-8">
+            <h1 class="text-3xl font-black tracking-tighter text-black">ICHI</h1>
+            <p class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">V1-29 Prototype</p>
+        </div>
+        <nav class="flex flex-col gap-1.5" id="desktop-nav-links">
+            <div class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-2 mb-1">主流程 (13页)</div>
+            <a href="#start" class="nav-link px-4 py-2.5 rounded-2xl text-sm font-bold text-zinc-500 hover:bg-black/5 transition-colors">1. 导入版面</a>
+            <a href="#resume" class="nav-link px-4 py-2.5 rounded-2xl text-sm font-bold text-zinc-500 hover:bg-black/5 transition-colors">2. 继续上次记录</a>
+            <a href="#camera-capture" class="nav-link px-4 py-2.5 rounded-2xl text-sm font-bold text-zinc-500 hover:bg-black/5 transition-colors">3. 拍摄版面</a>
+            <a href="#recognizing" class="nav-link px-4 py-2.5 rounded-2xl text-sm font-bold text-zinc-500 hover:bg-black/5 transition-colors">4. 正在识别版面</a>
+            <a href="#draft" class="nav-link px-4 py-2.5 rounded-2xl text-sm font-bold text-zinc-500 hover:bg-black/5 transition-colors">5. 识别结果</a>
+            <a href="#target" class="nav-link px-4 py-2.5 rounded-2xl text-sm font-bold text-zinc-500 hover:bg-black/5 transition-colors">6. 选择目标奖</a>
+            <a href="#draw" class="nav-link px-4 py-2.5 rounded-2xl text-sm font-black text-white bg-black shadow-[0_4px_12px_rgba(0,0,0,0.15)]">7. 一番赏版面 (核心)</a>
+            <a href="#storage" class="nav-link px-4 py-2.5 rounded-2xl text-sm font-bold text-zinc-500 hover:bg-black/5 transition-colors">8. 账号管理</a>
+            <a href="#local-records" class="nav-link px-4 py-2.5 rounded-2xl text-sm font-bold text-zinc-500 hover:bg-black/5 transition-colors">9. 本地记录</a>
+            <a href="#contributions" class="nav-link px-4 py-2.5 rounded-2xl text-sm font-bold text-zinc-500 hover:bg-black/5 transition-colors">10. 我的贡献</a>
+            <a href="#deleted" class="nav-link px-4 py-2.5 rounded-2xl text-sm font-bold text-zinc-500 hover:bg-black/5 transition-colors">11. 本地记录已清空</a>
+            <a href="#method" class="nav-link px-4 py-2.5 rounded-2xl text-sm font-bold text-zinc-500 hover:bg-black/5 transition-colors">12. 计算与隐私说明</a>
+            <a href="#my" class="nav-link px-4 py-2.5 rounded-2xl text-sm font-bold text-zinc-500 hover:bg-black/5 transition-colors">13. 我的</a>
+            
+            <div class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mt-6 mb-1">V2 预留 & 异常页</div>
+            <a href="#map-preview" class="nav-link px-4 py-2.5 rounded-2xl text-sm font-bold text-zinc-500 hover:bg-black/5 transition-colors">14. 好版地图</a>
+            <a href="#cannot-build-pool" class="nav-link px-4 py-2.5 rounded-2xl text-sm font-bold text-zinc-500 hover:bg-black/5 transition-colors">15. 异常状态页组</a>
+        </nav>
+    </aside>
+
+    <main class="flex-1 relative w-full max-w-xl mx-auto overflow-x-hidden">
+        
+        <header class="sticky top-0 z-40 w-full px-4 pt-4 pb-2 bg-[#f0f2f5]/90 backdrop-blur-xl flex justify-between items-center" id="global-header">
+            <div class="flex flex-col">
+                <span class="text-xl font-black tracking-tighter text-[#111]">ICHI</span>
+                <span class="text-[9px] text-[#e014a0] font-bold tracking-widest uppercase" id="header-subtitle">V1-29 Prototype</span>
+            </div>
+            <a href="#method" class="text-[10px] text-white font-bold bg-gradient-to-r from-[#e014a0] to-[#5528c2] px-3.5 py-2 rounded-full shadow-md hover:shadow-lg transition-shadow">计算与隐私</a>
+        </header>
+
+        <!-- 顶部轻提醒 Toast (已移除怪兽图标和晕影，换成基于赏票结构的极简小吉祥物) -->
+        <div id="toast-message" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-[70] pointer-events-none opacity-0 flex items-center justify-center w-[90%] max-w-[400px]">
+            <div class="light-capsule w-full flex items-center justify-between px-3 py-2.5 h-[64px]" style="border-radius: 32px;">
+                
+                <!-- 新吉祥物：源自赏票结构的迷你票根小精灵 -->
+                <div class="relative flex justify-center items-center w-12 h-12 flex-shrink-0 mr-3">
+                    <div class="w-10 h-8 bg-black rounded-lg relative flex items-center justify-center shadow-md transform -rotate-3">
+                        <div class="absolute right-[-4px] top-1/2 transform -translate-y-1/2 w-1.5 h-3 bg-[#f0f2f5] rounded-l-sm"></div>
+                        <div class="flex gap-1.5">
+                            <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
+                            <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex-grow flex flex-col justify-center overflow-hidden">
+                    <span class="text-[15px] text-[#111] font-bold tracking-tight whitespace-nowrap truncate">成功抽出 <span id="toast-rank" class="font-black text-[#e014a0] ml-0.5">A赏</span></span>
+                    <span class="text-[10px] text-zinc-500 font-medium tracking-wide mt-0.5">余票已更新</span>
+                </div>
+
+                <div class="relative flex flex-shrink-0 ml-2">
+                    <div class="relative z-20 h-10 px-4 rounded-full bg-black text-white flex items-center justify-center font-bold text-xs shadow-md">
+                        <span class="text-[9px] text-zinc-400 mr-1.5">剩</span>
+                        <span id="toast-remaining" class="text-sm font-black">79</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="pages-container" class="px-4 py-4 w-full">
+            
+            <section id="page-start" class="page-view hidden">
+                <div class="light-capsule p-8 mb-6 flex flex-col items-center justify-center min-h-[340px] text-center">
+                    <div class="w-20 h-20 bg-[#f0f2f5] rounded-full flex items-center justify-center mb-6 shadow-inner border border-white">
+                        <i class="ph-bold ph-camera text-3xl text-zinc-400"></i>
+                    </div>
+                    <h2 class="text-2xl font-black mb-3 tracking-tight text-[#111]">导入版面照片</h2>
+                    <p class="text-xs text-zinc-500 mb-10 max-w-[220px] leading-relaxed font-medium">拍摄或选择一张完整、清楚的兑换进度板照片以建立票池。</p>
+                    
+                    <div class="btn-wrapper" onclick="window.location.hash='#camera-capture'">
+                        <div class="btn-glow"></div>
+                        <button class="action-button">
+                            <i class="ph-bold ph-scan text-xl mr-2"></i> 拍摄版面
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="light-capsule p-6 border-l-4 border-l-black">
+                    <h3 class="text-sm font-bold text-[#111] mb-2 flex items-center"><i class="ph-fill ph-shield-check text-zinc-400 text-lg mr-1.5 drop-shadow-md"></i> 只保存在这台设备</h3>
+                    <p class="text-[11px] text-zinc-500 leading-relaxed font-medium">无需登录。票池和抽取记录仅保存在当前浏览器，照片不会作为历史附件留下。</p>
+                </div>
+            </section>
+
+            <section id="page-resume" class="page-view hidden">
+                <div class="light-capsule p-6 mb-6 relative overflow-hidden">
+                    <i class="ph-fill ph-clock-counter-clockwise absolute -right-6 -top-6 text-[120px] text-black/5 pointer-events-none"></i>
+                    
+                    <h2 class="text-[10px] font-bold text-[#e014a0] tracking-widest uppercase mb-1">找到上次的票池记录</h2>
+                    <p class="text-xl font-black text-[#111] mb-1 tracking-tight">大阪店现场 · 2026-08-06</p>
+                    <p class="text-xs text-zinc-500 mb-8 font-medium">保存时间: 今天 14:32</p>
+                    
+                    <div class="grid grid-cols-3 gap-3 mb-10">
+                        <div class="bg-[#f0f2f5] rounded-2xl p-3 flex flex-col items-center justify-center shadow-inner">
+                            <span class="text-[10px] text-zinc-500 font-bold mb-1">当前余票</span>
+                            <span class="text-xl font-black text-[#111]">37</span>
+                        </div>
+                        <div class="bg-[#f0f2f5] rounded-2xl p-3 flex flex-col items-center justify-center shadow-inner">
+                            <span class="text-[10px] text-zinc-500 font-bold mb-1">累计花费</span>
+                            <span class="text-lg font-black text-[#e014a0]">¥5,600</span>
+                        </div>
+                        <div class="bg-[#f0f2f5] rounded-2xl p-3 flex flex-col items-center justify-center shadow-inner">
+                            <span class="text-[10px] text-zinc-500 font-bold mb-1">待确认</span>
+                            <span class="text-xl font-black text-[#111]">1抽</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col gap-4">
+                        <div class="btn-wrapper" onclick="window.location.hash='#draw'">
+                            <button class="action-button">
+                                <i class="ph-bold ph-play text-xl mr-2"></i> 继续记录抽取
+                            </button>
+                        </div>
+                        <div class="flex gap-3">
+                            <a href="#local-records" class="ghost-button">管理记录</a>
+                            <a href="#start" class="ghost-button">建新票池</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="page-camera-capture" class="page-view hidden">
+                <div class="fixed inset-0 z-50 bg-[#f0f2f5] flex flex-col">
+                    <div class="absolute top-0 left-0 w-full p-6 z-20 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent pt-12 pointer-events-none">
+                        <a href="#start" class="pointer-events-auto w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white active:bg-white/30 transition-colors border border-white/30 shadow-sm">
+                            <i class="ph-bold ph-x text-lg"></i>
+                        </a>
+                        <div class="bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20 shadow-sm">
+                            <span class="text-xs font-bold text-white tracking-widest"><i class="ph-fill ph-scan mr-1"></i> 对齐兑换进度板</span>
+                        </div>
+                        <div class="w-10"></div>
+                    </div>
+
+                    <div class="flex-1 relative overflow-hidden flex items-center justify-center bg-[#111]">
+                        <div class="absolute inset-0 bg-[url('https://placehold.co/800x1200/444/555?text=Camera+Feed')] bg-cover bg-center opacity-80"></div>
+                        <div class="relative w-[85%] max-w-sm aspect-[3/4] border border-white/20 rounded-[32px] z-10 flex flex-col items-center justify-between p-6 shadow-[0_0_0_4000px_rgba(0,0,0,0.5)]">
+                            <div class="absolute top-0 left-0 w-12 h-12 border-t-[5px] border-l-[5px] border-white rounded-tl-[32px] shadow-[inset_2px_2px_4px_rgba(0,0,0,0.1)]"></div>
+                            <div class="absolute top-0 right-0 w-12 h-12 border-t-[5px] border-r-[5px] border-white rounded-tr-[32px] shadow-[inset_-2px_2px_4px_rgba(0,0,0,0.1)]"></div>
+                            <div class="absolute bottom-0 left-0 w-12 h-12 border-b-[5px] border-l-[5px] border-white rounded-bl-[32px] shadow-[inset_2px_-2px_4px_rgba(0,0,0,0.1)]"></div>
+                            <div class="absolute bottom-0 right-0 w-12 h-12 border-b-[5px] border-r-[5px] border-white rounded-br-[32px] shadow-[inset_-2px_-2px_4px_rgba(0,0,0,0.1)]"></div>
+                            
+                            <div class="w-full flex-1 flex flex-col justify-center gap-5 opacity-60 pointer-events-none">
+                                <div class="h-14 bg-white/40 rounded-xl w-3/4 mx-auto backdrop-blur-md"></div>
+                                <div class="h-10 bg-white/30 rounded-xl w-full backdrop-blur-md"></div>
+                                <div class="h-10 bg-white/30 rounded-xl w-full backdrop-blur-md"></div>
+                                <div class="h-10 bg-white/30 rounded-xl w-5/6 mx-auto backdrop-blur-md"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="h-[140px] bg-white/90 backdrop-blur-2xl pb-8 px-10 flex items-center justify-center border-t border-white shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-20 rounded-t-[40px] relative">
+                        <div class="absolute left-8">
+                            <button class="w-[52px] h-[52px] bg-[#f0f2f5] rounded-full flex items-center justify-center text-zinc-500 shadow-inner border border-black/5 active:scale-95 transition-all hover:bg-[#e2e8f0]">
+                                <i class="ph-fill ph-image text-[22px]"></i>
+                            </button>
+                        </div>
+                        <a href="#recognizing" class="relative flex items-center justify-center w-[84px] h-[84px] rounded-full bg-[#f0f2f5] p-2 shadow-[inset_0_4px_10px_rgba(0,0,0,0.05),0_4px_15px_rgba(0,0,0,0.1)] active:scale-95 transition-transform border border-white">
+                            <div class="w-full h-full bg-[#111] rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.3)] border border-black flex items-center justify-center relative overflow-hidden group">
+                                <div class="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent opacity-50"></div>
+                            </div>
+                        </a>
+                        <div class="absolute right-8">
+                            <button class="w-[52px] h-[52px] bg-[#f0f2f5] rounded-full flex items-center justify-center text-zinc-500 shadow-inner border border-black/5 active:scale-95 transition-all hover:bg-[#e2e8f0]">
+                                <i class="ph-bold ph-lightning-slash text-[22px]"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="page-recognizing" class="page-view hidden">
+                <div class="fixed inset-0 z-50 bg-[#f0f2f5] flex flex-col items-center justify-center p-6">
+                    <div class="light-capsule w-full max-w-sm p-10 flex flex-col items-center">
+                        <div class="relative w-28 h-28 mb-8 flex justify-center items-center">
+                            <div class="absolute inset-0 rounded-full border-[6px] border-[#f0f2f5] shadow-[inset_0_4px_10px_rgba(0,0,0,0.1)]"></div>
+                            <div class="absolute inset-0 rounded-full border-[6px] border-zinc-800 border-t-transparent animate-spin"></div>
+                            <div class="relative z-20 w-14 h-14 bg-black rounded-[50%] rounded-bl-sm transform -rotate-[15deg] shadow-lg flex items-center justify-center">
+                                <i class="ph-fill ph-scan text-white text-xl transform rotate-[15deg]"></i>
+                            </div>
+                        </div>
+                        
+                        <h2 class="text-2xl font-black mb-8 tracking-tight text-[#111]">正在提取版面</h2>
+                        
+                        <div class="w-full space-y-5 px-4">
+                            <div class="flex items-center gap-4 text-sm font-bold text-[#111]">
+                                <div class="w-6 h-6 flex items-center justify-center text-lg" id="rec-step-1"><i class="ph-bold ph-circle text-zinc-300"></i></div>
+                                <span>照片解析完成</span>
+                            </div>
+                            <div class="flex items-center gap-4 text-sm font-bold text-zinc-400" id="rec-text-2">
+                                <div class="w-6 h-6 flex items-center justify-center text-lg" id="rec-step-2"><i class="ph-bold ph-circle text-zinc-300"></i></div>
+                                <span>奖级与余票读取中</span>
+                            </div>
+                            <div class="flex items-center gap-4 text-sm font-bold text-zinc-400" id="rec-text-3">
+                                <div class="w-6 h-6 flex items-center justify-center text-lg" id="rec-step-3"><i class="ph-bold ph-circle text-zinc-300"></i></div>
+                                <span>数据校验构建池</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="page-draft" class="page-view hidden">
+                <div class="mb-5 flex items-end justify-between">
+                    <div>
+                        <h2 class="text-2xl font-black tracking-tight text-[#111]">核对结果</h2>
+                        <p class="text-[11px] text-zinc-500 font-bold mt-1">请修正识别错误的余量</p>
+                    </div>
+                    <a href="#cannot-build-pool" class="text-xs text-[#e014a0] font-bold bg-[#e014a0]/10 px-3 py-1.5 rounded-full">识别有误?</a>
+                </div>
+                
+                <div class="light-capsule p-3 mb-6 flex flex-col gap-2">
+                    <div class="p-4 bg-[#f0f2f5] rounded-2xl flex justify-between items-center shadow-inner">
+                        <span class="text-base font-black text-[#111]">LAST 赏</span>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-zinc-500 font-bold">数量</span>
+                            <input type="number" value="1" class="w-14 bg-white shadow-sm border border-black/5 rounded-xl text-center text-[#111] text-sm py-1.5 font-bold outline-none" readonly>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 mt-1">
+                        <div class="p-3.5 bg-white border border-black/5 shadow-sm rounded-2xl flex flex-col gap-3">
+                            <div class="flex justify-between items-center"><span class="font-black text-xl text-[#111]">A</span></div>
+                            <div class="flex justify-between text-[10px] text-zinc-400 font-bold px-1"><span>总数</span><span>剩余</span></div>
+                            <div class="flex gap-2">
+                                <input type="number" value="2" class="flex-1 bg-[#f0f2f5] rounded-xl text-center text-[#111] py-1.5 outline-none font-bold shadow-inner border border-transparent focus:border-black">
+                                <input type="number" value="2" class="flex-1 bg-black text-white rounded-xl text-center font-black py-1.5 outline-none">
+                            </div>
+                        </div>
+                        <div class="p-3.5 bg-white border border-black/5 shadow-sm rounded-2xl flex flex-col gap-3">
+                            <div class="flex justify-between items-center"><span class="font-black text-xl text-[#111]">B</span></div>
+                            <div class="flex justify-between text-[10px] text-zinc-400 font-bold px-1"><span>总数</span><span>剩余</span></div>
+                            <div class="flex gap-2">
+                                <input type="number" value="3" class="flex-1 bg-[#f0f2f5] rounded-xl text-center text-[#111] py-1.5 outline-none font-bold shadow-inner border border-transparent focus:border-black">
+                                <input type="number" value="3" class="flex-1 bg-black text-white rounded-xl text-center font-black py-1.5 outline-none">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="p-4 bg-white border border-black/5 shadow-sm rounded-2xl flex items-center justify-between mt-1">
+                        <span class="font-black text-lg text-[#111]">D 赏</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-zinc-400 font-bold mr-1">总/余</span>
+                            <input type="number" value="12" class="w-12 bg-[#f0f2f5] rounded-xl text-center text-[#111] text-xs py-1.5 font-bold shadow-inner">
+                            <span class="text-zinc-300 font-black">/</span>
+                            <input type="number" value="11" class="w-12 bg-black text-white rounded-xl text-center font-black text-xs py-1.5">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-wrapper" onclick="simulateConfirmDraft()">
+                    <div class="btn-glow"></div>
+                    <button class="action-button">确认并生成版面</button>
+                </div>
+            </section>
+            
+            <div id="generating-overlay" class="fixed inset-0 z-[100] bg-white/90 backdrop-blur-md hidden flex-col items-center justify-center p-6">
+                <div class="w-16 h-16 bg-black rounded-[50%] rounded-bl-sm transform -rotate-[15deg] shadow-lg flex items-center justify-center mb-6 animate-bounce">
+                    <i class="ph-bold ph-magic-wand text-white text-2xl transform rotate-[15deg]"></i>
+                </div>
+                <h3 class="text-2xl font-black text-[#111] mb-2 tracking-tight">版面已确认</h3>
+                <p class="text-sm text-zinc-500 text-center font-medium">正在将数据排版为一番赏实体视觉...</p>
+                <div class="w-48 h-1.5 bg-[#f0f2f5] rounded-full mt-8 overflow-hidden shadow-inner border border-black/5">
+                    <div class="h-full bg-black w-1/2 animate-[pulse_1s_ease-in-out_infinite]"></div>
+                </div>
+            </div>
+
+            <section id="page-target" class="page-view hidden">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-black tracking-tight mb-2 text-[#111]">选择目标奖</h2>
+                    <p class="text-xs text-zinc-500 font-medium">关注的奖级将优先在版面中高亮并计算成本。</p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-10">
+                    <label class="p-5 rounded-[24px] flex items-center gap-4 cursor-pointer bg-black shadow-[0_8px_20px_rgba(0,0,0,0.15)] border-2 border-zinc-800 transition-all">
+                        <div class="w-6 h-6 rounded-full bg-white flex items-center justify-center shadow-sm">
+                            <i class="ph-bold ph-check text-black text-sm"></i>
+                        </div>
+                        <span class="font-black text-white text-xl">A 赏</span>
+                    </label>
+                    <label class="light-capsule p-5 flex items-center gap-4 cursor-pointer transition-all active:scale-95">
+                        <div class="w-6 h-6 rounded-full border-2 border-zinc-300 flex items-center justify-center bg-[#f0f2f5] shadow-inner"></div>
+                        <span class="font-black text-[#111] text-xl">B 赏</span>
+                    </label>
+                    <label class="light-capsule p-5 flex items-center gap-4 cursor-pointer transition-all active:scale-95">
+                        <div class="w-6 h-6 rounded-full border-2 border-zinc-300 flex items-center justify-center bg-[#f0f2f5] shadow-inner"></div>
+                        <span class="font-black text-[#111] text-xl">C 赏</span>
+                    </label>
+                    <label class="light-capsule p-5 flex items-center gap-4 cursor-pointer transition-all active:scale-95">
+                        <div class="w-6 h-6 rounded-full border-2 border-zinc-300 flex items-center justify-center bg-[#f0f2f5] shadow-inner"></div>
+                        <span class="font-black text-[#111] text-xl">D 赏</span>
+                    </label>
+                </div>
+                
+                <div class="btn-wrapper" onclick="window.location.hash='#draw'">
+                    <div class="btn-glow"></div>
+                    <button class="action-button">进入抽取版面</button>
+                </div>
+            </section>
+
+            <section id="page-draw" class="page-view hidden pb-20">
+                <div class="light-capsule px-6 py-4 flex items-center justify-between mb-8 sticky top-[72px] z-30">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-extrabold text-zinc-400 tracking-widest uppercase mb-0.5">REMAINING</span>
+                        <div class="flex items-baseline gap-1">
+                            <span id="draw-remaining" class="text-4xl font-black text-[#111] tracking-tighter leading-none">80</span>
+                            <span class="text-xs font-bold text-zinc-400">/80</span>
+                        </div>
+                    </div>
+                    
+                    <div class="w-[1px] h-10 bg-zinc-200"></div>
+                    
+                    <div class="flex flex-col items-end justify-center">
+                        <span class="text-[9px] font-bold text-zinc-400 mb-1">单价: 650¥</span>
+                        <span class="text-[10px] font-black text-[#e014a0] tracking-wider uppercase bg-[#e014a0]/10 px-2 py-0.5 rounded-sm mb-0.5">LAST包套</span>
+                        <div class="flex items-baseline gap-0.5">
+                            <span class="text-xl font-black text-[#111] tracking-tight leading-none" id="draw-buyout">52,000</span>
+                            <span class="text-xs font-black text-zinc-400">¥</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-8 relative z-10">
+                    <div>
+                        <div class="text-[#e014a0] font-black tracking-widest text-[11px] mb-4 ml-1 uppercase flex items-center gap-2 drop-shadow-sm">
+                            <i class="ph-fill ph-crown text-sm"></i> Grand Prizes
+                        </div>
+                        <div id="draw-grand-grid" class="flex flex-col gap-4"></div>
+                    </div>
+                    
+                    <div>
+                        <div class="text-[#111] font-black tracking-widest text-[11px] mb-4 ml-1 uppercase flex items-center gap-2">
+                            <i class="ph-fill ph-ticket text-sm"></i> Normal Prizes
+                        </div>
+                        <div id="draw-normal-list" class="flex flex-col gap-4"></div>
+                    </div>
+                </div>
+
+                <div class="fixed right-5 bottom-28 flex flex-col gap-4 z-40">
+                    <button onclick="document.getElementById('modal-probability').classList.remove('hidden')" class="w-12 h-12 bg-white rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.15)] flex items-center justify-center text-[#111] active:scale-90 transition-transform border border-black/5 text-lg">
+                        <i class="ph-bold ph-chart-pie-slice"></i>
+                    </button>
+                    <button onclick="undoLastDraw()" class="w-12 h-12 bg-white rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.15)] flex items-center justify-center text-[#111] active:scale-90 transition-transform border border-black/5 text-lg">
+                        <i class="ph-bold ph-arrow-u-up-left"></i>
+                    </button>
+                    <button onclick="document.getElementById('modal-history').classList.remove('hidden')" class="w-12 h-12 bg-white rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.15)] flex items-center justify-center text-[#111] active:scale-90 transition-transform border border-black/5 text-lg">
+                        <i class="ph-bold ph-clock-counter-clockwise"></i>
+                    </button>
+                </div>
+
+                <div class="fixed bottom-[100px] left-1/2 transform -translate-x-1/2 z-40 w-[60%] max-w-[200px]">
+                    <button onclick="document.getElementById('modal-share-1').classList.remove('hidden')" class="w-full h-12 bg-white text-[#111] font-black rounded-full shadow-[0_10px_25px_rgba(0,0,0,0.15)] border-2 border-zinc-200 active:scale-95 transition-transform flex items-center justify-center gap-2">
+                        <i class="ph-bold ph-hand-palm text-lg"></i> 决定收手
+                    </button>
+                </div>
+            </section>
+
+            <div id="modal-probability" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden flex-col justify-end">
+                <div class="bg-[#f0f2f5] rounded-t-[40px] p-8 modal-enter shadow-[0_-10px_40px_rgba(0,0,0,0.2)]">
+                    <div class="flex justify-between items-center mb-8">
+                        <h3 class="text-2xl font-black text-[#111] tracking-tight">局面可能性</h3>
+                        <button onclick="document.getElementById('modal-probability').classList.add('hidden')" class="w-10 h-10 bg-white shadow-sm rounded-full text-zinc-500 flex items-center justify-center text-lg"><i class="ph-bold ph-x"></i></button>
+                    </div>
+                    
+                    <div class="light-capsule p-5 mb-6">
+                        <p class="text-[11px] text-zinc-500 font-bold mb-3 uppercase tracking-widest">观察窗口 (接下来 3 抽以内)</p>
+                        <div class="flex justify-between items-end border-b border-black/5 pb-4 mb-4">
+                            <span class="text-sm font-black text-[#111]">抽出任意 A/B 赏</span>
+                            <span class="text-2xl font-black text-[#e014a0]">18.4%</span>
+                        </div>
+                        <div class="flex justify-between items-end pb-2">
+                            <span class="text-sm font-bold text-zinc-500">抽出 C 赏</span>
+                            <span class="text-lg font-black text-[#111]">32.1%</span>
+                        </div>
+                    </div>
+                    <p class="text-[10px] text-zinc-400 font-bold text-center mt-6 tracking-widest">结果不保证；停止仍可选</p>
+                </div>
+            </div>
+
+            <div id="modal-history" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden flex-col justify-center p-5">
+                <div class="light-capsule p-8 modal-enter relative w-full max-w-sm mx-auto min-h-[400px]">
+                    <button onclick="document.getElementById('modal-history').classList.add('hidden')" class="absolute top-5 right-5 w-10 h-10 bg-[#f0f2f5] rounded-full text-zinc-500 flex items-center justify-center text-lg shadow-inner"><i class="ph-bold ph-x"></i></button>
+                    <h3 class="text-2xl font-black text-[#111] mb-8 tracking-tight">抽取记录</h3>
+                    <div class="flex flex-col gap-3 max-h-[50vh] overflow-y-auto pr-2" id="history-list"></div>
+                </div>
+            </div>
+
+            <div id="modal-share-1" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm hidden flex-col justify-center p-6">
+                <div class="light-capsule p-8 modal-enter text-center max-w-sm mx-auto w-full">
+                    <div class="w-20 h-20 bg-[#f0f2f5] rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                        <i class="ph-fill ph-share-network text-4xl text-[#111]"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-[#111] mb-3 tracking-tight">分享本次记录？</h3>
+                    <p class="text-xs text-zinc-500 font-medium mb-10 leading-relaxed">先拍下已抽出的赏票，再和记录核对，为其他玩家提供真实参考。</p>
+                    
+                    <div class="flex flex-col gap-4">
+                        <div class="btn-wrapper" onclick="document.getElementById('modal-share-1').classList.add('hidden'); document.getElementById('modal-share-2').classList.remove('hidden');">
+                            <div class="btn-glow"></div>
+                            <button class="action-button">愿意并拍摄赏票</button>
+                        </div>
+                        <button onclick="document.getElementById('modal-share-1').classList.add('hidden')" class="ghost-button">暂不分享</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="modal-share-2" class="fixed inset-0 z-50 bg-[#f0f2f5] flex flex-col hidden">
+                <div class="px-6 py-4 flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-black/5 shadow-sm sticky top-0 z-10">
+                    <button onclick="document.getElementById('modal-share-2').classList.add('hidden'); document.getElementById('modal-share-1').classList.remove('hidden');" class="w-10 h-10 flex items-center justify-center text-[#111] bg-[#f0f2f5] rounded-full"><i class="ph-bold ph-caret-left text-lg"></i></button>
+                    <h3 class="text-base font-black">拍摄赏票</h3>
+                    <div class="w-10"></div>
+                </div>
+                
+                <div class="flex-1 p-6 flex flex-col">
+                    <div class="w-full aspect-[4/3] bg-white rounded-[32px] shadow-sm border-2 border-dashed border-zinc-300 flex items-center justify-center mb-8 relative overflow-hidden">
+                        <i class="ph-fill ph-camera text-5xl text-zinc-200"></i>
+                    </div>
+                    
+                    <div class="mb-8">
+                        <label class="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mb-2 block ml-2">地点与备注</label>
+                        <input type="text" placeholder="例如：秋叶原本店，A赏已被抽走" class="w-full bg-white shadow-sm border border-black/5 rounded-2xl px-5 py-4 text-sm text-[#111] outline-none font-bold placeholder:text-zinc-300 focus:border-[#111] focus:ring-4 ring-black/10 transition-all">
+                    </div>
+                    
+                    <div class="mt-auto pb-10">
+                        <div class="btn-wrapper" onclick="submitShare()" id="btn-submit-share-wrap">
+                            <div class="btn-glow"></div>
+                            <button class="action-button" id="btn-submit-share">提交核对</button>
+                        </div>
+                        <p class="text-[10px] text-zinc-400 font-bold text-center mt-4 tracking-wide">提交即代表同意遵守社区真实性准则</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="overlay-submitted" class="fixed inset-0 z-[80] bg-black/40 backdrop-blur-sm hidden flex-col items-center justify-center p-6">
+                <div class="light-capsule p-8 text-center max-w-sm mx-auto w-full">
+                    <div class="w-20 h-20 bg-[#f0f2f5] rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                        <i class="ph-bold ph-check text-4xl text-black"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-[#111] mb-3 tracking-tight">已提交</h3>
+                    <p class="text-xs text-zinc-500 font-medium mb-10 leading-relaxed">后台正在核对本次提交。<br>退出后可导入新的版面。</p>
+                    <div class="flex flex-col gap-4">
+                        <div class="btn-wrapper" onclick="window.location.hash='#start'">
+                            <div class="btn-glow"></div>
+                            <button class="action-button">退出回首页</button>
+                        </div>
+                        <button onclick="document.getElementById('overlay-submitted').classList.add('hidden')" class="ghost-button">留在当前版面</button>
+                    </div>
+                </div>
+            </div>
+
+            <section id="page-my" class="page-view hidden">
+                <div class="flex items-center gap-5 mb-10 mt-4">
+                    <div class="w-20 h-20 bg-black rounded-[50%] rounded-bl-sm transform -rotate-[15deg] shadow-xl flex items-center justify-center">
+                        <span class="text-3xl font-black text-white transform rotate-[15deg]">I</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <h2 class="text-2xl font-black text-[#111] tracking-tight">ICHI 玩家</h2>
+                        <span class="text-[11px] text-zinc-500 font-bold font-mono tracking-widest mt-1">ID: LOCAL-001</span>
+                        <span class="text-[9px] bg-[#111] text-white font-bold px-2 py-0.5 rounded-full w-max mt-2 shadow-sm">本机模式</span>
+                    </div>
+                </div>
+
+                <div class="light-capsule p-2 flex flex-col gap-1 mb-6">
+                    <a href="#storage" class="flex items-center justify-between p-4 bg-white hover:bg-[#f0f2f5] rounded-[24px] transition-colors">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-[#f0f2f5] rounded-full flex items-center justify-center text-zinc-500"><i class="ph-fill ph-cloud text-lg"></i></div>
+                            <span class="text-sm font-black text-[#111]">账号管理</span>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-zinc-400"></i>
+                    </a>
+                    <a href="#local-records" class="flex items-center justify-between p-4 bg-white hover:bg-[#f0f2f5] rounded-[24px] transition-colors">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-black rounded-full flex items-center justify-center text-white shadow-md"><i class="ph-fill ph-hard-drives text-lg"></i></div>
+                            <span class="text-sm font-black text-[#111]">本地记录</span>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-zinc-400"></i>
+                    </a>
+                    <a href="#contributions" class="flex items-center justify-between p-4 bg-white hover:bg-[#f0f2f5] rounded-[24px] transition-colors">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-[#f0f2f5] rounded-full flex items-center justify-center text-[#e014a0]"><i class="ph-fill ph-hand-heart text-lg"></i></div>
+                            <span class="text-sm font-black text-[#111]">我的贡献</span>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-zinc-400"></i>
+                    </a>
+                </div>
+
+                <div class="light-capsule p-2 flex flex-col gap-1">
+                    <a href="#method" class="flex items-center justify-between p-4 bg-white hover:bg-[#f0f2f5] rounded-[24px] transition-colors">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-[#f0f2f5] rounded-full flex items-center justify-center text-zinc-500"><i class="ph-fill ph-bell text-lg"></i></div>
+                            <span class="text-sm font-black text-[#111]">提醒设置</span>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-zinc-400"></i>
+                    </a>
+                    <a href="#method" class="flex items-center justify-between p-4 bg-white hover:bg-[#f0f2f5] rounded-[24px] transition-colors">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-[#f0f2f5] rounded-full flex items-center justify-center text-zinc-500"><i class="ph-fill ph-shield-check text-lg"></i></div>
+                            <span class="text-sm font-black text-[#111]">隐私与数据</span>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-zinc-400"></i>
+                    </a>
+                </div>
+            </section>
+
+            <section id="page-storage" class="page-view hidden">
+                <h2 class="text-3xl font-black text-[#111] mb-2 tracking-tight">账号管理</h2>
+                <p class="text-xs text-zinc-500 font-bold mb-8">账号与设置 · V2 接入登录与云端保存</p>
+                
+                <div class="light-capsule p-8 mb-8 text-center">
+                    <div class="w-16 h-16 bg-[#f0f2f5] rounded-full mx-auto flex items-center justify-center text-zinc-400 mb-4 shadow-inner"><i class="ph-fill ph-lock-key text-2xl"></i></div>
+                    <h3 class="text-lg font-black text-[#111] mb-2">登录功能预留</h3>
+                    <p class="text-xs text-zinc-500 font-medium mb-6 leading-relaxed">V1 版本暂不开放云端同步，您的数据安全地保存在本地浏览器中。</p>
+                    <button class="ghost-button cursor-not-allowed opacity-60">
+                        <i class="ph-fill ph-apple-logo mr-2 text-lg"></i> Sign in with Apple
+                    </button>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-1 btn-wrapper" onclick="window.location.hash='#local-records'"><div class="btn-glow"></div><button class="action-button">本地记录</button></div>
+                    <a href="#my" class="ghost-button flex-1">返回我的</a>
+                </div>
+            </section>
+
+            <section id="page-local-records" class="page-view hidden">
+                <h2 class="text-3xl font-black text-[#111] mb-8 tracking-tight">先看这里</h2>
+                
+                <h3 class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-3 ml-2">需要处理</h3>
+                <div class="flex flex-col gap-3 mb-8">
+                    <div class="light-capsule p-4 flex items-center justify-between border-l-4 border-l-[#e014a0]">
+                        <div>
+                            <p class="text-base font-black text-[#111] mb-1">秋叶原 0805</p>
+                            <span class="text-[9px] bg-[#e014a0]/10 text-[#e014a0] font-bold px-2 py-0.5 rounded-full">先处理 (待核对)</span>
+                        </div>
+                        <i class="ph-bold ph-caret-right text-zinc-400 text-lg"></i>
+                    </div>
+                </div>
+
+                <h3 class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-3 ml-2">本机草稿</h3>
+                <div class="light-capsule p-5 mb-10">
+                    <div class="flex justify-between items-start mb-4 border-b border-black/5 pb-4">
+                        <div>
+                            <p class="text-base font-black text-[#111] mb-1">大阪店现场 · 2026-08-06</p>
+                            <span class="text-[9px] bg-black text-white font-bold px-2 py-0.5 rounded-full">本地草稿</span>
+                        </div>
+                        <span class="text-xs text-zinc-400 font-bold">14:32</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-zinc-500 font-bold mb-5 px-1">
+                        <span>已抽: 1 抽</span>
+                        <span>花费: <span class="text-[#111]">¥650</span></span>
+                    </div>
+                    <div class="flex gap-3">
+                        <div class="flex-[2] btn-wrapper" onclick="window.location.hash='#draw'"><div class="btn-glow"></div><button class="action-button h-10 text-sm">继续抽取</button></div>
+                        <a href="#deleted" class="flex-1 h-10 rounded-full bg-[#f0f2f5] text-[#e014a0] font-bold flex items-center justify-center text-sm transition-colors active:bg-[#e2e8f0]">清空</a>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-4">
+                    <a href="#contributions" class="ghost-button">查看我的贡献</a>
+                    <a href="#storage-fallback" class="text-xs text-zinc-400 font-bold text-center underline underline-offset-4 mt-2">查看当前存储状态</a>
+                </div>
+            </section>
+
+            <section id="page-contributions" class="page-view hidden">
+                <h2 class="text-3xl font-black text-[#111] mb-2 tracking-tight">我的贡献</h2>
+                <p class="text-xs text-zinc-500 font-medium mb-8 leading-relaxed">这里记录主动提交的版面和后台核对进度。有效贡献将帮助完善全局数据库。</p>
+                
+                <h3 class="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-3 ml-2">已提交的版面</h3>
+                <div class="flex flex-col gap-3 mb-10">
+                    <div class="light-capsule p-4 flex items-center justify-between border-l-4 border-l-black">
+                        <div>
+                            <p class="text-base font-black text-[#111] mb-1">新宿东口店</p>
+                            <span class="text-[9px] bg-black text-white font-bold px-2 py-0.5 rounded-full shadow-sm">后台核对中</span>
+                        </div>
+                        <span class="text-[10px] text-zinc-400 font-bold">今天 10:15</span>
+                    </div>
+                    <div class="light-capsule p-4 flex flex-col gap-3 border-l-4 border-l-[#e014a0]">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-base font-black text-[#111] mb-1">秋叶原 0805</p>
+                                <span class="text-[9px] bg-[#e014a0] text-white font-bold px-2 py-0.5 rounded-full shadow-sm">需要重拍</span>
+                            </div>
+                            <span class="text-[10px] text-zinc-400 font-bold">昨天</span>
+                        </div>
+                        <p class="text-xs text-zinc-500 font-medium">原因：照片边缘模糊，无法确认 A 赏存量。</p>
+                        <a href="#draw" class="w-full bg-[#f0f2f5] text-[#111] font-bold py-2.5 rounded-xl text-center text-xs active:bg-zinc-200 mt-1">重新拍摄赏票</a>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <a href="#local-records" class="ghost-button flex-1">保留本机草稿</a>
+                    <a href="#my" class="ghost-button flex-1">返回我的</a>
+                </div>
+            </section>
+
+            <section id="page-method" class="page-view hidden">
+                <h2 class="text-3xl font-black text-[#111] mb-8 tracking-tight">计算与隐私</h2>
+                
+                <div class="flex flex-col gap-4 mb-10">
+                    <div class="light-capsule p-6">
+                        <h3 class="text-sm font-black text-[#111] mb-2 flex items-center"><i class="ph-fill ph-calculator text-[#e014a0] mr-2 text-lg"></i> 怎么算</h3>
+                        <p class="text-xs text-zinc-500 font-medium leading-relaxed">系统基于当前余票和您设定的目标奖项，采用超几何分布模型实时计算。不包含玄学或保底暗示。</p>
+                    </div>
+                    <div class="light-capsule p-6">
+                        <h3 class="text-sm font-black text-[#111] mb-2 flex items-center"><i class="ph-fill ph-image text-[#e014a0] mr-2 text-lg"></i> 照片怎么用</h3>
+                        <p class="text-xs text-zinc-500 font-medium leading-relaxed">上传的照片仅用于本地机器视觉提取结构化数据（奖级、余量），并在提交核对时生成校验哈希，不会作为历史附件在公共图库暴露。</p>
+                    </div>
+                    <div class="light-capsule p-6">
+                        <h3 class="text-sm font-black text-[#111] mb-2 flex items-center"><i class="ph-fill ph-database text-[#e014a0] mr-2 text-lg"></i> 记录放在哪里</h3>
+                        <p class="text-xs text-zinc-500 font-medium leading-relaxed">V1 版本的所有记录仅保存在您当前设备的浏览器缓存 (Local Storage) 中。清空缓存即永久丢失。</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="flex-1 btn-wrapper" onclick="window.location.hash='#start'"><div class="btn-glow"></div><button class="action-button">返回票池</button></div>
+                    <a href="#local-records" class="ghost-button flex-1">管理记录</a>
+                </div>
+            </section>
+            
+            <section id="page-map-preview" class="page-view hidden">
+                <div class="light-capsule p-10 text-center mt-6 overflow-hidden">
+                    <div class="absolute inset-0 bg-[url('https://placehold.co/600x400/eee/fff?text=Map')] opacity-30 bg-cover"></div>
+                    <div class="relative z-10 w-24 h-24 bg-black rounded-[50%] rounded-bl-sm transform -rotate-[15deg] shadow-xl flex items-center justify-center mx-auto mb-8">
+                        <i class="ph-fill ph-map-pin text-white text-4xl transform rotate-[15deg]"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-[#111] mb-3 relative z-10 tracking-tight">地图会在 V2 再来</h3>
+                    <p class="text-xs text-zinc-500 font-medium mb-8 leading-relaxed relative z-10">当前版本不展示门店线索或实时库存判断。我们希望先打磨好核心的核对和记录体验。</p>
+                    
+                    <div class="flex flex-col gap-4 relative z-10 mt-6">
+                        <div class="btn-wrapper" onclick="window.location.hash='#camera-capture'">
+                            <div class="btn-glow"></div>
+                            <button class="action-button">去拍摄版面</button>
+                        </div>
+                        <a href="#start" class="ghost-button">返回票池首页</a>
+                    </div>
+                </div>
+            </section>
+
+            <section id="page-cannot-build-pool" class="page-view hidden">
+                <div class="light-capsule p-10 text-center mt-10">
+                    <div class="w-20 h-20 bg-[#f0f2f5] rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
+                        <i class="ph-fill ph-warning-circle text-4xl text-amber-500 drop-shadow-md"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-[#111] mb-3 tracking-tight">无法建立票池</h3>
+                    <p class="text-xs text-zinc-500 font-medium mb-8 leading-relaxed">可能是识别失败、照片中版面不完整，或是识别出的各奖级数量不守恒。</p>
+                    <div class="flex flex-col gap-4">
+                        <div class="btn-wrapper" onclick="window.location.hash='#camera-capture'">
+                            <div class="btn-glow"></div>
+                            <button class="action-button">重新导入照片</button>
+                        </div>
+                        <a href="#draft" class="ghost-button">返回识别结果</a>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="page-deleted" class="page-view hidden">
+                <div class="light-capsule p-10 text-center mt-10">
+                    <div class="w-20 h-20 bg-black rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+                        <i class="ph-bold ph-trash text-3xl text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-[#111] mb-3 tracking-tight">记录已清空</h3>
+                    <p class="text-xs text-zinc-500 font-medium mb-10 leading-relaxed">当前浏览器中的票池、抽取记录和本地草稿已经彻底删除。</p>
+                    <div class="flex flex-col gap-4">
+                        <div class="btn-wrapper" onclick="window.location.hash='#start'">
+                            <div class="btn-glow"></div>
+                            <button class="action-button">建立新的票池</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="page-undo-protected" class="page-view hidden"><div class="light-capsule p-10 text-center mt-10"><h3 class="text-xl font-black mb-6">异常演示: 不可撤销</h3><a href="#draw" class="ghost-button">回到版面</a></div></section>
+            <section id="page-storage-fallback" class="page-view hidden"><div class="light-capsule p-10 text-center mt-10"><h3 class="text-xl font-black mb-6">异常演示: 存储降级</h3><a href="#draw" class="ghost-button">回到版面</a></div></section>
+            <section id="page-schema-incompatible" class="page-view hidden"><div class="light-capsule p-10 text-center mt-10"><h3 class="text-xl font-black mb-6">异常演示: 结构不兼容</h3><a href="#start" class="ghost-button">回首页</a></div></section>
+            <section id="page-storage-warning" class="page-view hidden"><div class="light-capsule p-10 text-center mt-10"><h3 class="text-xl font-black mb-6">异常演示: 空间不足</h3><a href="#local-records" class="ghost-button">管理记录</a></div></section>
+
+        </div>
+    </main>
+
+    <nav class="fixed bottom-5 left-1/2 transform -translate-x-1/2 w-[80%] max-w-[320px] light-capsule z-50 p-1.5 transition-all duration-300 md:hidden" style="border-radius: 40px; box-shadow: 0 10px 40px rgba(0,0,0,0.1), inset 0 1px 2px #fff;">
+        <div class="flex items-center h-[52px] w-full gap-1" id="mobile-bottom-nav">
+            <a href="#camera-capture" id="nav-btn-camera" class="nav-item group relative flex h-full flex-[1.6] flex-col items-center justify-center overflow-hidden rounded-full cursor-pointer text-[#111] is-active transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]">
+                <div class="nav-bg absolute inset-0 rounded-full bg-black opacity-100 scale-100 transition-all duration-500 shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]"></div>
+                <div class="icon-container relative z-10 flex flex-col items-center transform -translate-y-2 transition-transform duration-500 text-white">
+                    <i class="ph-bold ph-corners-out text-[20px] mb-1 transition-colors duration-500"></i>
+                    <span class="label-text absolute -bottom-4 text-[10px] font-black tracking-widest text-white opacity-100 transition-all duration-500">识别</span>
+                </div>
+            </a>
+            
+            <a href="#map-preview" id="nav-btn-map" class="nav-item group relative flex h-full flex-1 flex-col items-center justify-center overflow-hidden rounded-full cursor-pointer text-zinc-400 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]">
+                <div class="nav-bg absolute inset-0 rounded-full bg-black opacity-0 scale-75 transition-all duration-500"></div>
+                <div class="icon-container relative z-10 flex flex-col items-center transform transition-transform duration-500">
+                    <i class="ph-bold ph-map-pin text-[20px] mb-1 transition-colors duration-500"></i>
+                    <span class="label-text absolute -bottom-3 text-[10px] font-bold tracking-widest opacity-0 transition-all duration-500">地图</span>
+                </div>
+            </a>
+            
+            <a href="#my" id="nav-btn-my" class="nav-item group relative flex h-full flex-1 flex-col items-center justify-center overflow-hidden rounded-full cursor-pointer text-zinc-400 transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]">
+                <div class="nav-bg absolute inset-0 rounded-full bg-black opacity-0 scale-75 transition-all duration-500"></div>
+                <div class="icon-container relative z-10 flex flex-col items-center transform transition-transform duration-500">
+                    <i class="ph-bold ph-user-astronaut text-[20px] mb-1 transition-colors duration-500"></i>
+                    <span class="label-text absolute -bottom-3 text-[10px] font-bold tracking-widest opacity-0 transition-all duration-500">我的</span>
+                </div>
+            </a>
+        </div>
+    </nav>
+
+    <script>
+        const pages = [
+            'start', 'resume', 'camera-capture', 'recognizing', 'draft', 
+            'target', 'draw', 'storage', 'local-records', 'contributions', 
+            'deleted', 'method', 'map-preview', 'my', 'cannot-build-pool',
+            'undo-protected', 'storage-fallback', 'schema-incompatible', 'storage-warning'
+        ];
+
+        function handleRoute() {
+            let hash = window.location.hash.replace('#', '') || 'start';
+            const pageId = hash.split('?')[0]; 
+            
+            if (!pages.includes(pageId)) { window.location.hash = '#start'; return; }
+
+            document.querySelectorAll('.page-view').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('page-enter');
+            });
+
+            const targetEl = document.getElementById(`page-${pageId}`);
+            if (targetEl) {
+                targetEl.classList.remove('hidden');
+                void targetEl.offsetWidth; 
+                targetEl.classList.add('page-enter');
+            }
+
+            updateNavigation(pageId);
+            
+            const header = document.getElementById('global-header');
+            if(pageId === 'camera-capture' || pageId === 'recognizing') {
+                header.classList.add('hidden');
+            } else {
+                header.classList.remove('hidden');
+                document.getElementById('header-subtitle').textContent = 
+                    pageId === 'draw' ? '一番赏版面' : 
+                    pageId === 'start' ? '导入版面' : 
+                    pageId === 'my' ? '个人中心' : 'V1-29';
+            }
+
+            if (pageId === 'recognizing') startMockRecognizing();
+            else if (pageId === 'draw') renderDrawBoard();
+        }
+
+        window.addEventListener('hashchange', handleRoute);
+
+        function updateNavigation(pageId) {
+            document.querySelectorAll('#desktop-nav-links .nav-link').forEach(link => {
+                const href = link.getAttribute('href').replace('#', '');
+                if (href === pageId) {
+                    link.className = 'nav-link px-4 py-2.5 rounded-2xl text-sm font-black text-white bg-black shadow-[0_4px_12px_rgba(0,0,0,0.15)]';
+                } else {
+                    link.className = 'nav-link px-4 py-2.5 rounded-2xl text-sm font-bold text-zinc-500 hover:bg-black/5 transition-colors';
+                }
+            });
+
+            const mobileMap = {
+                'camera-capture': 'camera', 'recognizing': 'camera', 'draft': 'camera', 'start': 'camera', 'resume': 'camera', 'draw': 'camera', 'target': 'camera', 'cannot-build-pool': 'camera',
+                'map-preview': 'map',
+                'my': 'my', 'storage': 'my', 'local-records': 'my', 'contributions': 'my', 'method': 'my', 'deleted': 'my'
+            };
+            const activeTab = mobileMap[pageId] || 'camera';
+            
+            ['camera', 'map', 'my'].forEach(tab => {
+                const btn = document.getElementById(`nav-btn-${tab}`);
+                if (!btn) return;
+                
+                if (tab === activeTab) {
+                    btn.classList.add('is-active', 'flex-[1.6]');
+                    btn.classList.remove('text-zinc-400', 'flex-1');
+                    btn.style.flex = '1.6';
+                    
+                    btn.querySelector('.nav-bg').classList.replace('opacity-0', 'opacity-100');
+                    btn.querySelector('.nav-bg').classList.replace('scale-75', 'scale-100');
+                    
+                    const container = btn.querySelector('.icon-container');
+                    container.classList.add('-translate-y-2', 'text-white');
+                    container.querySelector('i').classList.remove('text-zinc-400');
+                    
+                    const label = btn.querySelector('.label-text');
+                    label.classList.remove('opacity-0', 'font-bold', '-bottom-3');
+                    label.classList.add('opacity-100', 'font-black', '-bottom-4', 'text-white');
+                } else {
+                    btn.classList.remove('is-active', 'flex-[1.6]');
+                    btn.classList.add('text-zinc-400', 'flex-1');
+                    btn.style.flex = '1';
+                    
+                    btn.querySelector('.nav-bg').classList.replace('opacity-100', 'opacity-0');
+                    btn.querySelector('.nav-bg').classList.replace('scale-100', 'scale-75');
+                    
+                    const container = btn.querySelector('.icon-container');
+                    container.classList.remove('-translate-y-2', 'text-white');
+                    
+                    const label = btn.querySelector('.label-text');
+                    label.classList.remove('opacity-100', 'font-black', '-bottom-4', 'text-white');
+                    label.classList.add('opacity-0', 'font-bold', '-bottom-3');
+                }
+            });
+        }
+
+        function startMockRecognizing() {
+            const hashParts = window.location.hash.split('?');
+            const isFail = hashParts[1] === 'outcome=cannot-build-pool';
+            
+            document.getElementById('rec-step-1').innerHTML = '<i class="ph-bold ph-spinner animate-spin text-black"></i>';
+            document.getElementById('rec-step-2').innerHTML = '<i class="ph-bold ph-circle text-zinc-300"></i>';
+            document.getElementById('rec-step-3').innerHTML = '<i class="ph-bold ph-circle text-zinc-300"></i>';
+            document.getElementById('rec-text-2').classList.replace('text-[#111]', 'text-zinc-400');
+            document.getElementById('rec-text-3').classList.replace('text-[#111]', 'text-zinc-400');
+
+            setTimeout(() => {
+                document.getElementById('rec-step-1').innerHTML = '<i class="ph-bold ph-check-circle text-black"></i>';
+                document.getElementById('rec-step-2').innerHTML = '<i class="ph-bold ph-spinner animate-spin text-black"></i>';
+                document.getElementById('rec-text-2').classList.replace('text-zinc-400', 'text-[#111]');
+            }, 800);
+            
+            setTimeout(() => {
+                document.getElementById('rec-step-2').innerHTML = '<i class="ph-bold ph-check-circle text-black"></i>';
+                if(isFail) { window.location.hash = '#cannot-build-pool'; return; }
+                document.getElementById('rec-step-3').innerHTML = '<i class="ph-bold ph-spinner animate-spin text-black"></i>';
+                document.getElementById('rec-text-3').classList.replace('text-zinc-400', 'text-[#111]');
+            }, 1600);
+            
+            setTimeout(() => { if(!isFail) window.location.hash = '#draft'; }, 2500);
+        }
+
+        function simulateConfirmDraft() {
+            const overlay = document.getElementById('generating-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+                window.location.hash = '#target';
+            }, 1800);
+        }
+
+        function submitShare() {
+            const btn = document.getElementById('btn-submit-share');
+            btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin mr-2"></i> 上传中';
+            const wrap = document.getElementById('btn-submit-share-wrap');
+            wrap.classList.add('opacity-80', 'pointer-events-none');
+            
+            setTimeout(() => {
+                btn.innerHTML = '提交核对';
+                wrap.classList.remove('opacity-80', 'pointer-events-none');
+                document.getElementById('modal-share-2').classList.add('hidden');
+                document.getElementById('overlay-submitted').classList.remove('hidden');
+            }, 1200);
+        }
+
+        const drawEngine = {
+            TICKET_PRICE: 650, cost: 0, history: [],
+            prizeData: [
+                { id: 'A', type: 'grand', total: 2, slots: [false, false] },
+                { id: 'B', type: 'grand', total: 3, slots: [false, false, false] },
+                { id: 'C', type: 'grand', total: 5, slots: [false, false, false, false, false] },
+                { id: 'D', type: 'normal', total: 12, slots: Array(12).fill(false) },
+                { id: 'E', type: 'normal', total: 18, slots: Array(18).fill(false) },
+                { id: 'F', type: 'normal', total: 25, slots: Array(25).fill(false) }
+            ],
+            
+            getTotalRemaining() { return this.prizeData.reduce((acc, prize) => acc + prize.slots.filter(drawn => !drawn).length, 0); },
+            
+            render() {
+                const totalRem = this.getTotalRemaining();
+                const grandContainer = document.getElementById('draw-grand-grid');
+                const normalContainer = document.getElementById('draw-normal-list');
+                if(!grandContainer || !normalContainer) return;
+                
+                grandContainer.innerHTML = ''; normalContainer.innerHTML = '';
+                document.getElementById('draw-remaining').textContent = totalRem;
+                document.getElementById('draw-buyout').textContent = (totalRem * this.TICKET_PRICE).toLocaleString();
+
+                this.prizeData.forEach((prize, prizeIndex) => {
+                    const remForThis = prize.slots.filter(d => !d).length;
+                    const prob = totalRem === 0 ? 0 : ((remForThis / totalRem) * 100).toFixed(1);
+                    const isGrand = prize.type === 'grand';
+
+                    let slotsHTML = '';
+                    prize.slots.forEach((isDrawn, slotIndex) => {
+                        if (!isDrawn) {
+                            slotsHTML += `<div class="w-5 h-5 rounded-[50%] bg-[#56f2d8] flex-shrink-0 shadow-[0_0_8px_rgba(86,242,216,0.6)] border border-[#56f2d8]"></div>`;
+                        } else {
+                            slotsHTML += `<div class="w-5 h-5 rounded-full border-[1.5px] border-[#1e223b]/30 bg-transparent flex items-center justify-center flex-shrink-0 opacity-60"><i class="ph-bold ph-x text-[#1e223b]/50 text-[10px]"></i></div>`;
+                        }
+                    });
+
+                    const navyColor = 'bg-[#1e223b]';
+                    const blackColor = 'bg-[#0a0a0a]';
+                    const grayColor = 'bg-[#d2d6d3]';
+
+                    const cardHTML = `
+                        <div class="relative w-full drop-shadow-sm mb-2 ${remForThis === 0 ? 'opacity-50 grayscale' : ''}">
+                            
+                            <div class="w-full flex flex-col rounded-l-xl overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.05)] border border-black/5 bg-white">
+                                <div class="h-[28px] ${navyColor} flex items-center justify-between px-3 w-[calc(100%-16px)] rounded-tr-[4px]">
+                                    <span class="text-white text-[10px] font-bold tracking-widest">引きかえ券</span>
+                                    <span class="text-[#56f2d8] text-[9px] font-bold">${prob}%</span>
+                                </div>
+                                <div class="h-[68px] bg-[#f0f2f5] flex items-center justify-center w-[calc(100%-16px)] shadow-inner">
+                                    <span class="text-zinc-300 font-black text-xl tracking-widest uppercase italic opacity-60">OPENED</span>
+                                </div>
+                                <div class="min-h-[44px] ${grayColor} flex items-center justify-between px-3 py-2 w-[calc(100%-16px)] rounded-br-[4px] border-t border-white/50">
+                                    <span class="text-[10px] font-black text-[#1e223b] tracking-wider">LEFT <span class="text-sm ml-1">${remForThis}</span></span>
+                                    <div class="flex flex-wrap gap-1.5 justify-end pl-2">
+                                        ${slotsHTML}
+                                    </div>
+                                </div>
+                            </div>
+
+                            ${remForThis > 0 ? `
+                            <div class="absolute top-[28px] left-0 w-full h-[68px] z-20 cursor-grab touch-none flex items-center"
+                                 onpointerdown="startSwipe(event, this, ${prizeIndex})"
+                                 onpointermove="moveSwipe(event, this)"
+                                 onpointerup="endSwipe(event, this, ${prizeIndex})"
+                                 onpointercancel="endSwipe(event, this, ${prizeIndex})">
+                                 
+                                 <div class="w-full h-full ${blackColor} flex items-center justify-between pl-4 pr-6 relative drop-shadow-[4px_0_12px_rgba(0,0,0,0.15)]"
+                                      style="clip-path: polygon(0% 0%, calc(100% - 16px) 0%, 100% 25%, 100% 75%, calc(100% - 16px) 100%, 0% 100%); transform-origin: left; transition: filter 0.3s;">
+                                     <div class="absolute left-0 top-0 bottom-0 w-1 bg-[#56f2d8]"></div>
+                                     <div class="flex items-baseline gap-1 text-white ml-2">
+                                         <span class="text-[40px] leading-none font-black tracking-tighter">${prize.id}</span>
+                                         <span class="text-sm font-bold text-zinc-400">賞</span>
+                                     </div>
+                                     <div class="text-zinc-600 flex items-center animate-pulse mr-1">
+                                         <i class="ph-bold ph-caret-double-right text-2xl"></i>
+                                     </div>
+                                 </div>
+                            </div>
+                            ` : `
+                            <div class="absolute top-[28px] left-0 w-[calc(100%-16px)] h-[68px] z-10 flex items-center bg-[#0a0a0a] opacity-[0.08] pointer-events-none" style="clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%); border-left: 4px solid #56f2d8;">
+                                 <div class="pl-6 flex items-baseline gap-1 text-white">
+                                     <span class="text-[40px] leading-none font-black tracking-tighter">${prize.id}</span>
+                                     <span class="text-sm font-bold text-zinc-400">賞</span>
+                                 </div>
+                            </div>
+                            `}
+                        </div>
+                    `;
+                    if (isGrand) grandContainer.innerHTML += cardHTML;
+                    else normalContainer.innerHTML += cardHTML;
+                });
+                this.renderHistory();
+            },
+            
+            renderHistory() {
+                const list = document.getElementById('history-list');
+                if(!list) return;
+                if(this.history.length === 0) {
+                    list.innerHTML = '<div class="text-center text-sm font-bold text-zinc-400 py-10">还没有新的抽取记录</div>';
+                    return;
+                }
+                let html = '';
+                [...this.history].reverse().forEach((record, idx) => {
+                    html += `
+                        <div class="flex items-center justify-between py-3 border-b border-black/5 last:border-0">
+                            <div class="flex items-center gap-4">
+                                <span class="text-xs text-zinc-400 font-mono font-bold">#${this.history.length - idx}</span>
+                                <span class="text-base font-black text-[#111]">${record.rank}赏</span>
+                            </div>
+                            <div class="flex flex-col items-end justify-center">
+                                <span class="text-[10px] text-zinc-400 font-bold">余 ${record.rem}</span>
+                                <span class="text-sm text-[#e014a0] font-black">¥${record.cost.toLocaleString()}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                list.innerHTML = html;
+            }
+        };
+
+        window.renderDrawBoard = () => drawEngine.render();
+        
+        window.startSwipe = function(e, element, prizeIndex) {
+            if (window.isAnimating) return;
+            element.setPointerCapture(e.pointerId);
+            element.startX = e.clientX || e.touches[0].clientX;
+            element.startY = e.clientY || e.touches[0].clientY;
+            element.isDragging = true;
+            element.style.transition = 'none';
+            element.style.zIndex = '50';
+            element.style.transformOrigin = 'left center';
+        };
+
+        window.moveSwipe = function(e, element) {
+            if (!element.isDragging) return;
+            let deltaX = (e.clientX || (e.touches ? e.touches[0].clientX : element.startX)) - element.startX;
+            if (deltaX < 0) deltaX = 0;
+
+            let rotY = Math.min(deltaX * 0.35, 60);
+            let translateZ = deltaX * 0.5;
+            let shadowBlur = Math.min(4 + deltaX * 0.2, 30);
+            let shadowOffsetX = Math.min(4 + deltaX * 0.3, 25);
+
+            element.style.transform = `perspective(1000px) translateX(${deltaX * 0.3}px) translateZ(${translateZ}px) rotateY(${rotY}deg)`;
+            element.style.filter = `drop-shadow(${shadowOffsetX}px 6px ${shadowBlur}px rgba(0,0,0,0.35)) brightness(${1 + deltaX * 0.001})`;
+            element.style.opacity = Math.max(1 - (deltaX / 350), 0.7);
+        };
+
+        window.endSwipe = function(e, element, prizeIndex) {
+            if (!element.isDragging) return;
+            element.isDragging = false;
+            element.releasePointerCapture(e.pointerId);
+            const deltaX = (e.clientX || (e.changedTouches ? e.changedTouches[0].clientX : element.startX)) - element.startX;
+
+            if (deltaX > 50) {
+                window.isAnimating = true;
+                element.style.transition = 'transform 0.4s cubic-bezier(0.5, 0, 0.2, 1), opacity 0.3s ease-out, filter 0.3s';
+                element.style.transform = `perspective(1000px) translateX(250px) translateZ(150px) rotateY(95deg)`;
+                element.style.opacity = '0';
+                element.style.filter = 'drop-shadow(40px 10px 50px rgba(0,0,0,0.5)) brightness(1.2)';
+                
+                const slotIndex = drawEngine.prizeData[prizeIndex].slots.findIndex(d => !d);
+                setTimeout(() => { window.handleDraw(prizeIndex, slotIndex); }, 380);
+            } else {
+                element.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s, filter 0.3s';
+                element.style.transform = 'perspective(1000px) translateX(0) translateZ(0) rotateY(0deg)';
+                element.style.opacity = '1';
+                element.style.filter = 'drop-shadow(4px 0px 12px rgba(0,0,0,0.15)) brightness(1)';
+            }
+        };
+
+        window.handleDraw = (prizeIndex, slotIndex) => {
+            const prize = drawEngine.prizeData[prizeIndex];
+            prize.slots[slotIndex] = true;
+            drawEngine.cost += drawEngine.TICKET_PRICE;
+            drawEngine.history.push({ rank: prize.id, isGrand: prize.type === 'grand', rem: drawEngine.getTotalRemaining(), cost: drawEngine.cost, pIndex: prizeIndex, sIndex: slotIndex });
+            
+            const toast = document.getElementById('toast-message');
+            document.getElementById('toast-rank').textContent = prize.id + '赏';
+            document.getElementById('toast-remaining').textContent = drawEngine.getTotalRemaining();
+            
+            toast.classList.remove('toast-animate');
+            void toast.offsetWidth; 
+            toast.classList.add('toast-animate');
+            
+            drawEngine.render();
+            window.isAnimating = false;
+        };
+
+        window.undoLastDraw = () => {
+            if(drawEngine.history.length === 0) return;
+            const lastRecord = drawEngine.history.pop();
+            drawEngine.prizeData[lastRecord.pIndex].slots[lastRecord.sIndex] = false;
+            drawEngine.cost -= drawEngine.TICKET_PRICE;
+            drawEngine.render();
+        };
+
+        window.onload = () => { handleRoute(); drawEngine.render(); };
+    </script>
+</body>
+</html>

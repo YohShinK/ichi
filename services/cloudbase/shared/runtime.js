@@ -3,7 +3,12 @@
 
 const crypto = require("node:crypto");
 const domain = require("./domain");
+const sourceBridge = require("./source-bridge-producer");
 const { TEXT_SAFETY_USAGE, reviewTextSafety } = require("./text-safety-review");
+const {
+  persistUploadSharing,
+  readUploadSharing,
+} = require("./upload-sharing-authorization");
 
 const COLLECTIONS = Object.freeze({
   accounts: "accounts",
@@ -475,6 +480,19 @@ const createRuntime = ({
 
   const bindWechatProfile = async (event) => {
     const { accountId, identity } = await accountForCaller();
+    if (event.action === "sync-map-metadata") {
+      const { syncOwnedMapNotes } = require("./map-note-metadata");
+      return response(
+        await syncOwnedMapNotes({
+          db,
+          cloud,
+          env,
+          accountId,
+          openId: identity.openId,
+          nowMs: now(),
+        }),
+      );
+    }
     const nickname = String(event.nickname || "").trim();
     const avatarUrl = String(event.avatarUrl || "").trim();
     const avatarFileId = String(event.avatarFileId || "").trim();
@@ -556,6 +574,12 @@ const createRuntime = ({
         actorAccountId: accountId,
         subjectType: "account",
         subjectId: accountId,
+      });
+      await sourceBridge.enqueueProfileChange({
+        tx: transaction,
+        env,
+        ownerAccountId: accountId,
+        nowMs: now(),
       });
       const boundProfile = {
         ...profile,
@@ -857,7 +881,32 @@ const createRuntime = ({
 
   const finalizeObservation = async (event) => {
     domain.assertNoImagePayload(event);
-    const { accountId } = await accountForCaller();
+    const { accountId, identity } = await accountForCaller();
+    if (event.action === "confirm-upload-sharing") {
+      const recordId = String(event.recordId || "");
+      domain.assert(
+        /^record_[a-f0-9]{32}$/u.test(recordId),
+        "RECORD_NOT_FOUND",
+      );
+      return db.runTransaction(async (tx) => {
+        await persistUploadSharing({
+          env,
+          tx,
+          recordId,
+          accountId,
+          intent: event.uploadSharing,
+          nowMs: now(),
+        });
+        return response({
+          recordId,
+          uploadSharingAcknowledged: await readUploadSharing(
+            tx,
+            recordId,
+            accountId,
+          ),
+        });
+      });
+    }
     const snapshot = domain.validateSnapshot(event.confirmedSnapshot);
     const location = domain.assertLocation(event.location);
     domain.assert(
@@ -909,7 +958,15 @@ const createRuntime = ({
               current.sourcePath === "assisted-draw",
             "RECORD_NOT_FOUND",
           );
-          if (current.status !== "deleting")
+          if (current.status !== "deleting") {
+            await persistUploadSharing({
+              env,
+              tx: transaction,
+              recordId: current.recordId,
+              accountId,
+              intent: event.uploadSharing,
+              nowMs: now(),
+            });
             return response({
               recordId: current.recordId,
               recordCode: current.recordCode,
@@ -917,7 +974,13 @@ const createRuntime = ({
               status: current.status,
               idempotent: true,
               created: false,
+              uploadSharingAcknowledged: await readUploadSharing(
+                transaction,
+                current.recordId,
+                accountId,
+              ),
             });
+          }
         } else {
           const deletion = await getDocument(
             transaction,
@@ -949,6 +1012,39 @@ const createRuntime = ({
       .update(`${accountId}:${boardId}:current-publication`)
       .digest("hex")
       .slice(0, 32)}`;
+    let directNoteReview;
+    if (
+      event.sourcePath === "direct-upload" &&
+      !(await getDocument(db, COLLECTIONS.observations, recordId))
+    ) {
+      const job = await getDocument(
+        db,
+        COLLECTIONS.jobs,
+        String(event.recognitionJobId || ""),
+      );
+      domain.assert(
+        job?.ownerAccountId === accountId &&
+          ["recognized", "succeeded"].includes(job.status) &&
+          job.sourcePath === event.sourcePath,
+        "RECOGNITION_JOB_INVALID",
+      );
+      const review = await reviewTextSafety({
+        cloud,
+        usage: TEXT_SAFETY_USAGE.MAP_NOTE,
+        content: locationNote,
+        openId: identity.openId,
+        reviewer: textSafetyReviewer,
+      });
+      domain.assert(review.passed, "LOCATION_NOTE_REVIEW_FAILED");
+      directNoteReview = {
+        status: "NOTE_PASSED",
+        contentHash: crypto
+          .createHash("sha256")
+          .update(locationNote)
+          .digest("hex"),
+        reviewedAt: nowIso(now()),
+      };
+    }
     return db.runTransaction(async (transaction) => {
       const existing = await getDocument(
         transaction,
@@ -961,12 +1057,25 @@ const createRuntime = ({
             existing.sourcePath === event.sourcePath,
           "RECORD_NOT_FOUND",
         );
+        await persistUploadSharing({
+          env,
+          tx: transaction,
+          recordId,
+          accountId,
+          intent: event.uploadSharing,
+          nowMs: now(),
+        });
         return response({
           recordId,
           recordCode: existing.recordCode,
           boardId: existing.boardId,
           status: existing.status,
           idempotent: true,
+          uploadSharingAcknowledged: await readUploadSharing(
+            transaction,
+            recordId,
+            accountId,
+          ),
         });
       }
       const job = await getDocument(
@@ -1026,6 +1135,7 @@ const createRuntime = ({
           : {}),
         location,
         ...(locationNote ? { locationNote } : {}),
+        ...(directNoteReview ? { directNoteReview } : {}),
         observedAt: event.observedAt || timestamp,
         serverReceivedAt: timestamp,
         recognitionJobId: event.recognitionJobId,
@@ -1077,6 +1187,31 @@ const createRuntime = ({
         .collection(COLLECTIONS.observations)
         .doc(recordId)
         .set({ data: observation });
+      const uploadSharingAcknowledged = await persistUploadSharing({
+        env,
+        tx: transaction,
+        recordId,
+        accountId,
+        intent: event.uploadSharing,
+        nowMs: now(),
+      });
+      const bridgeControl =
+        env.ICHI_V2_BRIDGE_PRODUCER_ENABLED === "true"
+          ? await sourceBridge.get(
+              transaction,
+              "mapSourceBridgeControl",
+              "global:bridge",
+            )
+          : null;
+      if (bridgeControl?.producerEnabled === true && !uploadSharingAcknowledged)
+        await sourceBridge.enqueueSourceChange({
+          tx: transaction,
+          env,
+          recordId,
+          ownerAccountId: accountId,
+          reason: "PUBLISHED",
+          nowMs: now(),
+        });
       await addAudit(transaction, {
         type: "observation.finalized",
         actorAccountId: accountId,
@@ -1097,6 +1232,7 @@ const createRuntime = ({
         boardId,
         status: observation.status,
         idempotent: false,
+        uploadSharingAcknowledged,
       });
     });
   };
@@ -1525,6 +1661,14 @@ const createRuntime = ({
         subjectType: "record",
         subjectId: recordId,
       });
+      await sourceBridge.enqueueSourceChange({
+        tx: transaction,
+        env,
+        recordId,
+        ownerAccountId: accountId,
+        reason: "DELETE",
+        nowMs: now(),
+      });
       return response({ deletionId, status: "pending", idempotent: false });
     });
   };
@@ -1572,6 +1716,12 @@ const createRuntime = ({
         actorAccountId: accountId,
         subjectType: "account",
         subjectId: accountId,
+      });
+      await sourceBridge.enqueueAccountDeletion({
+        tx: transaction,
+        env,
+        ownerAccountId: accountId,
+        nowMs: now(),
       });
     });
     return response({ deletionId: `account:${accountId}`, status: "pending" });

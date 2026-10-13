@@ -1,0 +1,58 @@
+{
+  "status": "LOCAL_CANDIDATE_ARTIFACTS_PENDING_EXACT_DIFF_APPROVAL",
+  "environmentId": "cloud1-d7gxqfwv783a1f131",
+  "deployed": false,
+  "cloudWrite": false,
+  "functions": [
+    {
+      "name": "v2-shadow-get-my-assistance",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/candidate-runtime/v2-shadow-get-my-assistance.zip",
+      "sha256": "3de2485254ed4b4425a11580137a988ae48d712b3ff36791b3e548b597a64c1d",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowControlState",
+        "v2ShadowHumanAssistanceRequests",
+        "v2ShadowSourceFixtures"
+      ],
+      "deployed": false,
+      "cloudWrite": false
+    },
+    {
+      "name": "v2-shadow-reconcile-projection",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/candidate-runtime/v2-shadow-reconcile-projection.zip",
+      "sha256": "4fab3b8323913f0de5a7789677fb4d49a354e9aab82dfeec119dc1cbaad7d67a",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowControlState",
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowProjectionOutbox",
+        "v2ShadowPublicMapLeads",
+        "v2ShadowContributionAuthority"
+      ],
+      "deployed": false,
+      "cloudWrite": false
+    },
+    {
+      "name": "v2-shadow-manage-contribution",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/candidate-runtime/v2-shadow-manage-contribution.zip",
+      "sha256": "56f72569982e4b69544875e846485ac27838f8cf17e8f56898fd6dc4d1cbc38b",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowControlState",
+        "v2ShadowContributionAuthority",
+        "v2ShadowSourceFixtures",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowBoardInstances",
+        "v2ShadowPublicMapLeads",
+        "v2ShadowProjectionOutbox"
+      ],
+      "deployed": false,
+      "cloudWrite": false
+    }
+  ]
+}

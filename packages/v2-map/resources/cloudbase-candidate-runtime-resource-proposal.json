@@ -1,0 +1,130 @@
+{
+  "status": "SUPERSEDED_DO_NOT_DEPLOY",
+  "proposalVersion": "v2-19-candidate-runtime-1",
+  "autoApply": false,
+  "environmentId": "cloud1-d7gxqfwv783a1f131",
+  "region": "ap-shanghai",
+  "dataScope": "SYNTHETIC_REHEARSAL_ONLY",
+  "newCollections": [
+    {
+      "name": "v2ShadowContributionAuthority",
+      "permission": "ADMINONLY",
+      "clientReadWrite": false,
+      "v1ProductionReadAllowed": false,
+      "purpose": "Server-only versioned consent and per-lead owner capability ledger for synthetic candidate contributions",
+      "documents": [
+        {
+          "idPattern": "authorization:<server-derived-principal-HMAC-digest>",
+          "kind": "AUTHORIZATION",
+          "fields": {
+            "ownerSubjectDigest": "string; server-derived only",
+            "acceptedVersion": "map-contribution-authorization-v1",
+            "acceptedScopeDigest": "history+future:draw+upload:public-location+venue-note+safe-player-profile:v1",
+            "acceptedAt": "ISO UTC string",
+            "firstActionId": "string; idempotency audit",
+            "dataOrigin": "SYNTHETIC_REHEARSAL"
+          }
+        },
+        {
+          "idPattern": "owner:<opaque 32-hex publicLeadId>",
+          "kind": "OWNER",
+          "fields": {
+            "ownerSubjectDigest": "string; server-derived only",
+            "publicLeadId": "opaque 32-hex string",
+            "boardInstanceId": "string; shadow internal",
+            "observationVersionId": "string; shadow internal",
+            "fixtureId": "string; shadow synthetic source only",
+            "title": "public-safe boardShortLabel",
+            "lifecycle": "ACTIVE|WITHDRAWN|DELETED",
+            "noResurrection": "boolean",
+            "publicHideIntent": "boolean",
+            "lastCommandId": "string; optional",
+            "updatedAt": "ISO UTC string; optional",
+            "dataOrigin": "SYNTHETIC_REHEARSAL"
+          }
+        }
+      ],
+      "indexes": [
+        {
+          "name": "kind_ownerSubjectDigest",
+          "keys": {
+            "kind": 1,
+            "ownerSubjectDigest": 1
+          },
+          "unique": false,
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "List the caller's server-issued owner capabilities"
+        }
+      ]
+    }
+  ],
+  "newFunctions": [
+    {
+      "name": "v2-shadow-manage-contribution",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 10,
+      "triggers": [],
+      "collections": [
+        "v2ShadowControlState",
+        "v2ShadowContributionAuthority",
+        "v2ShadowSourceFixtures",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowBoardInstances",
+        "v2ShadowPublicMapLeads",
+        "v2ShadowProjectionOutbox"
+      ],
+      "v1FunctionCallAllowed": false,
+      "v1StorageAccessAllowed": false
+    }
+  ],
+  "updatedFunctions": [
+    {
+      "name": "v2-shadow-get-my-assistance",
+      "purpose": "Add server-derived opaque candidate record/version reference to trusted HA response",
+      "newCollections": [],
+      "newConfig": []
+    },
+    {
+      "name": "v2-shadow-reconcile-projection",
+      "purpose": "Require accepted shadow consent and write server-only owner capability ledger; deny owner conflict and deleted resurrection",
+      "newCollections": ["v2ShadowContributionAuthority"],
+      "newConfig": []
+    }
+  ],
+  "newFunctionConfig": [
+    {
+      "name": "ICHI_V2_SHADOW_BOUNDARY",
+      "initialValue": "synthetic_only"
+    },
+    {
+      "name": "ICHI_V2_SHADOW_CONTRIBUTION_ENABLED",
+      "initialValue": "false",
+      "failClosed": true
+    },
+    {
+      "name": "ICHI_V2_SHADOW_TEST_CALLER_DIGESTS",
+      "initialValue": "",
+      "failClosed": true
+    },
+    {
+      "name": "ICHI_V2_SHADOW_PRINCIPAL_HMAC_KEY",
+      "initialValue": "BIND_EXISTING_SHADOW_ONLY_SECRET_WITHOUT_REVEAL"
+    }
+  ],
+  "newSecretCount": 0,
+  "newIndexCount": 1,
+  "newCollectionCount": 1,
+  "newFunctionCount": 1,
+  "updatedFunctionCount": 2,
+  "v1CollectionFunctionIndexConfigStorageTriggerAclMutation": false,
+  "environmentWideRuleMutation": false,
+  "expectedPostApplyResourceCount": {
+    "shadowCollections": 10,
+    "shadowExplicitIndexes": 16,
+    "shadowFunctions": 7
+  },
+  "rollback": "Set contribution flag false, restore read-stop true and all temporary flags false, clear test allowlist; hide candidate public rows before any code rollback. Preserve evidence and tombstones. Do not mutate V1.",
+  "cleanupAuthorized": false,
+  "cloudMutationAuthorized": false
+}

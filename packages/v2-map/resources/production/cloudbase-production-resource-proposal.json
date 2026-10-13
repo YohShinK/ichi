@@ -1,0 +1,1020 @@
+{
+  "task": "TASK-V2-22",
+  "phase": "PHASE_1_PRODUCTION_BACKEND_CONVERGENCE",
+  "status": "LOCAL_PROPOSAL_CLOUD_NOT_APPLIED",
+  "environmentId": "cloud1-d7gxqfwv783a1f131",
+  "v1Mutation": "NONE",
+  "initialPublicCount": 0,
+  "collections": [
+    {
+      "name": "boardObservations",
+      "action": "CREATE",
+      "layer": "PRIVATE_SOURCE",
+      "schemaVersion": "production-map-phase1-v1",
+      "schema": "Immutable approved observation versions and current lineage heads; Phase2 adapter writes only",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "indexes": [
+        {
+          "name": "lineage_version",
+          "keys": {
+            "kind": 1,
+            "lineageId": 1,
+            "sourceVersion": 1
+          },
+          "unique": true,
+          "expireAfterSeconds": null
+        },
+        {
+          "name": "location_current",
+          "keys": {
+            "locationKey": 1,
+            "lifecycleState": 1
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "immutable facts/head and lawful provenance; numeric retention deferred; no purge/TTL in Phase1",
+      "expectedInitialRows": 0,
+      "expectedInitialSize": "EMPTY_BUSINESS_COLLECTION",
+      "futureCleanup": "none in Phase1",
+      "documentContract": {
+        "ids": ["observation:<observationVersionId>", "lineage:<lineageId>"],
+        "kinds": ["OBSERVATION_VERSION", "LINEAGE_HEAD"],
+        "fields": "Observation: schemaVersion,kind,observationVersionId,lineageId,sourceVersion,source(PLAYER|NETWORK),input(exact verification input),lifecycleState,sourceCurrent,locationKey,rightsEligible,verification,publicProjection?; Head: kind,lineageId,sourceVersion,currentObservationVersionId,lifecycleState,ownerAccountId|null. Exact typed field contract in source-boundary.ts; strict runtime shape in domain.mjs.",
+        "retention": "immutable facts/head and lawful provenance; numeric retention deferred; no purge/TTL in Phase1",
+        "writer": "Phase2 source adapter only; not implemented"
+      }
+    },
+    {
+      "name": "boardInstances",
+      "action": "CREATE",
+      "layer": "DOMAIN_AUTHORITY",
+      "schemaVersion": "production-map-phase1-v1",
+      "schema": "Continuity, candidatePoint, latest observation ref, sequence and retired IDs",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "indexes": [
+        {
+          "name": "candidatePoint",
+          "keys": {
+            "candidatePoint": "2dsphere"
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        },
+        {
+          "name": "instance_state",
+          "keys": {
+            "lifecycleState": 1,
+            "boardInstanceId": 1
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "active continuity + minimal retired ID facts; no purge/TTL",
+      "expectedInitialRows": 0,
+      "expectedInitialSize": "EMPTY_BUSINESS_COLLECTION",
+      "futureCleanup": "none in Phase1",
+      "documentContract": {
+        "ids": ["<boardInstanceId SHA256>"],
+        "fields": "boardInstanceId,lifecycleState,instanceVersion,lastObservationVersionId,candidatePoint(GCJ02 GeoPoint),lastEventSequence,lastAppliedEventSequence,activePublicLeadId|null,activeServedVersion,retiredIds[],currentSupportObservationVersionId?",
+        "retention": "active continuity + minimal retired ID facts; no purge/TTL",
+        "writer": "resolver/HA/projector/owner; doc transaction, no destructive merge"
+      }
+    },
+    {
+      "name": "boardAssociations",
+      "action": "CREATE",
+      "layer": "DOMAIN_AUTHORITY",
+      "schemaVersion": "production-map-phase1-v1",
+      "schema": "Versioned conservative resolution decisions",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "indexes": [
+        {
+          "name": "observation_version",
+          "keys": {
+            "kind": 1,
+            "observationVersionId": 1,
+            "decisionVersion": 1
+          },
+          "unique": true,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "immutable decisions and mutable current head; no purge/TTL",
+      "expectedInitialRows": 0,
+      "expectedInitialSize": "EMPTY_BUSINESS_COLLECTION",
+      "futureCleanup": "none in Phase1",
+      "documentContract": {
+        "ids": [
+          "head:<observationVersionId>",
+          "SHA256(observationVersionId,decisionVersion)"
+        ],
+        "kinds": ["HEAD", "DECISION"],
+        "fields": "kind,observationVersionId,boardInstanceId|null,decisionVersion,supersedesDecisionVersion|null,action(LINK|UNLINK),resolution?,negativeBoardInstanceId?,resolverVersion,createdAt",
+        "retention": "immutable decisions and mutable current head; no purge/TTL",
+        "writer": "resolver/HA; append decisions"
+      }
+    },
+    {
+      "name": "mapContributions",
+      "action": "CREATE",
+      "layer": "DOMAIN_AUTHORITY",
+      "schemaVersion": "production-map-phase1-v1",
+      "schema": "One active contribution per private lineage; withdrawal/deletion tombstone",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "indexes": [
+        {
+          "name": "lineageId",
+          "keys": {
+            "lineageId": 1
+          },
+          "unique": true,
+          "expireAfterSeconds": null
+        },
+        {
+          "name": "instance_lifecycle",
+          "keys": {
+            "boardInstanceId": 1,
+            "lifecycle": 1
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        },
+        {
+          "name": "owner_lifecycle",
+          "keys": {
+            "ownerAccountId": 1,
+            "lifecycle": 1
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "active lineage and minimal retirement/tombstone; owner PII disposal requires later approved retention policy",
+      "expectedInitialRows": 0,
+      "expectedInitialSize": "EMPTY_BUSINESS_COLLECTION",
+      "futureCleanup": "none in Phase1",
+      "documentContract": {
+        "ids": ["SHA256(contribution,lineageId)"],
+        "fields": "contributionId,lineageId,observationVersionId,ownerAccountId|null,sourceFamily,boardInstanceId,lifecycle,noResurrection,authorizationApplicable,publicHideIntent,processedCommandIds[]",
+        "retention": "active lineage and minimal retirement/tombstone; owner PII disposal requires later approved retention policy",
+        "writer": "resolver/HA/owner"
+      }
+    },
+    {
+      "name": "mapContributionConsents",
+      "action": "CREATE",
+      "layer": "DOMAIN_AUTHORITY",
+      "schemaVersion": "production-map-phase1-v1",
+      "schema": "Versioned irreversible terms acceptance and idempotency",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "indexes": [
+        {
+          "name": "owner_version",
+          "keys": {
+            "ownerAccountId": 1,
+            "termsVersion": 1
+          },
+          "unique": true,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "versioned consent evidence; legal retention duration deferred; no TTL",
+      "expectedInitialRows": 0,
+      "expectedInitialSize": "EMPTY_BUSINESS_COLLECTION",
+      "futureCleanup": "none in Phase1",
+      "documentContract": {
+        "ids": ["SHA256(consent,ownerAccountId,termsVersion)"],
+        "fields": "ownerAccountId,termsVersion,scopeDigest(64hex),accepted,acceptedAt,policyVersion; immutable accepted version; no per-record repeat",
+        "retention": "versioned consent evidence; legal retention duration deferred; no TTL",
+        "writer": "owner consent command only"
+      }
+    },
+    {
+      "name": "mapProjectionOutbox",
+      "action": "CREATE",
+      "layer": "DOMAIN_AUTHORITY",
+      "schemaVersion": "production-map-phase1-v1",
+      "schema": "Immutable per-instance monotonic work; retry/crash resume",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "indexes": [
+        {
+          "name": "instance_sequence",
+          "keys": {
+            "boardInstanceId": 1,
+            "eventSequence": 1
+          },
+          "unique": true,
+          "expireAfterSeconds": null
+        },
+        {
+          "name": "status_createdAt",
+          "keys": {
+            "status": 1,
+            "createdAt": 1
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "pending retry + applied evidence; future compaction separately approved",
+      "expectedInitialRows": 0,
+      "expectedInitialSize": "EMPTY_BUSINESS_COLLECTION",
+      "futureCleanup": "none in Phase1",
+      "documentContract": {
+        "ids": ["SHA256(outbox,boardInstanceId,eventSequence)"],
+        "fields": "boardInstanceId,eventSequence,status(PENDING|APPLIED),createdAt,attempts,appliedAt?",
+        "retention": "pending retry + applied evidence; future compaction separately approved",
+        "writer": "resolver/HA/owner enqueue; projector applies"
+      }
+    },
+    {
+      "name": "publicMapLeads",
+      "action": "CREATE",
+      "layer": "PUBLIC_PROJECTION",
+      "schemaVersion": "production-map-phase1-v1",
+      "schema": "Sanitized current HEAD, immutable VERSION and scrubbed retirement head",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "indexes": [
+        {
+          "name": "public_point",
+          "keys": {
+            "publicLocation.point": "2dsphere"
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        },
+        {
+          "name": "lead_kind_version",
+          "keys": {
+            "publicLeadId": 1,
+            "kind": 1,
+            "servedVersion": 1
+          },
+          "unique": true,
+          "expireAfterSeconds": null
+        },
+        {
+          "name": "public_lifecycle",
+          "keys": {
+            "kind": 1,
+            "lifecycleState": 1
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "current head + sanitized immutable serving versions; retire scrubs public fields; historical retention numeric policy deferred",
+      "expectedInitialRows": 0,
+      "expectedInitialSize": "EMPTY_BUSINESS_COLLECTION",
+      "futureCleanup": "none in Phase1",
+      "documentContract": {
+        "ids": ["head:<publicLeadId>", "lead:<publicLeadId>:<servedVersion>"],
+        "kinds": ["HEAD", "VERSION"],
+        "fields": "kind,lifecycleState(PUBLIC|HIDDEN|RETIRED),publicLeadId(32hex),servedVersion,projectionVersion,policyVersion,visibility,boardShortLabel,recordType|null,observedAt,freshnessPolicyVersion,venueNote|null,sourceLabel|null,retiredAt|null,publicUntil|null,publicLocation(public allowlist + GeoPoint),board(allowlisted tier facts; null !=0),opportunity(primaryStatus,reasonCodes,policyVersion,evaluatedAt),contributor|null,contributors[],disclosures; hideReason? INTERNAL_ONLY. Retired cores scrub board/location/contributors. Serializer does not return control/removal/private fields.",
+        "retention": "current head + sanitized immutable serving versions; retire scrubs public fields; historical retention numeric policy deferred",
+        "writer": "projector; owner/resolver/report hide-first only"
+      }
+    },
+    {
+      "name": "publicMapQuerySnapshots",
+      "action": "CREATE",
+      "layer": "CONTROL",
+      "schemaVersion": "production-map-phase1-v1",
+      "schema": "Account-bound bounded cursor refs only; max500 refs,120s",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "indexes": [
+        {
+          "name": "expiresAt",
+          "keys": {
+            "expiresAt": 1
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        },
+        {
+          "name": "snapshotId",
+          "keys": {
+            "snapshotId": 1
+          },
+          "unique": true,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "120s validity; 128 fixed slots per Account reused only after expiry; no TTL",
+      "expectedInitialRows": 0,
+      "expectedInitialSize": "EMPTY_BUSINESS_COLLECTION",
+      "futureCleanup": "none in Phase1",
+      "documentContract": {
+        "ids": ["slot:<account HMAC digest>:<0..127>"],
+        "fields": "snapshotId,queryDigest,accountDigest(schema cursor HMAC),query,schemaVersion,asOf,expiresAtMs,expiresAt,epoch,refs[{publicLeadId,servedVersion}]; exact frozen PublicMapService snapshot type",
+        "retention": "120s validity; 128 fixed slots per Account reused only after expiry; no TTL",
+        "writer": "query only"
+      }
+    },
+    {
+      "name": "mapControlState",
+      "action": "CREATE",
+      "layer": "CONTROL",
+      "schemaVersion": "production-map-phase1-v1",
+      "schema": "Stopped initial control, epoch, policy, durable rate and HA budget",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "indexes": [
+        {
+          "name": "kind_expiry",
+          "keys": {
+            "kind": 1,
+            "expiresAt": 1
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [
+        {
+          "_id": "global:read-stop",
+          "kind": "READ_STOP",
+          "stopped": true
+        },
+        {
+          "_id": "global:read-epoch",
+          "kind": "READ_EPOCH",
+          "epoch": 1,
+          "mutationRevision": 0
+        },
+        {
+          "_id": "global:features",
+          "kind": "FEATURES",
+          "readEnabled": false,
+          "resolverEnabled": false,
+          "projectorEnabled": false,
+          "ownerEnabled": false,
+          "consentEnabled": false,
+          "reportEnabled": false,
+          "haEnabled": false,
+          "haPaused": true
+        },
+        {
+          "_id": "global:policy",
+          "kind": "POLICY",
+          "policyVersion": "map-production-phase1-v1",
+          "projectionVersion": "map-projection-phase1-v1",
+          "verificationVersion": "verification-v2-10",
+          "resolverVersion": "resolver-v2-11",
+          "opportunity": {
+            "policyVersion": "opportunity-20260930-v1",
+            "lastMaxRemaining": 12,
+            "grandMinRemaining": 3,
+            "highGrandRatio": 0.08,
+            "lowGrandRatio": 0.03,
+            "splitMinRemaining": 60
+          },
+          "freshness": {
+            "policyVersion": "freshness-production-v1",
+            "recentMaxAgeMs": 3600000,
+            "agingMaxAgeMs": 86400000
+          },
+          "terms": null,
+          "ha": null,
+          "report": {
+            "policyVersion": "v2-21-report-policy-1",
+            "autoHideDistinctEligibleReports": 10
+          },
+          "publicAvatarOrigins": []
+        }
+      ],
+      "retention": "4 controls stable; one rate row per Account/operation; one snapshot counter; fixed HA rows overwritten per window; no TTL",
+      "expectedInitialRows": 4,
+      "expectedInitialSize": "Four control JSON rows; exact bytes in artifact report; DB physical size NOT_MEASURED",
+      "futureCleanup": "none in Phase1",
+      "documentContract": {
+        "ids": [
+          "global:read-stop",
+          "global:read-epoch",
+          "global:features",
+          "global:policy",
+          "rate:<Account/operation hash>",
+          "snapshot-counter:<Account digest>",
+          "ha-budget:<owner hash>",
+          "ha-cooldown:<owner hash>"
+        ],
+        "kinds": [
+          "READ_STOP",
+          "READ_EPOCH",
+          "FEATURES",
+          "POLICY",
+          "RATE",
+          "SNAPSHOT_COUNTER",
+          "HA_BUDGET",
+          "HA_COOLDOWN"
+        ],
+        "fields": "Four exact initial rows below; rate window/count/expiresAt fixed key, snapshot nextSlot bounded128, HA budget window/count/expiresAt and cooldown nextAllowedAtMs/expiresAt. READ_EPOCH has epoch and mutationRevision. All future source changes must atomically increment mutationRevision and perform required hide-first/epoch invalidation.",
+        "retention": "4 controls stable; one rate row per Account/operation; one snapshot counter; fixed HA rows overwritten per window; no TTL",
+        "writer": "functions for bounded control state; actual policy enable/write requires future approved batch"
+      }
+    },
+    {
+      "name": "mapModerationLedger",
+      "action": "CREATE",
+      "layer": "DOMAIN_AUTHORITY",
+      "schemaVersion": "production-map-phase1-v1",
+      "schema": "REPORT_STATE/TARGET permanent hide latch, report action receipts",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "indexes": [
+        {
+          "name": "lead_kind",
+          "keys": {
+            "publicLeadId": 1,
+            "kind": 1
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "moderation evidence and sticky hide state; duration deferred; no TTL",
+      "expectedInitialRows": 0,
+      "expectedInitialSize": "EMPTY_BUSINESS_COLLECTION",
+      "futureCleanup": "none in Phase1",
+      "documentContract": {
+        "ids": [
+          "report:<SHA256(Account digest,publicLeadId,reportPolicy)>",
+          "target:<publicLeadId>"
+        ],
+        "kinds": ["REPORT_STATE", "TARGET"],
+        "fields": "Report: kind,publicLeadId,reporterAccountId,reporterDigest,active,policyVersion,updatedAt. Target: kind,publicLeadId,hidden,distinctEligibleReporters,policyVersion. Reporter identities/counts are private, omitted from public responses. Hidden latch cannot be canceled/restored by ordinary reports.",
+        "retention": "moderation evidence and sticky hide state; duration deferred; no TTL",
+        "writer": "report/cancel; approved emergency moderation maintenance future"
+      }
+    },
+    {
+      "name": "mapAuditEvents",
+      "action": "CREATE",
+      "layer": "AUDIT",
+      "schemaVersion": "production-map-phase1-v1",
+      "schema": "Private minimal actor digest/event/policy receipts; no raw payload or secret",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "indexes": [
+        {
+          "name": "createdAt",
+          "keys": {
+            "createdAt": -1
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "minimum audit/idempotency evidence; numeric compaction/retention not yet approved; no TTL",
+      "expectedInitialRows": 0,
+      "expectedInitialSize": "EMPTY_BUSINESS_COLLECTION",
+      "futureCleanup": "none in Phase1",
+      "documentContract": {
+        "ids": [
+          "SHA256(actorDigest,operation,actionId)",
+          "SHA256(auto-hide,publicLeadId)"
+        ],
+        "kinds": ["COMMAND_RECEIPT", "AUTO_HIDE"],
+        "fields": "Receipt: kind,actorDigest,operation,actionHash,result,createdAt,policyVersion,requestDigest; Auto-hide: kind,publicLeadId,createdAt,policyVersion. No raw event, OPENID, image, URL, secret or prompt.",
+        "retention": "minimum audit/idempotency evidence; numeric compaction/retention not yet approved; no TTL",
+        "writer": "successful commands + auto-hide"
+      }
+    },
+    {
+      "name": "mapAssistanceRequests",
+      "action": "CREATE",
+      "layer": "DOMAIN_AUTHORITY",
+      "schemaVersion": "production-map-phase1-v1",
+      "schema": "Owner-scoped pending comparison, exact instance and observation versions",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "indexes": [
+        {
+          "name": "owner_state",
+          "keys": {
+            "ownerAccountId": 1,
+            "state": 1
+          },
+          "unique": false,
+          "expireAfterSeconds": null
+        },
+        {
+          "name": "observationVersionId",
+          "keys": {
+            "observationVersionId": 1
+          },
+          "unique": true,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "request TTL policy unbound/null initially; one request per observation; records preserved until approved cleanup",
+      "expectedInitialRows": 0,
+      "expectedInitialSize": "EMPTY_BUSINESS_COLLECTION",
+      "futureCleanup": "none in Phase1",
+      "documentContract": {
+        "ids": ["ha:<SHA256(observationVersionId)[0:40]>"],
+        "fields": "requestId,ownerAccountId,observationVersionId,comparisonBoardInstanceId,comparisonInstanceVersion,comparisonObservationVersionId,state,policyVersion,expiresAt,answer?,answeredAt?",
+        "retention": "request TTL policy unbound/null initially; one request per observation; records preserved until approved cleanup",
+        "writer": "resolver and owner HA answer"
+      }
+    },
+    {
+      "name": "mapAssistanceEvidence",
+      "action": "CREATE",
+      "layer": "DOMAIN_AUTHORITY",
+      "schemaVersion": "production-map-phase1-v1",
+      "schema": "One immutable SAME/DIFFERENT/CANNOT/SKIP answer per request",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "indexes": [
+        {
+          "name": "requestId",
+          "keys": {
+            "requestId": 1
+          },
+          "unique": true,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "immutable bounded-per-request evidence; no TTL; numeric legal retention deferred",
+      "expectedInitialRows": 0,
+      "expectedInitialSize": "EMPTY_BUSINESS_COLLECTION",
+      "futureCleanup": "none in Phase1",
+      "documentContract": {
+        "ids": ["SHA256(requestId)"],
+        "fields": "requestId,observationVersionId,comparisonBoardInstanceId,answer,resolverContextVersion,createdAt; SKIP persists request ANSWERED but does not create evidence",
+        "retention": "immutable bounded-per-request evidence; no TTL; numeric legal retention deferred",
+        "writer": "owner HA answer once"
+      }
+    },
+    {
+      "name": "mapAccountPolicies",
+      "action": "CREATE",
+      "layer": "CONTROL_AUTHORITY",
+      "schemaVersion": "production-map-phase1-v1",
+      "schema": "Server-issued role/eligibility policy for real Account; no tester enrollment",
+      "acl": "ADMINONLY",
+      "clientDirectAccess": false,
+      "indexes": [
+        {
+          "name": "accountId",
+          "keys": {
+            "accountId": 1
+          },
+          "unique": true,
+          "expireAfterSeconds": null
+        }
+      ],
+      "initialRows": [],
+      "retention": "expiring server authority; no tester enrollment, no initial rows, no TTL",
+      "expectedInitialRows": 0,
+      "expectedInitialSize": "EMPTY_BUSINESS_COLLECTION",
+      "futureCleanup": "none in Phase1",
+      "documentContract": {
+        "ids": ["account:<real V1 accountId>"],
+        "kinds": ["ACCOUNT_POLICY"],
+        "fields": "kind,accountId,authorityVersion=production-account-policy-v1,roles[(MAP_ADMIN|MAP_MAINTAINER)],reporterEligible,spamOrInvalid,expiresAt. Account active status rechecked from V1. Ordinary reads do not require an Account policy.",
+        "retention": "expiring server authority; no tester enrollment, no initial rows, no TTL",
+        "writer": "approved admin policy provisioning future, absent in Phase1"
+      }
+    }
+  ],
+  "functions": [
+    {
+      "name": "query-public-map-leads",
+      "action": "CREATE",
+      "operation": "query",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 10,
+      "memoryMB": 256,
+      "triggers": [],
+      "layers": [],
+      "collectionAllowlist": [
+        "accounts",
+        "mapControlState",
+        "publicMapLeads",
+        "publicMapQuerySnapshots",
+        "wechatIdentities"
+      ],
+      "readOnlyV1Collections": ["wechatIdentities", "accounts"],
+      "config": {
+        "ICHI_V2_BACKEND_MODE": "production",
+        "ICHI_V2_FUNCTION_ENABLED": "false"
+      },
+      "secrets": [
+        "IDENTITY_HMAC_KEY",
+        "ICHI_V2_ACCOUNT_AUTHORITY_HMAC_KEY",
+        "ICHI_V2_CURSOR_HMAC_KEY"
+      ],
+      "rollback": {
+        "priorArtifact": null,
+        "strategy": "disable-new-entry-and-preserve-data; deletion only after separate approval"
+      },
+      "installDependency": true,
+      "role": "TCB_QcsRole",
+      "publicNetwork": "ENABLE",
+      "initTimeoutSeconds": 65,
+      "diskMB": 512,
+      "environmentMergePolicy": "CREATE new function only; no V1/shadow config mutation"
+    },
+    {
+      "name": "get-public-map-lead-detail",
+      "action": "CREATE",
+      "operation": "detail",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 10,
+      "memoryMB": 256,
+      "triggers": [],
+      "layers": [],
+      "collectionAllowlist": [
+        "accounts",
+        "mapControlState",
+        "publicMapLeads",
+        "wechatIdentities"
+      ],
+      "readOnlyV1Collections": ["wechatIdentities", "accounts"],
+      "config": {
+        "ICHI_V2_BACKEND_MODE": "production",
+        "ICHI_V2_FUNCTION_ENABLED": "false"
+      },
+      "secrets": [
+        "IDENTITY_HMAC_KEY",
+        "ICHI_V2_ACCOUNT_AUTHORITY_HMAC_KEY",
+        "ICHI_V2_CURSOR_HMAC_KEY"
+      ],
+      "rollback": {
+        "priorArtifact": null,
+        "strategy": "disable-new-entry-and-preserve-data; deletion only after separate approval"
+      },
+      "installDependency": true,
+      "role": "TCB_QcsRole",
+      "publicNetwork": "ENABLE",
+      "initTimeoutSeconds": 65,
+      "diskMB": 512,
+      "environmentMergePolicy": "CREATE new function only; no V1/shadow config mutation"
+    },
+    {
+      "name": "resolve-board-observation",
+      "action": "CREATE",
+      "operation": "resolve",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 20,
+      "memoryMB": 256,
+      "triggers": [],
+      "layers": [],
+      "collectionAllowlist": [
+        "accounts",
+        "boardAssociations",
+        "boardInstances",
+        "boardObservations",
+        "mapAccountPolicies",
+        "mapAssistanceRequests",
+        "mapAuditEvents",
+        "mapContributions",
+        "mapControlState",
+        "mapProjectionOutbox",
+        "publicMapLeads",
+        "wechatIdentities"
+      ],
+      "readOnlyV1Collections": ["wechatIdentities", "accounts"],
+      "config": {
+        "ICHI_V2_BACKEND_MODE": "production",
+        "ICHI_V2_FUNCTION_ENABLED": "false"
+      },
+      "secrets": ["IDENTITY_HMAC_KEY", "ICHI_V2_ACCOUNT_AUTHORITY_HMAC_KEY"],
+      "rollback": {
+        "priorArtifact": null,
+        "strategy": "disable-new-entry-and-preserve-data; deletion only after separate approval"
+      },
+      "installDependency": true,
+      "role": "TCB_QcsRole",
+      "publicNetwork": "ENABLE",
+      "initTimeoutSeconds": 65,
+      "diskMB": 512,
+      "environmentMergePolicy": "CREATE new function only; no V1/shadow config mutation"
+    },
+    {
+      "name": "reconcile-map-projection",
+      "action": "CREATE",
+      "operation": "project",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 20,
+      "memoryMB": 256,
+      "triggers": [],
+      "layers": [],
+      "collectionAllowlist": [
+        "accounts",
+        "boardAssociations",
+        "boardInstances",
+        "boardObservations",
+        "mapAccountPolicies",
+        "mapAuditEvents",
+        "mapContributionConsents",
+        "mapContributions",
+        "mapControlState",
+        "mapModerationLedger",
+        "mapProjectionOutbox",
+        "publicMapLeads",
+        "wechatIdentities"
+      ],
+      "readOnlyV1Collections": ["wechatIdentities", "accounts"],
+      "config": {
+        "ICHI_V2_BACKEND_MODE": "production",
+        "ICHI_V2_FUNCTION_ENABLED": "false"
+      },
+      "secrets": ["IDENTITY_HMAC_KEY", "ICHI_V2_ACCOUNT_AUTHORITY_HMAC_KEY"],
+      "rollback": {
+        "priorArtifact": null,
+        "strategy": "disable-new-entry-and-preserve-data; deletion only after separate approval"
+      },
+      "installDependency": true,
+      "role": "TCB_QcsRole",
+      "publicNetwork": "ENABLE",
+      "initTimeoutSeconds": 65,
+      "diskMB": 512,
+      "environmentMergePolicy": "CREATE new function only; no V1/shadow config mutation"
+    },
+    {
+      "name": "manage-map-contribution",
+      "action": "CREATE",
+      "operation": "owner",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 10,
+      "memoryMB": 256,
+      "triggers": [],
+      "layers": [],
+      "collectionAllowlist": [
+        "accounts",
+        "boardInstances",
+        "boardObservations",
+        "mapAuditEvents",
+        "mapContributions",
+        "mapControlState",
+        "mapProjectionOutbox",
+        "publicMapLeads",
+        "wechatIdentities"
+      ],
+      "readOnlyV1Collections": ["wechatIdentities", "accounts"],
+      "config": {
+        "ICHI_V2_BACKEND_MODE": "production",
+        "ICHI_V2_FUNCTION_ENABLED": "false"
+      },
+      "secrets": ["IDENTITY_HMAC_KEY", "ICHI_V2_ACCOUNT_AUTHORITY_HMAC_KEY"],
+      "rollback": {
+        "priorArtifact": null,
+        "strategy": "disable-new-entry-and-preserve-data; deletion only after separate approval"
+      },
+      "installDependency": true,
+      "role": "TCB_QcsRole",
+      "publicNetwork": "ENABLE",
+      "initTimeoutSeconds": 65,
+      "diskMB": 512,
+      "environmentMergePolicy": "CREATE new function only; no V1/shadow config mutation"
+    },
+    {
+      "name": "manage-map-contribution-consent",
+      "action": "CREATE",
+      "operation": "consent",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 10,
+      "memoryMB": 256,
+      "triggers": [],
+      "layers": [],
+      "collectionAllowlist": [
+        "accounts",
+        "mapAuditEvents",
+        "mapContributionConsents",
+        "mapControlState",
+        "wechatIdentities"
+      ],
+      "readOnlyV1Collections": ["wechatIdentities", "accounts"],
+      "config": {
+        "ICHI_V2_BACKEND_MODE": "production",
+        "ICHI_V2_FUNCTION_ENABLED": "false"
+      },
+      "secrets": ["IDENTITY_HMAC_KEY", "ICHI_V2_ACCOUNT_AUTHORITY_HMAC_KEY"],
+      "rollback": {
+        "priorArtifact": null,
+        "strategy": "disable-new-entry-and-preserve-data; deletion only after separate approval"
+      },
+      "installDependency": true,
+      "role": "TCB_QcsRole",
+      "publicNetwork": "ENABLE",
+      "initTimeoutSeconds": 65,
+      "diskMB": 512,
+      "environmentMergePolicy": "CREATE new function only; no V1/shadow config mutation"
+    },
+    {
+      "name": "report-public-map-lead",
+      "action": "CREATE",
+      "operation": "report",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 10,
+      "memoryMB": 256,
+      "triggers": [],
+      "layers": [],
+      "collectionAllowlist": [
+        "accounts",
+        "mapAccountPolicies",
+        "mapAuditEvents",
+        "mapControlState",
+        "mapModerationLedger",
+        "publicMapLeads",
+        "wechatIdentities"
+      ],
+      "readOnlyV1Collections": ["wechatIdentities", "accounts"],
+      "config": {
+        "ICHI_V2_BACKEND_MODE": "production",
+        "ICHI_V2_FUNCTION_ENABLED": "false"
+      },
+      "secrets": ["IDENTITY_HMAC_KEY", "ICHI_V2_ACCOUNT_AUTHORITY_HMAC_KEY"],
+      "rollback": {
+        "priorArtifact": null,
+        "strategy": "disable-new-entry-and-preserve-data; deletion only after separate approval"
+      },
+      "installDependency": true,
+      "role": "TCB_QcsRole",
+      "publicNetwork": "ENABLE",
+      "initTimeoutSeconds": 65,
+      "diskMB": 512,
+      "environmentMergePolicy": "CREATE new function only; no V1/shadow config mutation"
+    },
+    {
+      "name": "get-my-map-assistance",
+      "action": "CREATE",
+      "operation": "getAssistance",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 10,
+      "memoryMB": 256,
+      "triggers": [],
+      "layers": [],
+      "collectionAllowlist": [
+        "accounts",
+        "boardObservations",
+        "mapAssistanceRequests",
+        "mapControlState",
+        "wechatIdentities"
+      ],
+      "readOnlyV1Collections": ["wechatIdentities", "accounts"],
+      "config": {
+        "ICHI_V2_BACKEND_MODE": "production",
+        "ICHI_V2_FUNCTION_ENABLED": "false"
+      },
+      "secrets": ["IDENTITY_HMAC_KEY", "ICHI_V2_ACCOUNT_AUTHORITY_HMAC_KEY"],
+      "rollback": {
+        "priorArtifact": null,
+        "strategy": "disable-new-entry-and-preserve-data; deletion only after separate approval"
+      },
+      "installDependency": true,
+      "role": "TCB_QcsRole",
+      "publicNetwork": "ENABLE",
+      "initTimeoutSeconds": 65,
+      "diskMB": 512,
+      "environmentMergePolicy": "CREATE new function only; no V1/shadow config mutation"
+    },
+    {
+      "name": "answer-map-assistance",
+      "action": "CREATE",
+      "operation": "answerAssistance",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 20,
+      "memoryMB": 256,
+      "triggers": [],
+      "layers": [],
+      "collectionAllowlist": [
+        "accounts",
+        "boardAssociations",
+        "boardInstances",
+        "boardObservations",
+        "mapAssistanceEvidence",
+        "mapAssistanceRequests",
+        "mapAuditEvents",
+        "mapContributions",
+        "mapControlState",
+        "mapProjectionOutbox",
+        "publicMapLeads",
+        "wechatIdentities"
+      ],
+      "readOnlyV1Collections": ["wechatIdentities", "accounts"],
+      "config": {
+        "ICHI_V2_BACKEND_MODE": "production",
+        "ICHI_V2_FUNCTION_ENABLED": "false"
+      },
+      "secrets": ["IDENTITY_HMAC_KEY", "ICHI_V2_ACCOUNT_AUTHORITY_HMAC_KEY"],
+      "rollback": {
+        "priorArtifact": null,
+        "strategy": "disable-new-entry-and-preserve-data; deletion only after separate approval"
+      },
+      "installDependency": true,
+      "role": "TCB_QcsRole",
+      "publicNetwork": "ENABLE",
+      "initTimeoutSeconds": 65,
+      "diskMB": 512,
+      "environmentMergePolicy": "CREATE new function only; no V1/shadow config mutation"
+    }
+  ],
+  "initialControlRows": [
+    {
+      "_id": "global:read-stop",
+      "kind": "READ_STOP",
+      "stopped": true
+    },
+    {
+      "_id": "global:read-epoch",
+      "kind": "READ_EPOCH",
+      "epoch": 1,
+      "mutationRevision": 0
+    },
+    {
+      "_id": "global:features",
+      "kind": "FEATURES",
+      "readEnabled": false,
+      "resolverEnabled": false,
+      "projectorEnabled": false,
+      "ownerEnabled": false,
+      "consentEnabled": false,
+      "reportEnabled": false,
+      "haEnabled": false,
+      "haPaused": true
+    },
+    {
+      "_id": "global:policy",
+      "kind": "POLICY",
+      "policyVersion": "map-production-phase1-v1",
+      "projectionVersion": "map-projection-phase1-v1",
+      "verificationVersion": "verification-v2-10",
+      "resolverVersion": "resolver-v2-11",
+      "opportunity": {
+        "policyVersion": "opportunity-20260930-v1",
+        "lastMaxRemaining": 12,
+        "grandMinRemaining": 3,
+        "highGrandRatio": 0.08,
+        "lowGrandRatio": 0.03,
+        "splitMinRemaining": 60
+      },
+      "freshness": {
+        "policyVersion": "freshness-production-v1",
+        "recentMaxAgeMs": 3600000,
+        "agingMaxAgeMs": 86400000
+      },
+      "terms": null,
+      "ha": null,
+      "report": {
+        "policyVersion": "v2-21-report-policy-1",
+        "autoHideDistinctEligibleReports": 10
+      },
+      "publicAvatarOrigins": []
+    }
+  ],
+  "secretPlan": {
+    "IDENTITY_HMAC_KEY": "reuse exact V1 identity namespace binding; never rotate or modify V1",
+    "ICHI_V2_ACCOUNT_AUTHORITY_HMAC_KEY": "NEW production-only >=32 byte secret; real Account authority pseudonym, independent of test principal",
+    "ICHI_V2_CURSOR_HMAC_KEY": "NEW production-only >=32 byte secret; never reuse authority secret"
+  },
+  "shadowDataDisposition": "DO_NOT_MIGRATE; KEEP_SHADOW_FOR_EVIDENCE_ONLY; future cleanup requires independent approval",
+  "cost": "NOT_MEASURED / REQUIRES_ACCOUNT_BILLING_READBACK",
+  "phase2": "Source bridge/policy binding/NETWORK versioned serving adapter and real inputs NOT_IMPLEMENTED",
+  "transactionContract": {
+    "sdkDocumentOnly": true,
+    "maximumSDKOperations": 95,
+    "platformLimit": 100,
+    "preselectOutsideTransaction": true,
+    "revalidateSelectedDocuments": true,
+    "mutationFence": "global:read-epoch.mutationRevision",
+    "futureSourceWriterRequirement": "all source/head/eligibility and lifecycle changes must atomically fence mutationRevision and enforce hide-first; Phase2 must pass race tests",
+    "onStaleOrOverBudget": "SERVICE_UNAVAILABLE and transaction rollback; no unbounded read or partial commit",
+    "capacityAcceptance": "real DB latency/concurrency/billing NOT_MEASURED; required after separately approved provisioning; no Phase1 enable"
+  }
+}

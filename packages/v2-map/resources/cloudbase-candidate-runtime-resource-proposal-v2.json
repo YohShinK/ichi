@@ -1,0 +1,293 @@
+{
+  "status": "SUPERSEDED_DO_NOT_DEPLOY",
+  "proposalVersion": "v2-19-candidate-runtime-2",
+  "autoApply": false,
+  "environmentId": "cloud1-d7gxqfwv783a1f131",
+  "region": "ap-shanghai",
+  "dataScope": "SYNTHETIC_REHEARSAL_ONLY",
+  "supersedes": "cloudbase-candidate-runtime-resource-proposal.json",
+  "newCollections": [
+    {
+      "name": "v2ShadowCandidateUploads",
+      "permission": "ADMINONLY",
+      "access": "SERVER_ONLY",
+      "clientReadWrite": false,
+      "v1ProductionReadAllowed": false,
+      "dataOrigin": "SYNTHETIC_REHEARSAL",
+      "purpose": "Server-issued candidate upload record and immutable ref/version lineage",
+      "documents": [
+        {
+          "idPattern": "candidate:<server-HMAC-derived-40hex>",
+          "fields": {
+            "candidateRecordRef": "opaque string; same as _id; server issued",
+            "ownerSubjectDigest": "64hex; deriveTrustedCaller(getWXContext()) only",
+            "fixtureId": "synthetic fixture ID; owner verified on server",
+            "observationVersionId": "server-verified synthetic observation lineage",
+            "observationVersion": "verified board version",
+            "verifiedBoardId": "server verification output",
+            "verifiedBoardVersion": "server verification output",
+            "shareDecision": "SHARE|DO_NOT_SHARE; chosen at upload",
+            "firstIdempotencyKey": "client retry key, audited but not identity authority",
+            "validationState": "VERIFIED; eligibility is separately gated",
+            "lifecycle": "ACTIVE|DELETED; deletion tombstone is irreversible",
+            "boardInstanceId": "shadow association ID or null",
+            "contributionId": "server-generated or null",
+            "projectionState": "PENDING or absent",
+            "noResurrection": "true when deleted",
+            "createdAt": "server ISO UTC",
+            "deletedAt": "server ISO UTC or absent",
+            "dataOrigin": "SYNTHETIC_REHEARSAL"
+          }
+        }
+      ],
+      "indexes": [
+        {
+          "name": "ownerSubjectDigest_dataOrigin",
+          "keys": {
+            "ownerSubjectDigest": 1,
+            "dataOrigin": 1
+          },
+          "unique": false,
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Bounded My Uploads read for trusted caller"
+        },
+        {
+          "name": "observationVersionId_ownerSubjectDigest_lifecycle_dataOrigin",
+          "keys": {
+            "observationVersionId": 1,
+            "ownerSubjectDigest": 1,
+            "lifecycle": 1,
+            "dataOrigin": 1
+          },
+          "unique": false,
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Resolver finds one current server-issued upload for one observation"
+        }
+      ]
+    },
+    {
+      "name": "v2ShadowContributionLedger",
+      "permission": "ADMINONLY",
+      "access": "SERVER_ONLY",
+      "clientReadWrite": false,
+      "v1ProductionReadAllowed": false,
+      "dataOrigin": "SYNTHETIC_REHEARSAL",
+      "purpose": "Per-upload contribution state, irreversible tombstones and append/versioned audit events; no owner by publicLeadId",
+      "documents": [
+        {
+          "idPattern": "contribution:<sha256(candidateRecordRef)-40hex>",
+          "kind": "STATE",
+          "fields": {
+            "contributionId": "opaque server-generated",
+            "candidateRecordRef": "trusted reference to candidate upload",
+            "fixtureId": "synthetic source fixture",
+            "ownerSubjectDigest": "server-derived trusted caller",
+            "boardInstanceId": "resolved shared BoardInstance",
+            "observationVersionId": "source version lineage",
+            "observationVersion": "verified board version",
+            "shareDecision": "SHARE only",
+            "validationState": "VERIFIED",
+            "eligible": "boolean; all public gates",
+            "lifecycle": "ACTIVE|DELETED",
+            "observedAt": "trusted verified observation time",
+            "publicSafeNote": "string|null; only after note safety approval",
+            "contributor": "public-safe displayName + approved fallback avatar projection",
+            "sourceType": "synthetic source path",
+            "noResurrection": "true when deleted",
+            "createdAt": "server ISO UTC",
+            "updatedAt": "server ISO UTC",
+            "deletedAt": "server ISO UTC or absent",
+            "dataOrigin": "SYNTHETIC_REHEARSAL"
+          }
+        },
+        {
+          "idPattern": "contribution-audit:<sha256(candidateRecordRef:action)-40hex>",
+          "kind": "ACTIVATE_EVENT|DELETE_EVENT",
+          "fields": {
+            "contributionId": "opaque ID",
+            "auditVersion": "1; versioned append-only event schema",
+            "candidateRecordRef": "server-issued ref",
+            "ownerSubjectDigest": "trusted caller",
+            "boardInstanceId": "if activated",
+            "commandId": "if deleted",
+            "at": "server ISO UTC",
+            "dataOrigin": "SYNTHETIC_REHEARSAL"
+          }
+        }
+      ],
+      "indexes": [
+        {
+          "name": "boardInstanceId_kind_dataOrigin",
+          "keys": {
+            "boardInstanceId": 1,
+            "kind": 1,
+            "dataOrigin": 1
+          },
+          "unique": false,
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Bounded current contribution aggregation per shared BoardInstance"
+        }
+      ]
+    }
+  ],
+  "implicitUniqueId": "CloudBase automatic _id_ unique index on each new collection; no separate unique index requested",
+  "newFunctions": [
+    {
+      "name": "v2-shadow-submit-candidate-upload",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 10,
+      "triggers": [],
+      "collections": [
+        "v2ShadowCandidateUploads",
+        "v2ShadowSourceFixtures",
+        "v2ShadowControlState"
+      ]
+    },
+    {
+      "name": "v2-shadow-manage-contribution",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 10,
+      "triggers": [],
+      "collections": [
+        "v2ShadowControlState",
+        "v2ShadowCandidateUploads",
+        "v2ShadowContributionLedger",
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowPublicMapLeads",
+        "v2ShadowProjectionOutbox"
+      ]
+    }
+  ],
+  "updatedFunctions": [
+    {
+      "name": "v2-shadow-resolve-observation",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 10,
+      "triggers": [],
+      "collections": [
+        "v2ShadowControlState",
+        "v2ShadowSourceFixtures",
+        "v2ShadowCandidateUploads",
+        "v2ShadowContributionLedger",
+        "v2ShadowBoardInstances",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowProjectionOutbox",
+        "v2ShadowHumanAssistanceRequests"
+      ]
+    },
+    {
+      "name": "v2-shadow-answer-assistance",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 10,
+      "triggers": [],
+      "collections": [
+        "v2ShadowControlState",
+        "v2ShadowCandidateUploads",
+        "v2ShadowContributionLedger",
+        "v2ShadowHumanAssistanceRequests",
+        "v2ShadowHumanAssistanceEvidence",
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowProjectionOutbox",
+        "v2ShadowAssociationDecisions"
+      ]
+    },
+    {
+      "name": "v2-shadow-get-my-assistance",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 10,
+      "triggers": [],
+      "collections": [
+        "v2ShadowControlState",
+        "v2ShadowHumanAssistanceRequests",
+        "v2ShadowSourceFixtures",
+        "v2ShadowCandidateUploads"
+      ]
+    },
+    {
+      "name": "v2-shadow-reconcile-projection",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 10,
+      "triggers": [],
+      "collections": [
+        "v2ShadowControlState",
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowProjectionOutbox",
+        "v2ShadowPublicMapLeads",
+        "v2ShadowContributionLedger",
+        "v2ShadowCandidateUploads"
+      ]
+    },
+    {
+      "name": "v2-shadow-get-public-map-lead-detail",
+      "runtime": "Nodejs20.19",
+      "entry": "index.main",
+      "timeoutSeconds": 10,
+      "triggers": [],
+      "collections": [
+        "v2ShadowControlState",
+        "v2ShadowPublicMapLeads"
+      ]
+    }
+  ],
+  "artifactManifest": "packages/v2-map/resources/cloudbase-candidate-runtime-artifacts-v2.json",
+  "newFunctionConfig": [
+    {
+      "name": "ICHI_V2_SHADOW_BOUNDARY",
+      "initialValue": "synthetic_only"
+    },
+    {
+      "name": "ICHI_V2_SHADOW_CANDIDATE_UPLOAD_ENABLED",
+      "initialValue": "false",
+      "failClosed": true
+    },
+    {
+      "name": "ICHI_V2_SHADOW_CONTRIBUTION_ENABLED",
+      "initialValue": "false",
+      "failClosed": true
+    },
+    {
+      "name": "ICHI_V2_SHADOW_TEST_CALLER_DIGESTS",
+      "initialValue": "",
+      "failClosed": true
+    },
+    {
+      "name": "ICHI_V2_SHADOW_UPLOAD_REF_HMAC_KEY",
+      "initialValue": "NEW_SHADOW_ONLY_SECRET_BIND_EXISTENCE_ONLY_NEVER_ECHO"
+    }
+  ],
+  "existingFlagRequirement": "RESOLVE/HUMAN_ASSISTANCE/PROJECTOR/READ flags remain false; caller allowlist remains empty",
+  "existingShadowSecretBinding": "principal/rehearsal/cursor key existence only; never echo values",
+  "haPolicy": "CANDIDATE_TEST_ONLY / PILOT_CALIBRATION_REQUIRED; no configured product values",
+  "newSecretCount": 1,
+  "newIndexCount": 3,
+  "newCollectionCount": 2,
+  "newFunctionCount": 2,
+  "updatedFunctionCount": 5,
+  "newTriggerCount": 0,
+  "newStoragePrefixCount": 0,
+  "v1CollectionFunctionIndexConfigStorageTriggerAclMutation": false,
+  "environmentWideRuleMutation": false,
+  "expectedPostApplyResourceCount": {
+    "shadowCollections": 11,
+    "shadowExplicitIndexes": 18,
+    "shadowFunctions": 8,
+    "allCollections": 24,
+    "allFunctions": 27
+  },
+  "rollback": "Before any authorized future apply, keep all flags false and allowlist empty. If subsequently authorized, disable shadow upload/contribution and existing read/resolve/HA/projector flags, hide candidate public rows and advance read epoch before any code rollback. Preserve ledger tombstones and evidence; never mutate V1. Rollback mutation is not authorized now.",
+  "cleanupAuthorized": false,
+  "cloudMutationAuthorized": false,
+  "deployed": false,
+  "cloudWrite": false,
+  "supersededBy": "v2-19-candidate-runtime-3"
+}

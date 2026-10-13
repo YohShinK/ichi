@@ -27,7 +27,9 @@ describe("V1-31 approved web-shell fidelity", () => {
     expect(myRecords).not.toContain("cloudRecords");
     expect(myRecords).not.toContain("onDeleteCloudRecord");
 
-    expect(myUploads).toContain("{{cloudClues.length}}");
+    expect(myUploads).toContain(
+      "{{cloudClues.length + candidateUploads.length}}",
+    );
     expect(myUploads).toContain('wx:for="{{cloudClues}}"');
     expect(myUploads).toContain("onDeleteCloudRecord");
     expect(myUploads).not.toContain('wx:for="{{contributions}}"');
@@ -198,6 +200,10 @@ describe("V1-31 approved web-shell fidelity", () => {
     expect(wxss).toMatch(/\.swipe-row\s*{[\s\S]*?background: transparent;/);
   });
 
+  it("does not put XML comparison operators inside class interpolations", () => {
+    expect(wxml).not.toMatch(/class="[^"\n]*\{\{[^"\n]*(?:<|&lt;)[^"\n]*\}\}/);
+  });
+
   it("dismisses an open draft action from the next screen tap", () => {
     expect(wxml).toMatch(
       /class="app-shell"[\s\S]*?bindtap="onDismissDraftSwipe"/,
@@ -265,9 +271,11 @@ describe("V1-31 approved web-shell fidelity", () => {
     expect(wxml).toContain("/assets/icons/bell-pink.svg");
   });
 
-  it("keeps the map placeholder watermark visibly present", () => {
-    expect(wxml).toContain("/assets/v1-29/map-placeholder.svg");
-    expect(wxss).toMatch(/\.map-watermark\s*{[\s\S]*?opacity: 0\.36;/);
+  it("uses the formal native map surface in the existing host", () => {
+    expect(wxml).toContain('<map id="public-map"');
+    expect(wxml).toContain('enable-zoom="true"');
+    expect(wxml).toContain('enable-scroll="true"');
+    expect(wxml).toContain('bindregionchange="onMapNativeRegionChange"');
   });
 
   it("matches the approved camera stage and control-deck geometry", () => {
@@ -343,7 +351,7 @@ describe("V1-31 approved web-shell fidelity", () => {
 
   it("keeps the note-review modal compact and contains its reordered content", () => {
     expect(wxml).toMatch(
-      /modalView === 'note-review'[\s\S]*?class="account-profile-nickname note-review-input"[\s\S]*?class="card-copy note-review-copy">只会重新核验备注，不会重复地点或照片核验。<[\s\S]*?class="action-wrap note-review-actions"/,
+      /modalView === 'note-review'[\s\S]*?class="account-profile-nickname note-review-input"[\s\S]*?class="card-copy note-review-copy">\{\{noteReviewSourcePath === 'direct-upload'[\s\S]*?备注通过安全审核后，本条记录才会完成上传。[\s\S]*?只会重新核验备注，不会重复地点或照片核验。[\s\S]*?class="action-wrap note-review-actions"/,
     );
     expect(wxss).toMatch(
       /\.modal-card--note-review\s*\{[\s\S]*?width:\s*calc\(100% - 48px\);[\s\S]*?max-width:\s*316px;[\s\S]*?height:\s*auto;[\s\S]*?padding:\s*24px 22px 28px;[\s\S]*?overflow:\s*visible;/,
@@ -367,7 +375,7 @@ describe("V1-31 approved web-shell fidelity", () => {
     expect(wxml).toContain('role="dialog" aria-label="删除版面线索"');
     expect(wxml).toContain('<text class="state-title">删除版面线索</text>');
     expect(wxml).toContain(
-      "删除后，该版面将从“我上传的版面”和“好版地图”中移除，相关上传数据也会从云端删除。此操作无法恢复。",
+      "删除本人上传记录后，将重新计算地图公开内容；若仍有其他有效贡献，地图版面会保留。此操作无法恢复。",
     );
     expect(wxml).toMatch(
       /modalView === 'delete-uploaded-board'[\s\S]*?warning-white\.svg[\s\S]*?class="action-button" bindtap="onConfirmDeleteUploadedBoard">删除<[\s\S]*?class="ghost-button" bindtap="onCancelDeleteUploadedBoard">取消</,

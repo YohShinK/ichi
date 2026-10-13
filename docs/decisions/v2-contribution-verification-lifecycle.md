@@ -1,4 +1,18 @@
-# V2 Contribution Verification Lifecycle
+# V2 贡献核验生命周期（历史概念）
+
+> **历史归档，仅用于追溯。不得覆盖 `memory-bank/implementation-plan.md` 中的当前计划，也不得作为当前任务自动执行。**
+>
+> 本文件记录 V1 最终三层语义形成前的设计探索；其中 `ContributionDraft` 按 `boardId` 覆盖、长期照片引用和旧审核流均已失效。2026-09-08 草案中的 public consent、moderation、`PublicMapLead` 和 withdrawal/deletion 也只是历史候选，不是当前获批架构或任务。若后续需要使用本文件，必须在新的 V2 完整规划中重新裁决并取得人工批准。
+
+> 2026-10-03 最终替代：当前唯一分享合同为 `UPLOAD_CONFIRMATION_MAP_SHARING_V2` 与 `V2_ADMISSION_AUTO_MAP_V1`（`docs/decisions/map-upload-sharing-contract.md`）。原上传确认取得意愿；核验进入V1不依赖条例；真实条例及其他准入条件通过后V1转V2，正式V2与地图投影自动同事务生成，无二次审核/授权。下方所有“current”“待发布审核”“exact preview Consent”均为当时的历史描述，禁止恢复为当前流程。
+
+> 2026-09-11 current supersession：V2-B 当前链路为 `BoardObservation → Verification → VerifiedBoard → OpportunityEvaluation → FreshnessEvaluation → Public Eligibility → Public Projection → PublicMapLead`。TASK-V2-04 只提交 Domain Model Contract 供人工批准；Lifecycle 只冻结正交状态语义、不冻结生产 enum；Location 不等于 Venue，只冻结精度模型、不冻结米级参数；PublicMapLead 只作为 storage-agnostic 服务边界。下方所有覆盖式 ContributionDraft、Venue 核心链和直接发布状态继续是历史内容。
+
+> 2026-09-10 current concept correction：当前计划不再把“核对通过”直接连到地图发布。现行 human-review flow 是 `Current Publication → private Public Candidate → Public Eligibility Check/PENDING_CONSENT → exact preview Consent → final eligibility → Projection → PublicMapLead`；地图最小价值单位为 `Verified Board Opportunity`，venue 必须经过 `Capture Location → Candidate Venue → Confirmed Venue → Public Venue Label → Public Geo`。本文下方旧流程与 `ContributionDraft` 细节继续只作历史证据。
+
+> 2026-09-10 Opportunity Evaluation 补充：当前 flow 进一步明确为 `Current Publication → V1 Verification → Verified Board → Opportunity Evaluation → Public Candidate → Public Eligibility/Consent → PublicMapLead`。Verified Board 只证明真实性；Opportunity Evaluation 独立判断机会价值，第一阶段仅讨论 rule-based 离散方向，不设计 score、weight、ranking 或 AI。下方任何把“核对通过”直接等同“待公开／已发布”的状态仍属历史。
+
+> 2026-09-08 替代说明：本文是 V1-D 时期的历史工作规格。最终 V1 已用 Local Board / versioned Upload Submission / lightweight Current Publication pointer、赏票核对完成态和 no-photo-retention 契约取代其中旧语义。唯一当前执行入口是 `memory-bank/implementation-plan.md`；本文件和 `docs/delivery/v2-pre-development-review-packet.md` 都只保留历史研究，不再作为实施门禁。
 
 > 状态：V1-D 工作规格，待用户验收
 >

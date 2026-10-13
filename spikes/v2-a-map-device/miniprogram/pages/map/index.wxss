@@ -1,0 +1,195 @@
+.page-shell {
+  box-sizing: border-box;
+  padding: 20rpx 20rpx 48rpx;
+}
+
+.notice-card,
+.diagnostic-card {
+  box-sizing: border-box;
+  margin-bottom: 18rpx;
+  padding: 22rpx;
+  border: 2rpx solid #dadada;
+  border-radius: 20rpx;
+  background: #ffffff;
+}
+
+.notice-title,
+.card-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+}
+
+.notice-copy,
+.state-line,
+.mono-line,
+.load-state {
+  display: block;
+  margin-top: 10rpx;
+  color: #555555;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.mono-line,
+.marker-coordinate,
+.log-row {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.device-map {
+  width: 100%;
+  height: 680rpx;
+  margin-bottom: 18rpx;
+  overflow: hidden;
+  border: 2rpx solid #111111;
+  border-radius: 24rpx;
+}
+
+.status-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-bottom: 18rpx;
+}
+
+.status-cell {
+  box-sizing: border-box;
+  width: calc(25% - 8rpx);
+  min-width: 0;
+  padding: 14rpx 8rpx;
+  border-radius: 14rpx;
+  background: #181818;
+  color: #ffffff;
+  text-align: center;
+}
+
+.status-cell text {
+  display: block;
+  overflow: hidden;
+  font-size: 20rpx;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-cell text:last-child {
+  margin-top: 4rpx;
+  color: #ff7ba4;
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.button-row,
+.radio-row,
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-top: 16rpx;
+}
+
+.button-row--wrap,
+.radio-row {
+  flex-wrap: wrap;
+}
+
+.button-row button,
+.card-head button {
+  margin: 0;
+}
+
+.radio-row label {
+  display: flex;
+  align-items: center;
+  font-size: 24rpx;
+}
+
+.picker-field {
+  margin-top: 16rpx;
+  padding: 18rpx;
+  border: 2rpx solid #bbbbbb;
+  border-radius: 14rpx;
+  font-size: 26rpx;
+}
+
+.load-state {
+  padding: 14rpx;
+  border-radius: 12rpx;
+  background: #f1f1f1;
+}
+
+.load-state--ERROR,
+.load-state--OFFLINE {
+  background: #fff0f3;
+  color: #a1143a;
+}
+
+.card-head {
+  justify-content: space-between;
+  margin-top: 0;
+}
+
+.marker-list {
+  margin-top: 12rpx;
+}
+
+.marker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 18rpx 0;
+  border-bottom: 2rpx solid #eeeeee;
+  font-size: 25rpx;
+}
+
+.marker-row:last-child {
+  border-bottom: 0;
+}
+
+.marker-meta,
+.marker-coordinate {
+  display: block;
+  margin-top: 6rpx;
+  color: #777777;
+  font-size: 20rpx;
+}
+
+.marker-coordinate {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.empty-state {
+  padding: 28rpx 0;
+  color: #777777;
+  font-size: 24rpx;
+  line-height: 1.5;
+}
+
+.log-card {
+  background: #111111;
+  color: #ffffff;
+}
+
+.log-card .card-title {
+  color: #ffffff;
+}
+
+.log-row {
+  padding: 14rpx 0;
+  border-bottom: 2rpx solid #333333;
+  font-size: 20rpx;
+  line-height: 1.45;
+}
+
+.log-head,
+.log-detail {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.log-detail {
+  margin-top: 6rpx;
+  color: #bdbdbd;
+}

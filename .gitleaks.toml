@@ -1,0 +1,12 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Reviewed prose that describes a secret reference without a value"
+paths = [
+  '''(?:^|/)packages/v2-map/resources/cloudbase-candidate-runtime-resource-proposal-v[23]\.json$''',
+]
+regexTarget = "match"
+regexes = [
+  '''principal/rehearsal/cursor key existence only; never echo values''',
+]

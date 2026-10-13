@@ -1,4 +1,16 @@
+import {
+  SYNTHETIC_PUBLIC_MARKERS,
+  SyntheticPublicMapService,
+} from "../../platform/public-map-synthetic-service.js";
+import type {
+  PublicViewportRequest,
+  PublicDetailRequest,
+} from "../../platform/public-map-contract.js";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  PRODUCTION_MAP_TERMS,
+  UPLOAD_SHARING_DISCLOSURE_VERSION,
+} from "../../platform/production-map-service.js";
 
 import {
   LOCAL_DRAW_DRAFTS_KEY,
@@ -9,13 +21,32 @@ import {
   RECOGNITION_VIEW_KEY,
 } from "../../platform/navigation-state.js";
 import type { RecognitionDraftValidation } from "../../platform/recognition-flow.js";
+import { clusterStressFixture } from "../../../../../tests/fixtures/public-map-cluster-picker.fixture.js";
+import { HumanAssistanceClient } from "../../platform/human-assistance-client.js";
+import { CURRENT_LOCATION_MARKER_ID } from "../../platform/public-map-location.js";
+import { projectNativeMapMarkers } from "../../platform/public-map-native-presentation.js";
+
+const testMapLocationResult = (
+  latitude: number,
+  longitude: number,
+  accuracy: number,
+): WechatMiniprogram.GetLocationSuccessCallbackResult => ({
+  latitude,
+  longitude,
+  accuracy,
+  altitude: 0,
+  speed: 0,
+  horizontalAccuracy: accuracy,
+  verticalAccuracy: accuracy,
+  errMsg: "getLocation:ok",
+});
 
 type PageData = Record<string, unknown>;
 type PageDefinition = { data: PageData } & Record<string, unknown>;
 
 interface RuntimePage {
   data: PageData;
-  setData(update: Record<string, unknown>): void;
+  setData(update: Record<string, unknown>, callback?: () => void): void;
 }
 
 const validationOf = (page: RuntimePage): RecognitionDraftValidation =>
@@ -55,6 +86,421 @@ const onCopyUrlMock = vi.fn(
 const offCopyUrlMock = vi.fn((): void => {
   copyUrlListener = undefined;
 });
+
+describe("TASK-V2-19 Human Assistance page coverage", () => {
+  it("opens from upload success and returns there even when answering fails", async () => {
+    const page = createRuntimePage();
+    const client = new HumanAssistanceClient({
+      listMyRequests: async () => [
+        {
+          requestId: "synthetic-ha-1",
+          recordId: "synthetic-upload-1",
+          submissionVersion: 2,
+          expiresAt: Date.now() + 60_000,
+          state: "PENDING" as const,
+          currentBoardLabel: "这次上传",
+          candidateBoardLabel: "上次版面",
+        },
+      ],
+      answer: async () => ({ ok: false }),
+    });
+    (page as unknown as Record<string, unknown>).ensureHumanAssistanceClient =
+      () => client;
+    page.setData({ modalView: "board-upload-submitted" });
+    await call(page, "refreshHumanAssistance", "synthetic-upload-1", 2);
+    expect(page.data.humanAssistanceCurrent).toMatchObject({
+      requestId: "synthetic-ha-1",
+    });
+    call(
+      page,
+      "onOpenHumanAssistance",
+      baseEvent({ requestId: "synthetic-ha-1" }),
+    );
+    expect(page.data.modalView).toBe("human-assistance");
+    await call(page, "onAnswerHumanAssistance", baseEvent({ answer: "SKIP" }));
+    expect(page.data.humanAssistanceError).toContain("上传结果不受影响");
+    call(page, "onCloseHumanAssistance");
+    expect(page.data.modalView).toBe("board-upload-submitted");
+    expect(cloudCallFunctionMock).not.toHaveBeenCalled();
+  });
+
+  it("shows the My Uploads entry only for a current owner request", async () => {
+    const page = createRuntimePage();
+    const client = new HumanAssistanceClient({
+      listMyRequests: async () => [
+        {
+          requestId: "synthetic-ha-2",
+          recordId: "synthetic-upload-2",
+          submissionVersion: 3,
+          expiresAt: Date.now() + 60_000,
+          state: "PENDING" as const,
+          currentBoardLabel: "当前版面",
+          candidateBoardLabel: "候选版面",
+        },
+      ],
+      answer: async () => ({ ok: true }),
+    });
+    (page as unknown as Record<string, unknown>).ensureHumanAssistanceClient =
+      () => client;
+    page.setData({
+      currentView: "contributions",
+      cloudClues: [{ recordId: "synthetic-upload-2", submissionVersion: 3 }],
+    });
+    await call(page, "refreshHumanAssistance");
+    expect(page.data.humanAssistanceRequests).toHaveLength(1);
+    call(
+      page,
+      "onOpenHumanAssistance",
+      baseEvent({ requestId: "synthetic-ha-2" }),
+    );
+    await call(
+      page,
+      "onAnswerHumanAssistance",
+      baseEvent({ answer: "CANNOT_TELL" }),
+    );
+    expect(page.data.humanAssistanceRequests).toEqual([]);
+    expect(page.data.modalView).toBe("");
+  });
+});
+
+describe("unresolved cluster picker interaction", () => {
+  const setup = (members: typeof clusterStressFixture.sameCoordinate) => {
+    const page = createRuntimePage();
+    const first = members[0]!;
+    const cluster = {
+      ...first,
+      markerId: 91919,
+      kind: "CLUSTER",
+      clusterKey: "fixture-cluster",
+      memberLeadIds: members.map((member) => member.publicLeadId),
+      latitude: first.latitude,
+      longitude: first.longitude,
+      realLatitude: first.latitude,
+      realLongitude: first.longitude,
+      selected: false,
+    };
+    page.setData({
+      mapMarkers: members,
+      mapNativeMarkerViews: [cluster],
+      mapNativeScale: 18,
+      mapNativeInteractionState: "IDLE",
+    });
+    const selectLead = vi.fn(async () => undefined);
+    const clearSelection = vi.fn();
+    (page as unknown as Record<string, unknown>).ensurePublicMapClient = vi.fn(
+      () => ({
+        state: { detail: { selectedPublicLeadId: null, phase: "IDLE" } },
+        selectLead,
+        clearSelection,
+      }),
+    );
+    (
+      page as unknown as Record<string, unknown>
+    ).loadPublicMapAuthorizationStatus = vi.fn();
+    (page as unknown as Record<string, unknown>).startNativeMapScaleSampling =
+      vi.fn();
+    (page as unknown as Record<string, unknown>).animateNativeMapCenterTo =
+      vi.fn();
+    return { page, cluster, selectLead, clearSelection };
+  };
+
+  it("keeps twenty real-position choices while switching directly between details", () => {
+    const { page, cluster, selectLead } = setup(
+      clusterStressFixture.sameCoordinate,
+    );
+    call(page, "activateNativeMapMarker", cluster.markerId);
+    expect(page.data.mapClusterPickerOpen).toBe(true);
+    expect((page.data.mapClusterPickerItems as unknown[]).length).toBe(20);
+    expect(page.data.mapNativeMarkerViews).toMatchObject([
+      {
+        kind: "CLUSTER",
+        latitude: cluster.realLatitude,
+        longitude: cluster.realLongitude,
+      },
+    ]);
+    call(
+      page,
+      "onSelectMapClusterPickerItem",
+      baseEvent({ leadId: "stress-13" }),
+    );
+    expect(selectLead).toHaveBeenCalledExactlyOnceWith("stress-13");
+    expect(page.data.mapClusterPickerOpen).toBe(true);
+    expect((page.data.mapClusterPickerItems as unknown[]).length).toBe(20);
+    expect(page.data.mapSheetMode).toBe("PREVIEW");
+    call(
+      page,
+      "onSelectMapClusterPickerItem",
+      baseEvent({ leadId: "stress-17" }),
+    );
+    expect(selectLead).toHaveBeenNthCalledWith(2, "stress-17");
+    expect(page.data.mapClusterPickerOpen).toBe(true);
+  });
+
+  it.each(["tap", "drag"])(
+    "closes both panels only for an outside %s",
+    (kind) => {
+      const { page, cluster, clearSelection } = setup(
+        clusterStressFixture.sameCoordinate,
+      );
+      call(page, "activateNativeMapMarker", cluster.markerId);
+      page.setData({
+        mapCardPhase: "OPEN",
+        mapDetailPhase: "LOADING",
+        mapSheetMode: "PREVIEW",
+      });
+      call(page, "onMapOverlayTouchStart");
+      call(page, "onMapClusterPickerOutsideTouchStart");
+      call(
+        page,
+        kind === "tap"
+          ? "onMapClusterPickerOutsideDetailTap"
+          : "onMapClusterPickerOutsideTouchMove",
+      );
+      expect(page.data.mapClusterPickerOpen).toBe(false);
+      expect(page.data.mapCardPhase).toBe("CLOSED");
+      expect(clearSelection).toHaveBeenCalled();
+    },
+  );
+
+  it("selects a picker row after an observed touch end while ignoring companion map events", () => {
+    const { page, cluster, selectLead, clearSelection } = setup(
+      clusterStressFixture.sameCoordinate,
+    );
+    call(page, "activateNativeMapMarker", cluster.markerId);
+    clearSelection.mockClear();
+    call(page, "onMapOverlayTouchStart");
+    call(page, "onMapOverlayTouchEnd");
+    call(
+      page,
+      "onSelectMapClusterPickerItem",
+      baseEvent({ leadId: "stress-13" }),
+    );
+    call(page, "onMapNativeTap");
+    call(page, "onMapNativeRegionChange", {
+      detail: { type: "begin", causedBy: "gesture", scale: 18 },
+    });
+    expect(selectLead).toHaveBeenCalledExactlyOnceWith("stress-13");
+    expect(clearSelection).not.toHaveBeenCalled();
+    expect(page.data.mapClusterPickerOpen).toBe(true);
+    expect(page.data.mapCardPhase).toBe("OPENING");
+    expect(page.data.mapSheetMode).toBe("PREVIEW");
+  });
+
+  it.each(["picker", "detail", "both"])(
+    "keeps %s open through internal taps, drags and late native gesture events",
+    (surface) => {
+      const { page, cluster } = setup(clusterStressFixture.sameCoordinate);
+      if (surface !== "detail")
+        call(page, "activateNativeMapMarker", cluster.markerId);
+      if (surface !== "picker")
+        page.setData({
+          mapCardPhase: "OPEN",
+          mapDetailPhase: "LOADED",
+          mapSheetMode: "EXPANDED",
+        });
+      call(page, "onMapOverlayTouchStart");
+      call(page, "onMapOverlayTouchMove");
+      call(page, "onMapNativeRegionChange", {
+        detail: { type: "begin", causedBy: "gesture", scale: 18 },
+      });
+      call(page, "onMapNativeTap");
+      call(page, "onMapOverlayTouchEnd");
+      call(page, "onMapNativeRegionChange", {
+        detail: { type: "end", causedBy: "drag", scale: 18 },
+      });
+      call(page, "onMapNativeTap");
+      expect(page.data.mapClusterPickerOpen).toBe(surface !== "detail");
+      if (surface !== "picker") {
+        expect(page.data.mapCardPhase).toBe("OPEN");
+        // Preserve the existing expanded-card tap-to-collapse interaction.
+        call(page, "onMapCardTap");
+        expect(page.data.mapSheetMode).toBe("PREVIEW");
+        expect(page.data.mapCardPhase).toBe("OPEN");
+      }
+      expect(page.data.mapNativeInteractionState).toBe(
+        surface === "detail" ? "IDLE" : "CLUSTER_SELECTED",
+      );
+    },
+  );
+
+  it("refreshes the visible metadata window, preserves loaded rows on failure, and ends the spinner", async () => {
+    const { page } = setup(clusterStressFixture.sameCoordinate);
+    const read = vi.fn(async (id: string) => {
+      void id;
+      return null;
+    });
+    (page as unknown as Record<string, unknown>).ensurePublicMapClient =
+      () => ({ readLeadForPicker: read });
+    (page as unknown as Record<string, unknown>).prepareMapClusterPickerImages =
+      vi.fn(async () => undefined);
+    page.setData({
+      currentView: "map-preview",
+      mapClusterPickerOpen: true,
+      mapClusterPickerItems: clusterStressFixture.sameCoordinate.map(
+        (m, i) => ({
+          ...m,
+          pickerMetadataPhase: "LOADED",
+          pickerNotePreview: "已核验备注 " + i,
+          pickerUploadedAtLabel: "上传 10/06 03:26",
+        }),
+      ),
+    });
+    call(page, "onMapClusterPickerScroll", { detail: { scrollTop: 62 * 10 } });
+    call(page, "onMapClusterPickerRefresh");
+    call(page, "onMapClusterPickerRefresh");
+    expect(page.data.mapClusterPickerRefreshing).toBe(true);
+    for (let i = 0; i < 40; i++) await Promise.resolve();
+    expect(read.mock.calls.map((args) => args[0])).toEqual(
+      clusterStressFixture.sameCoordinate
+        .slice(10, 18)
+        .map((m) => m.publicLeadId),
+    );
+    expect(page.data.mapClusterPickerRefreshing).toBe(false);
+    expect(page.data.mapClusterPickerOpen).toBe(true);
+    expect(
+      (page.data.mapClusterPickerItems as { pickerNotePreview: string }[])[10]!
+        .pickerNotePreview,
+    ).toBe("已核验备注 10");
+  });
+
+  it("refreshes short lists even after native overscroll reports a position beyond their rows", async () => {
+    const { page } = setup(clusterStressFixture.sameCoordinate);
+    const read = vi.fn(async (id: string) => {
+      void id;
+      return null;
+    });
+    (page as unknown as Record<string, unknown>).ensurePublicMapClient =
+      () => ({ readLeadForPicker: read });
+    (page as unknown as Record<string, unknown>).prepareMapClusterPickerImages =
+      vi.fn(async () => undefined);
+    page.setData({
+      currentView: "map-preview",
+      mapClusterPickerOpen: true,
+      mapClusterPickerItems: clusterStressFixture.sameCoordinate.slice(0, 2),
+    });
+    call(page, "onMapClusterPickerScroll", { detail: { scrollTop: 10000 } });
+    call(page, "onMapClusterPickerRefresh");
+    for (let i = 0; i < 30; i++) await Promise.resolve();
+    expect(read).toHaveBeenCalledTimes(2);
+    expect(page.data.mapClusterPickerRefreshing).toBe(false);
+    expect(page.data.mapClusterPickerOpen).toBe(true);
+  });
+
+  it("closes without selecting or relocating the cluster", () => {
+    const { page, cluster, selectLead } = setup(
+      clusterStressFixture.sameCoordinate.slice(0, 2),
+    );
+    call(page, "activateNativeMapMarker", cluster.markerId);
+    expect(page.data.mapClusterPickerOpen).toBe(true);
+    call(page, "onCloseMapClusterPicker");
+    expect(page.data.mapClusterPickerOpen).toBe(false);
+    expect(selectLead).not.toHaveBeenCalled();
+    expect(page.data.mapNativeMarkerViews).toMatchObject([
+      {
+        kind: "CLUSTER",
+        latitude: cluster.realLatitude,
+        longitude: cluster.realLongitude,
+      },
+    ]);
+  });
+
+  it.each(["viewport-loading", "bounded-page"])(
+    "keeps rendered cluster rows when %s has not included their summaries",
+    async () => {
+      const { page, cluster, clearSelection } = setup(
+        clusterStressFixture.sameCoordinate.slice(0, 2),
+      );
+      const read = vi.fn(async () => null);
+      (page as unknown as Record<string, unknown>).ensurePublicMapClient =
+        () => ({
+          state: {
+            items: [],
+            detail: { selectedPublicLeadId: null, phase: "IDLE" },
+          },
+          clearSelection,
+          readLeadForPicker: read,
+          isPublicLeadUnavailable: () => false,
+        });
+      (
+        page as unknown as Record<string, unknown>
+      ).prepareMapClusterPickerImages = vi.fn(async () => undefined);
+      page.setData({ currentView: "map-preview", mapNativeScale: 10 });
+      call(page, "activateNativeMapMarker", cluster.markerId);
+      await vi.waitFor(() => expect(read).toHaveBeenCalledTimes(2));
+      expect(page.data.mapClusterPickerItems).toHaveLength(2);
+      expect(page.data.mapClusterPickerOpen).toBe(true);
+      expect(read).toHaveBeenCalledWith(cluster.memberLeadIds[0], {
+        forceRefresh: false,
+        allowRenderedLead: true,
+      });
+    },
+  );
+
+  it("removes only a confirmed unavailable member when viewport summaries are absent", async () => {
+    const { page, cluster, clearSelection } = setup(
+      clusterStressFixture.sameCoordinate.slice(0, 2),
+    );
+    const removedId = cluster.memberLeadIds[0]!;
+    const read = vi.fn(async () => null);
+    (page as unknown as Record<string, unknown>).ensurePublicMapClient =
+      () => ({
+        state: {
+          items: [],
+          detail: { selectedPublicLeadId: null, phase: "IDLE" },
+        },
+        clearSelection,
+        readLeadForPicker: read,
+        isPublicLeadUnavailable: (id: string) => id === removedId,
+      });
+    (page as unknown as Record<string, unknown>).prepareMapClusterPickerImages =
+      vi.fn(async () => undefined);
+    page.setData({ currentView: "map-preview" });
+    call(page, "activateNativeMapMarker", cluster.markerId);
+    await vi.waitFor(() => expect(read).toHaveBeenCalledTimes(2));
+    expect(page.data.mapClusterPickerItems).toMatchObject([
+      { publicLeadId: cluster.memberLeadIds[1] },
+    ]);
+    expect(page.data.mapClusterPickerOpen).toBe(true);
+  });
+
+  it("closes the empty shell when every rendered member is confirmed unavailable", async () => {
+    const { page, cluster, clearSelection } = setup(
+      clusterStressFixture.sameCoordinate.slice(0, 2),
+    );
+    const read = vi.fn(async () => null);
+    (page as unknown as Record<string, unknown>).ensurePublicMapClient =
+      () => ({
+        state: {
+          items: [],
+          detail: { selectedPublicLeadId: null, phase: "IDLE" },
+        },
+        clearSelection,
+        readLeadForPicker: read,
+        isPublicLeadUnavailable: () => true,
+      });
+    (page as unknown as Record<string, unknown>).prepareMapClusterPickerImages =
+      vi.fn(async () => undefined);
+    page.setData({ currentView: "map-preview" });
+    call(page, "activateNativeMapMarker", cluster.markerId);
+    await vi.waitFor(() => expect(page.data.mapClusterPickerOpen).toBe(false));
+    expect(page.data.mapClusterPickerItems).toEqual([]);
+    expect(page.data.mapSheetMode).toBe("CLOSED");
+  });
+
+  it("zooms a cluster whose two members can separate naturally at max scale", () => {
+    const { page, cluster, selectLead } = setup(
+      clusterStressFixture.separableStreet.slice(0, 2),
+    );
+    page.setData({ mapNativeScale: 12 });
+    call(page, "activateNativeMapMarker", cluster.markerId);
+    expect(page.data.mapClusterPickerOpen).toBe(false);
+    expect(Number(page.data.mapNativeScale)).toBeGreaterThan(12);
+    expect(page.data.mapNativeInteractionState).toBe("CAMERA_ANIMATING");
+    expect(selectLead).not.toHaveBeenCalled();
+    call(page, "onUnload");
+  });
+});
+const moveToLocationMock = vi.fn();
 const profileAvatarFileId =
   "cloud://test-env/profile-avatars/current-avatar.jpg";
 const app = {
@@ -132,10 +578,11 @@ const setAtPath = (
 const createRuntimePage = (): RuntimePage => {
   const page: RuntimePage = {
     data: structuredClone(definition.data),
-    setData(update) {
+    setData(update, callback) {
       Object.entries(update).forEach(([path, value]) =>
         setAtPath(this.data, path, value),
       );
+      callback?.();
     },
   };
   Object.entries(definition).forEach(([key, value]) => {
@@ -154,6 +601,119 @@ const call = (page: RuntimePage, method: string, ...args: unknown[]): unknown =>
 
 const baseEvent = (dataset: Record<string, unknown>): unknown => ({
   currentTarget: { dataset },
+});
+
+describe("account-bound map contribution terms", () => {
+  const consent = {
+    termsVersion: PRODUCTION_MAP_TERMS.version,
+    scopeDigest: PRODUCTION_MAP_TERMS.scopeDigest,
+    accepted: false,
+    acceptedAt: null,
+    status: "NOT_ACCEPTED",
+  };
+
+  it("rejects early calls even if the displayed seconds are altered, then rereads account consent", async () => {
+    vi.useFakeTimers();
+    const page = createRuntimePage();
+    let accepted = false;
+    cloudCallFunctionMock.mockImplementation(async ({ data }) => {
+      if (data.command === "ACCEPT") {
+        accepted = true;
+        return { result: { ok: true, ...consent, accepted: true } };
+      }
+      return {
+        result: {
+          ok: true,
+          ...consent,
+          accepted,
+          status: accepted ? "ACCEPTED" : "NOT_ACCEPTED",
+          acceptedAt: accepted ? "2026-09-30T03:00:00Z" : null,
+        },
+      };
+    });
+    try {
+      page.setData({ mapContributionConsent: consent });
+      call(page, "onOpenMapContributionConsent");
+      expect(page.data.mapContributionConsentSeconds).toBe(3);
+      page.setData({ mapContributionConsentSeconds: 0 });
+      await call(page, "onChooseMapContributionConsent");
+      await vi.advanceTimersByTimeAsync(2_999);
+      await call(page, "onChooseMapContributionConsent");
+      expect(cloudCallFunctionMock).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(page.data.mapContributionConsentSeconds).toBe(0);
+      await call(page, "onChooseMapContributionConsent");
+      expect(page.data.modalView).toBe("");
+      expect(page.data.mapContributionConsent).toMatchObject({
+        accepted: true,
+        status: "ACCEPTED",
+      });
+      const reopened = createRuntimePage();
+      await call(reopened, "refreshMapContributionConsent");
+      call(reopened, "onOpenMapContributionConsent");
+      expect(reopened.data.modalView).toBe("");
+      expect(reopened.data.mapContributionConsent).toMatchObject({
+        accepted: true,
+      });
+      expect(
+        cloudCallFunctionMock.mock.calls.filter(
+          ([input]) => input.data.command === "ACCEPT",
+        ),
+      ).toHaveLength(1);
+    } finally {
+      call(page, "clearMapContributionConsentCountdown");
+      vi.useRealTimers();
+    }
+  });
+
+  it("restarts the full delay on reopening and cancels timers on hide", async () => {
+    vi.useFakeTimers();
+    const page = createRuntimePage();
+    try {
+      page.setData({ mapContributionConsent: consent });
+      call(page, "onOpenMapContributionConsent");
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(page.data.mapContributionConsentSeconds).toBe(2);
+      call(page, "onCloseModal");
+      call(page, "onOpenMapContributionConsent");
+      expect(page.data.mapContributionConsentSeconds).toBe(3);
+      await vi.advanceTimersByTimeAsync(2_000);
+      expect(page.data.mapContributionConsentSeconds).toBe(1);
+      call(page, "onHide");
+      expect(page.data.modalView).toBe("");
+      expect(vi.getTimerCount()).toBe(0);
+      await call(page, "onChooseMapContributionConsent");
+      expect(cloudCallFunctionMock).not.toHaveBeenCalled();
+    } finally {
+      call(page, "clearMapContributionConsentCountdown");
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps failed consent unsaved and allows retry after the delay", async () => {
+    vi.useFakeTimers();
+    const page = createRuntimePage();
+    cloudCallFunctionMock.mockResolvedValue({ result: { ok: false } });
+    try {
+      page.setData({ mapContributionConsent: consent });
+      call(page, "onOpenMapContributionConsent");
+      await vi.advanceTimersByTimeAsync(3_000);
+      await call(page, "onChooseMapContributionConsent");
+      expect(page.data.mapContributionConsent).toMatchObject({
+        accepted: false,
+      });
+      expect(page.data.modalView).toBe("map-contribution-consent");
+      expect(page.data.mapContributionConsentBusy).toBe(false);
+      expect(page.data.mapContributionConsentError).toBe(
+        "选择未保存，请稍后重试。",
+      );
+      await call(page, "onChooseMapContributionConsent");
+      expect(cloudCallFunctionMock).toHaveBeenCalledTimes(2);
+    } finally {
+      call(page, "onCloseModal");
+      vi.useRealTimers();
+    }
+  });
 });
 
 const touchEvent = (
@@ -267,6 +827,30 @@ beforeAll(async () => {
       options.fail?.(new Error("permission denied"));
     },
     vibrateShort: vi.fn(),
+    chooseMedia(options: {
+      success?: (result: { tempFiles: { tempFilePath: string }[] }) => void;
+    }) {
+      options.success?.({
+        tempFiles: [{ tempFilePath: "/tmp/replacement-prize-ticket.jpg" }],
+      });
+    },
+    createMapContext: () => ({
+      moveToLocation: moveToLocationMock,
+      getScale(options: { success?: (result: { scale: number }) => void }) {
+        options.success?.({ scale: 12 });
+      },
+      getRegion(options: {
+        success?: (result: {
+          southwest: { latitude: number; longitude: number };
+          northeast: { latitude: number; longitude: number };
+        }) => void;
+      }) {
+        options.success?.({
+          southwest: { latitude: 31.2, longitude: 121.4 },
+          northeast: { latitude: 31.3, longitude: 121.5 },
+        });
+      },
+    }),
     createCameraContext: () => ({
       takePhoto(options: {
         success?: (result: { tempImagePath: string }) => void;
@@ -455,7 +1039,10 @@ beforeEach(() => {
           result: {
             ok: true,
             data: {
-              recordId: "record_0123456789abcdef0123456789abcdef",
+              recordId: String(
+                data?.recordId ?? "record_0123456789abcdef0123456789abcdef",
+              ),
+              uploadSharingAcknowledged: Boolean(data?.uploadSharing),
               recordCode: "A1B2C3",
               boardId: String(data?.boardId ?? "cloud-board-1"),
               status: "private_saved",
@@ -553,12 +1140,242 @@ beforeEach(() => {
   hideShareMenuMock.mockReset();
   onCopyUrlMock.mockClear();
   offCopyUrlMock.mockClear();
+  moveToLocationMock.mockReset();
   copyUrlListener = undefined;
   app.globalData = {};
   vi.useFakeTimers();
 });
 
 describe("V1-E page behavior", () => {
+  it.each([true, false])(
+    "distinguishes an intentional empty filter from temporary refresh emptiness (filtered=%s)",
+    async (filtered) => {
+      const page = createRuntimePage();
+      const publicBinding = {
+        id: 123,
+        latitude: 31.23,
+        longitude: 121.47,
+        iconPath: "lead.png",
+        alpha: 1,
+        width: 120,
+        height: 48,
+        anchor: { x: 0.5, y: 1 },
+      };
+      page.setData({
+        mapPhase: "VIEWPORT_REFRESHING",
+        mapDiscoveryEmptyReason: filtered ? "当前筛选组合暂无公开线索" : "",
+        mapNativeMarkers: [publicBinding],
+        mapNativeDisplayMarkers: [publicBinding],
+        canvasMarkerReady: true,
+        mapCurrentLocation: {
+          latitude: 31.23,
+          longitude: 121.47,
+          accuracy: 12,
+          obtainedAt: Date.now(),
+        },
+      });
+      call(
+        page,
+        "commitNativeMapProjection",
+        projectNativeMapMarkers({
+          markers: [],
+          scale: 14,
+          selectedPublicLeadId: "",
+        }),
+      );
+      await vi.advanceTimersByTimeAsync(0);
+      if (filtered) {
+        expect(page.data.mapNativeMarkers).toEqual([]);
+        expect(page.data.mapNativeDisplayMarkers).toMatchObject([
+          { id: CURRENT_LOCATION_MARKER_ID },
+        ]);
+      } else {
+        expect(page.data.mapNativeMarkers).toEqual([publicBinding]);
+      }
+      call(page, "onUnload");
+    },
+  );
+
+  it("uses the checked current position for the dot and camera, while foreground refresh leaves the camera alone", async () => {
+    const settings = vi.spyOn(wx, "getSetting").mockImplementation((o) => {
+      o?.success?.({
+        authSetting: { "scope.userLocation": true },
+        subscriptionsSetting: { mainSwitch: true },
+        errMsg: "getSetting:ok",
+      });
+    });
+    const location = vi.spyOn(wx, "getLocation");
+    const page = createRuntimePage();
+    page.setData({ activeTab: "map", currentView: "map-preview" });
+    call(page, "onMapNativeUpdated");
+    await call(page, "onMapRecenter");
+    expect(location).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "gcj02",
+        isHighAccuracy: true,
+        highAccuracyExpireTime: 8000,
+      }),
+    );
+    expect(page.data.mapNativeDisplayMarkers).toMatchObject([
+      { id: CURRENT_LOCATION_MARKER_ID, latitude: 31.23, longitude: 121.47 },
+    ]);
+    expect(page.data.mapNativeMarkers).toEqual([]);
+    expect(page.data.mapMarkers).toEqual([]);
+    expect(moveToLocationMock).toHaveBeenLastCalledWith({
+      latitude: 31.23,
+      longitude: 121.47,
+    });
+    location.mockImplementation((o) => {
+      o.success?.(testMapLocationResult(31.231, 121.471, 10));
+    });
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(page.data.mapCurrentLocation).toMatchObject({
+      latitude: 31.231,
+      longitude: 121.471,
+    });
+    expect(moveToLocationMock).toHaveBeenCalledTimes(1);
+    expect(page.data.mapNativeCenterLatitude).toBe(31.23);
+    call(page, "onHide");
+    expect(page.data.mapCurrentLocation).toBeNull();
+    expect(page.data.mapNativeDisplayMarkers).toEqual([]);
+    const calls = location.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(60_000);
+    expect(location).toHaveBeenCalledTimes(calls);
+    call(page, "onUnload");
+    settings.mockRestore();
+    location.mockRestore();
+  });
+
+  it("allows coarse positioning with a matching uncertainty circle without changing public counts", async () => {
+    const settings = vi.spyOn(wx, "getSetting").mockImplementation((o) => {
+      o?.success?.({
+        authSetting: { "scope.userLocation": true },
+        subscriptionsSetting: { mainSwitch: true },
+        errMsg: "getSetting:ok",
+      });
+    });
+    const location = vi.spyOn(wx, "getLocation").mockImplementation((o) => {
+      o.success?.(testMapLocationResult(30.406, 120.301, 1800));
+    });
+    const page = createRuntimePage();
+    page.setData({
+      mapNativeCenterLatitude: 30.394,
+      mapNativeCenterLongitude: 120.301,
+    });
+    call(page, "onMapNativeUpdated");
+    await call(page, "onMapRecenter");
+    expect(page.data.mapLocationState).toBe("APPROXIMATE");
+    expect(page.data.mapNativeLocationGranted).toBe(true);
+    expect(page.data.mapCurrentLocation).toMatchObject({
+      accuracy: 1800,
+      approximate: true,
+    });
+    expect(page.data.mapCurrentLocationCircles).toMatchObject([
+      { latitude: 30.406, longitude: 120.301, radius: 1800 },
+    ]);
+    expect(page.data.mapNativeCenterLatitude).toBe(30.406);
+    expect(page.data.mapNativeDisplayMarkers).toHaveLength(1);
+    expect(page.data.mapNativeMarkers).toEqual([]);
+    expect(moveToLocationMock).toHaveBeenCalledWith({
+      latitude: 30.406,
+      longitude: 120.301,
+    });
+    call(page, "onHide");
+    expect(page.data.mapCurrentLocationCircles).toEqual([]);
+    call(page, "onUnload");
+    settings.mockRestore();
+    location.mockRestore();
+  });
+
+  it("accepts reduced iOS location permission without requiring precise permission", async () => {
+    const settings = vi.spyOn(wx, "getSetting").mockImplementation((o) => {
+      o?.success?.({
+        authSetting: { "scope.userLocation": true },
+        subscriptionsSetting: { mainSwitch: true },
+        errMsg: "getSetting:ok",
+      });
+    });
+    const nativeApi = wx as unknown as {
+      getAppAuthorizeSetting?: () => {
+        locationAuthorized: string;
+        locationReducedAccuracy: boolean;
+      };
+    };
+    const original = nativeApi.getAppAuthorizeSetting;
+    nativeApi.getAppAuthorizeSetting = () => ({
+      locationAuthorized: "authorized",
+      locationReducedAccuracy: true,
+    });
+    const location = vi.spyOn(wx, "getLocation");
+    const page = createRuntimePage();
+    await call(page, "onMapRecenter");
+    expect(page.data.mapLocationState).toBe("APPROXIMATE");
+    expect(page.data.mapCurrentLocation).toMatchObject({ approximate: true });
+    expect(location).toHaveBeenCalledOnce();
+    call(page, "onUnload");
+    if (original) nativeApi.getAppAuthorizeSetting = original;
+    else delete nativeApi.getAppAuthorizeSetting;
+    settings.mockRestore();
+    location.mockRestore();
+  });
+
+  it("discards a location response arriving after the map is hidden", async () => {
+    const settings = vi.spyOn(wx, "getSetting").mockImplementation((o) => {
+      o?.success?.({
+        authSetting: { "scope.userLocation": true },
+        subscriptionsSetting: { mainSwitch: true },
+        errMsg: "getSetting:ok",
+      });
+    });
+    let deliver: (() => void) | undefined;
+    const location = vi.spyOn(wx, "getLocation").mockImplementation((o) => {
+      deliver = () => o.success?.(testMapLocationResult(30.4, 120.3, 10));
+    });
+    const page = createRuntimePage();
+    const pending = call(page, "onMapRecenter");
+    await Promise.resolve();
+    call(page, "onHide");
+    deliver?.();
+    await pending;
+    expect(page.data.mapCurrentLocation).toBeNull();
+    expect(page.data.mapNativeLocationGranted).toBe(false);
+    expect(page.data.mapNativeDisplayMarkers).toEqual([]);
+    call(page, "onUnload");
+    settings.mockRestore();
+    location.mockRestore();
+  });
+
+  it("reconciles the latest PNG zoom without pan and cancels on map exit", async () => {
+    vi.useFakeTimers();
+    const page = createRuntimePage();
+    page.setData({
+      currentView: "map-preview",
+      mapNativeScale: 12,
+      mapMarkers: [],
+    });
+    const methods = page as unknown as Record<string, unknown>;
+    const project = vi.fn((scale: number) => ({
+      scale,
+      views: [],
+      bindings: [],
+    }));
+    const commit = vi.fn();
+    methods.projectNativeMapPresentationAtScale = project;
+    methods.commitNativeMapProjection = commit;
+    for (const scale of [12.5, 14, 16, 18])
+      call(page, "observeNativeMapCameraScale", scale);
+    expect(commit).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(180);
+    expect(project).toHaveBeenCalledTimes(1);
+    expect(project.mock.calls[0]?.[0]).toBe(18);
+    expect(commit).toHaveBeenCalledTimes(1);
+    call(page, "observeNativeMapCameraScale", 14);
+    call(page, "deactivateNativeMapSurface");
+    await vi.advanceTimersByTimeAsync(180);
+    expect(commit).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
   it.each([
     ["recognize", "start"],
     ["map", "map-preview"],
@@ -667,7 +1484,7 @@ describe("V1-E page behavior", () => {
     expect(offCopyUrlMock).toHaveBeenCalledOnce();
   });
 
-  it("opens a map share without requesting location or any V2 map API", () => {
+  it("opens a map share without requesting location and reads only production map data", () => {
     const page = createRuntimePage();
     call(page, "onLoad", { tab: "map" });
     expect(page.data).toMatchObject({
@@ -675,7 +1492,601 @@ describe("V1-E page behavior", () => {
       currentView: "map-preview",
     });
     expect(locationRequestCount).toBe(0);
-    expect(cloudCallFunctionMock).not.toHaveBeenCalled();
+    expect(cloudCallFunctionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "query-public-map-leads" }),
+    );
+    call(page, "onUnload");
+  });
+
+  it("preloads once after identity is ready without location and cancels late background setup", async () => {
+    const page = createRuntimePage();
+    const ensure = vi.fn(() => ({ state: { phase: "INITIAL_LOADING" } }));
+    let ready!: (value: object) => void;
+    (page as unknown as Record<string, unknown>).refreshCloudAccount = () =>
+      new Promise((resolve) => {
+        ready = resolve;
+      });
+    (page as unknown as Record<string, unknown>).ensurePublicMapClient = ensure;
+    call(page, "onShow");
+    call(page, "onHide");
+    ready({});
+    await Promise.resolve();
+    expect(ensure).not.toHaveBeenCalled();
+    call(page, "onShow");
+    ready({});
+    await Promise.resolve();
+    expect(ensure).toHaveBeenCalledOnce();
+    expect(locationRequestCount).toBe(0);
+    expect(page.data.currentView).not.toBe("map-preview");
+    call(page, "onUnload");
+  });
+
+  it("refreshes expired prefetched results on map entry without repeating a fresh read", () => {
+    const page = createRuntimePage();
+    const refresh = vi.fn();
+    const state = { phase: "LOADED", cacheUpdatedAtMs: Date.now() };
+    (page as unknown as Record<string, unknown>).ensurePublicMapClient =
+      () => ({ state, refresh });
+    call(page, "refreshPublicMapOnEntry");
+    expect(refresh).not.toHaveBeenCalled();
+    state.cacheUpdatedAtMs -= 120000;
+    call(page, "refreshPublicMapOnEntry");
+    expect(refresh).toHaveBeenCalledOnce();
+    state.phase = "INITIAL_LOADING";
+    call(page, "refreshPublicMapOnEntry");
+    expect(refresh).toHaveBeenCalledOnce();
+  });
+
+  it.each(["hide", "exit", "unload"])(
+    "prepares only two foreground details, joins selection, and cancels after %s",
+    async (mode) => {
+      const page = createRuntimePage();
+      const service = new SyntheticPublicMapService();
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      const ids = SYNTHETIC_PUBLIC_MARKERS.slice(0, 3).map((_, i) =>
+        (i + 1).toString(16).padStart(32, "0"),
+      );
+      page.setData({
+        mapSelectedDiscoveryTagIds: [
+          "UPLOAD_ONLY",
+          "LAST_CHANCE",
+          "GRAND_PRIZE_REMAINS",
+          "GRAND_PRIZE_RATIO",
+          "SPLIT_SET",
+          "LOW_OPPORTUNITY",
+        ],
+      });
+      cloudCallFunctionMock.mockImplementation(async ({ name, data }) => {
+        if (name === "query-public-map-leads") {
+          const result = await service.query(data as PublicViewportRequest);
+          return {
+            result: result.ok
+              ? {
+                  ...result,
+                  items: SYNTHETIC_PUBLIC_MARKERS.slice(0, 3).map(
+                    (marker, i) => ({ ...marker, publicLeadId: ids[i]! }),
+                  ),
+                  nextCursor: null,
+                }
+              : result,
+          };
+        }
+        if (name === "get-public-map-lead-detail") {
+          await gate;
+          const request = data as PublicDetailRequest,
+            index = ids.indexOf(request.publicLeadId);
+          const result = await service.detail({
+            ...request,
+            publicLeadId: SYNTHETIC_PUBLIC_MARKERS[index]!.publicLeadId,
+          });
+          return {
+            result: result.ok
+              ? {
+                  ...result,
+                  item: {
+                    ...result.item,
+                    publicLeadId: request.publicLeadId,
+                    contributor: result.item.contributor
+                      ? {
+                          displayName: result.item.contributor.displayName,
+                          avatar: {
+                            kind: "FALLBACK_ASSET",
+                            path: "/assets/v1-29/ichi-avatar.png",
+                          },
+                        }
+                      : null,
+                  },
+                }
+              : result,
+          };
+        }
+        return { result: { ok: false, code: "SERVICE_UNAVAILABLE" } };
+      });
+      const client = call(
+        page,
+        "ensurePublicMapClient",
+      ) as import("../../platform/public-map-client.js").PublicMapClient;
+      await vi.waitFor(() => expect(client.state.phase).toBe("LOADED"));
+      const detailCalls = () =>
+        cloudCallFunctionMock.mock.calls.filter(
+          ([request]) => request.name === "get-public-map-lead-detail",
+        );
+      expect(detailCalls()).toHaveLength(0);
+      call(page, "onSelectTab", baseEvent({ tab: "map" }));
+      expect(detailCalls()).toHaveLength(2);
+      call(page, "openSelectedMapLead", ids[0]);
+      expect(detailCalls()).toHaveLength(2);
+      if (mode === "exit")
+        call(page, "onSelectTab", baseEvent({ tab: "recognize" }));
+      else call(page, mode === "hide" ? "onHide" : "onUnload");
+      expect(detailCalls()).toHaveLength(2);
+      release();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(detailCalls()).toHaveLength(2);
+      expect(page.data).toMatchObject({
+        mapDetailPhase: "IDLE",
+        mapDetail: null,
+        mapCardPhase: "CLOSED",
+      });
+      if (mode !== "unload") call(page, "onUnload");
+    },
+  );
+
+  it("opens a public summary before a delayed detail response and discards it after dismissal", async () => {
+    const page = createRuntimePage();
+    const service = new SyntheticPublicMapService();
+    let releaseQuery!: () => void, releaseDetail!: () => void;
+    const queryGate = new Promise<void>((resolve) => {
+      releaseQuery = resolve;
+    });
+    const detailGate = new Promise<void>((resolve) => {
+      releaseDetail = resolve;
+    });
+    cloudCallFunctionMock.mockImplementation(async ({ name, data }) => {
+      if (name === "query-public-map-leads") {
+        await queryGate;
+        const result = await service.query(data as PublicViewportRequest);
+        return {
+          result: result.ok
+            ? {
+                ...result,
+                items: result.items.map((item, index) => ({
+                  ...item,
+                  publicLeadId: (index + 1).toString(16).padStart(32, "0"),
+                })),
+              }
+            : result,
+        };
+      }
+      if (name === "get-public-map-lead-detail") {
+        await detailGate;
+        const request = data as PublicDetailRequest;
+        const result = await service.detail({
+          ...request,
+          publicLeadId: `lead-synthetic-${parseInt(request.publicLeadId, 16).toString().padStart(3, "0")}`,
+        });
+        return {
+          result: result.ok
+            ? {
+                ...result,
+                item: { ...result.item, publicLeadId: request.publicLeadId },
+              }
+            : result,
+        };
+      }
+      return { result: { ok: false, code: "SERVICE_UNAVAILABLE" } };
+    });
+    call(page, "onSelectTab", baseEvent({ tab: "map" }));
+    expect(page.data.currentView).toBe("map-preview");
+    expect(page.data.mapPhase).toBe("INITIAL_LOADING");
+    expect(page.data.modalView).toBe("");
+    releaseQuery();
+    await vi.advanceTimersByTimeAsync(1000);
+    call(page, "onMapResetDiscoveryFilters");
+    const marker = (
+      page.data.mapMarkers as Array<{
+        publicLeadId: string;
+        totalRemainingLabel: string;
+      }>
+    )[0]!;
+    expect(marker).toBeDefined();
+    call(page, "openSelectedMapLead", marker.publicLeadId);
+    expect(page.data.mapDetailPhase).toBe("LOADING");
+    expect(page.data.mapCardPhase).toBe("OPENING");
+    expect(page.data.mapDetail).toBeNull();
+    expect(page.data.mapDetailPreview).toMatchObject({
+      publicLeadId: marker.publicLeadId,
+      totalRemainingLabel: marker.totalRemainingLabel,
+    });
+    expect(page.data.mapDetailPreview).not.toHaveProperty("contributorName");
+    expect(page.data.mapDetailPreview).not.toHaveProperty("venueNote");
+    call(page, "dismissNativeMapSelection");
+    releaseDetail();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(page.data.mapDetailPhase).toBe("IDLE");
+    expect(page.data.mapDetailPreview).toBeNull();
+    expect(page.data.mapDetail).toBeNull();
+    expect(page.data.mapCardPhase).toBe("CLOSED");
+    call(page, "onUnload");
+  });
+
+  it("switches immediately to another lead while the previous marker camera is moving", () => {
+    const page = createRuntimePage();
+    const first = {
+      markerId: 101,
+      kind: "LEAD",
+      publicLeadId: "lead-synthetic-001",
+      latitude: 31.23,
+      longitude: 121.47,
+      realLatitude: 31.23,
+      realLongitude: 121.47,
+    };
+    const second = {
+      markerId: 102,
+      kind: "LEAD",
+      publicLeadId: "lead-synthetic-002",
+      latitude: 31.24,
+      longitude: 121.48,
+      realLatitude: 31.24,
+      realLongitude: 121.48,
+    };
+    page.setData({
+      mapNativeInteractionState: "CAMERA_ANIMATING",
+      mapSelectedLeadId: first.publicLeadId,
+      mapNativeMarkerViews: [
+        { ...first, selected: true },
+        { ...second, selected: false },
+      ],
+    });
+    const clearNativeMapTransition = vi.fn(() =>
+      page.setData({ mapNativeInteractionState: "IDLE" }),
+    );
+    const openSelectedMapLead = vi.fn();
+    (page as unknown as Record<string, unknown>).clearNativeMapTransition =
+      clearNativeMapTransition;
+    (page as unknown as Record<string, unknown>).openSelectedMapLead =
+      openSelectedMapLead;
+
+    call(page, "activateNativeMapMarker", second.markerId);
+
+    expect(clearNativeMapTransition).toHaveBeenCalledOnce();
+    expect(openSelectedMapLead).toHaveBeenCalledWith(
+      second.publicLeadId,
+      expect.objectContaining({ markerId: second.markerId }),
+    );
+    expect(page.data.mapNativeMarkerViews).toMatchObject([
+      { markerId: first.markerId, selected: false },
+      { markerId: second.markerId, selected: true },
+    ]);
+  });
+
+  it("consumes one companion surface tap, then lets an independent blank tap dismiss", () => {
+    const page = createRuntimePage();
+    const marker = {
+      markerId: 201,
+      kind: "LEAD",
+      publicLeadId: "lead-synthetic-001",
+      latitude: 31.23,
+      longitude: 121.47,
+      realLatitude: 31.23,
+      realLongitude: 121.47,
+      selected: false,
+    };
+    page.setData({
+      mapNativeInteractionState: "IDLE",
+      mapNativeMarkerViews: [marker],
+    });
+    (page as unknown as Record<string, unknown>).openSelectedMapLead = vi.fn(
+      () =>
+        page.setData({
+          mapCardPhase: "OPEN",
+          mapSheetMode: "PREVIEW",
+        }),
+    );
+    const detailState = {
+      phase: "LOADED",
+      selectedPublicLeadId: marker.publicLeadId as string | null,
+    };
+    const clearSelection = vi.fn(() => {
+      detailState.phase = "IDLE";
+      detailState.selectedPublicLeadId = null;
+    });
+    (page as unknown as Record<string, unknown>).ensurePublicMapClient = vi.fn(
+      () => ({ state: { detail: detailState }, clearSelection }),
+    );
+
+    call(page, "onMapNativeMarkerTap", {
+      detail: { markerId: marker.markerId },
+      currentTarget: { dataset: {} },
+    });
+    call(page, "onMapNativeTap");
+    expect(clearSelection).not.toHaveBeenCalled();
+    expect(page.data.mapCardPhase).toBe("OPEN");
+
+    call(page, "onMapNativeTap");
+    expect(clearSelection).toHaveBeenCalledOnce();
+    expect(page.data).toMatchObject({
+      mapCardPhase: "CLOSED",
+      mapSheetMode: "CLOSED",
+      mapSelectedLeadId: "",
+    });
+    expect(page.data.mapNativeMarkerViews).toMatchObject([
+      { markerId: marker.markerId, selected: false },
+    ]);
+  });
+
+  it("dismisses the selected marker when a real map drag begins", () => {
+    const page = createRuntimePage();
+    const marker = {
+      markerId: 205,
+      kind: "LEAD",
+      publicLeadId: "lead-synthetic-001",
+      latitude: 31.23,
+      longitude: 121.47,
+      realLatitude: 31.23,
+      realLongitude: 121.47,
+      selected: true,
+    };
+    page.setData({
+      mapCardPhase: "OPEN",
+      mapSheetMode: "PREVIEW",
+      mapSelectedLeadId: marker.publicLeadId,
+      mapNativeInteractionState: "IDLE",
+      mapNativeMarkerViews: [marker],
+    });
+    const detailState = {
+      phase: "LOADED",
+      selectedPublicLeadId: marker.publicLeadId as string | null,
+    };
+    const clearSelection = vi.fn(() => {
+      detailState.phase = "IDLE";
+      detailState.selectedPublicLeadId = null;
+    });
+    (page as unknown as Record<string, unknown>).ensurePublicMapClient = vi.fn(
+      () => ({ state: { detail: detailState }, clearSelection }),
+    );
+
+    call(page, "onMapNativeRegionChange", {
+      detail: { type: "begin", causedBy: "gesture", scale: 12 },
+    });
+
+    expect(clearSelection).toHaveBeenCalledOnce();
+    expect(page.data).toMatchObject({
+      mapCardPhase: "CLOSED",
+      mapSheetMode: "CLOSED",
+      mapSelectedLeadId: "",
+      mapNativeInteractionState: "GESTURE",
+    });
+    expect(page.data.mapNativeMarkerViews).toMatchObject([
+      { markerId: marker.markerId, selected: false },
+    ]);
+  });
+
+  it("keeps the selection during a programmatic camera region change", () => {
+    const page = createRuntimePage();
+    const marker = {
+      markerId: 206,
+      kind: "LEAD",
+      publicLeadId: "lead-synthetic-001",
+      latitude: 31.23,
+      longitude: 121.47,
+      realLatitude: 31.23,
+      realLongitude: 121.47,
+      selected: true,
+    };
+    page.setData({
+      mapCardPhase: "OPEN",
+      mapSheetMode: "PREVIEW",
+      mapSelectedLeadId: marker.publicLeadId,
+      mapNativeInteractionState: "CAMERA_ANIMATING",
+      mapNativeMarkerViews: [marker],
+    });
+    const clearSelection = vi.fn();
+    (page as unknown as Record<string, unknown>).ensurePublicMapClient = vi.fn(
+      () => ({
+        state: {
+          detail: {
+            phase: "LOADED",
+            selectedPublicLeadId: marker.publicLeadId,
+          },
+        },
+        clearSelection,
+      }),
+    );
+
+    call(page, "onMapNativeRegionChange", {
+      detail: { type: "begin", causedBy: "update", scale: 12 },
+    });
+
+    expect(clearSelection).not.toHaveBeenCalled();
+    expect(page.data).toMatchObject({
+      mapCardPhase: "OPEN",
+      mapSheetMode: "PREVIEW",
+      mapSelectedLeadId: marker.publicLeadId,
+      mapNativeInteractionState: "CAMERA_ANIMATING",
+    });
+    expect(page.data.mapNativeMarkerViews).toMatchObject([
+      { markerId: marker.markerId, selected: true },
+    ]);
+  });
+
+  it("treats a scale-caused region change as a user gesture", () => {
+    const page = createRuntimePage();
+    const marker = {
+      markerId: 207,
+      kind: "LEAD",
+      publicLeadId: "lead-synthetic-001",
+      latitude: 31.23,
+      longitude: 121.47,
+      realLatitude: 31.23,
+      realLongitude: 121.47,
+      selected: true,
+    };
+    page.setData({
+      mapCardPhase: "OPEN",
+      mapSheetMode: "PREVIEW",
+      mapSelectedLeadId: marker.publicLeadId,
+      mapNativeMarkerViews: [marker],
+    });
+    const clearSelection = vi.fn();
+    (page as unknown as Record<string, unknown>).ensurePublicMapClient = vi.fn(
+      () => ({
+        state: {
+          detail: {
+            phase: "LOADED",
+            selectedPublicLeadId: marker.publicLeadId,
+          },
+        },
+        clearSelection,
+      }),
+    );
+
+    call(page, "onMapNativeRegionChange", {
+      detail: { type: "begin", causedBy: "scale", scale: 13 },
+    });
+
+    expect(clearSelection).toHaveBeenCalledOnce();
+    expect(page.data.mapCardPhase).toBe("CLOSED");
+    expect(page.data.mapNativeMarkerViews).toMatchObject([
+      { markerId: marker.markerId, selected: false },
+    ]);
+  });
+
+  it("moves the controlled camera with a cancellable ease-in-out curve", () => {
+    const page = createRuntimePage();
+    call(page, "onMapNativeUpdated");
+    const marker = {
+      markerId: 202,
+      kind: "LEAD",
+      publicLeadId: "lead-synthetic-002",
+      latitude: 31.24,
+      longitude: 121.48,
+      realLatitude: 31.24,
+      realLongitude: 121.48,
+      selected: false,
+    };
+    page.setData({
+      mapNativeCenterLatitude: 31.21,
+      mapNativeCenterLongitude: 121.41,
+      mapNativeScale: 12,
+      mapNativeInteractionState: "IDLE",
+      mapNativeMarkerViews: [marker],
+    });
+    const detailState = {
+      selectedPublicLeadId: null as string | null,
+    };
+    const selectLead = vi.fn(async (publicLeadId: string) => {
+      detailState.selectedPublicLeadId = publicLeadId;
+    });
+    (page as unknown as Record<string, unknown>).ensurePublicMapClient = vi.fn(
+      () => ({ state: { detail: detailState }, selectLead }),
+    );
+    (
+      page as unknown as Record<string, unknown>
+    ).loadPublicMapAuthorizationStatus = vi.fn();
+
+    call(page, "activateNativeMapMarker", marker.markerId);
+
+    expect(selectLead).toHaveBeenCalledWith(marker.publicLeadId);
+    expect(moveToLocationMock).not.toHaveBeenCalled();
+    expect(page.data).toMatchObject({
+      mapNativeCenterLatitude: 31.21,
+      mapNativeCenterLongitude: 121.41,
+      mapNativeInteractionState: "CAMERA_ANIMATING",
+    });
+
+    vi.advanceTimersByTime(30);
+    const firstLatitude = Number(page.data.mapNativeCenterLatitude);
+    expect(firstLatitude).toBeGreaterThan(31.21);
+    expect(firstLatitude).toBeLessThan(31.21 + (31.24 - 31.21) / 14);
+
+    vi.advanceTimersByTime(180);
+    expect(Number(page.data.mapNativeCenterLatitude)).toBeGreaterThan(31.21);
+    expect(Number(page.data.mapNativeCenterLatitude)).toBeLessThan(
+      marker.realLatitude,
+    );
+    expect(Number(page.data.mapNativeCenterLongitude)).toBeGreaterThan(121.41);
+    expect(Number(page.data.mapNativeCenterLongitude)).toBeLessThan(
+      marker.realLongitude,
+    );
+
+    vi.advanceTimersByTime(210);
+    const finalLatitude = Number(page.data.mapNativeCenterLatitude);
+    const finalLongitude = Number(page.data.mapNativeCenterLongitude);
+    expect(finalLatitude).toBeGreaterThan(31.21);
+    expect(finalLatitude).toBeLessThanOrEqual(marker.realLatitude + 1e-9);
+    expect(finalLongitude).toBeGreaterThan(121.41);
+    expect(finalLongitude).toBeLessThanOrEqual(marker.realLongitude + 1e-9);
+    call(page, "onUnload");
+  });
+
+  it("rebases an in-flight lead camera animation when Marker B preempts Marker A", () => {
+    const page = createRuntimePage();
+    const first = {
+      markerId: 203,
+      kind: "LEAD",
+      publicLeadId: "lead-synthetic-001",
+      latitude: 31.24,
+      longitude: 121.48,
+      realLatitude: 31.24,
+      realLongitude: 121.48,
+      selected: false,
+    };
+    const second = {
+      markerId: 204,
+      kind: "LEAD",
+      publicLeadId: "lead-synthetic-002",
+      latitude: 31.26,
+      longitude: 121.52,
+      realLatitude: 31.26,
+      realLongitude: 121.52,
+      selected: false,
+    };
+    page.setData({
+      mapNativeCenterLatitude: 31.21,
+      mapNativeCenterLongitude: 121.41,
+      mapNativeScale: 12,
+      mapNativeInteractionState: "IDLE",
+      mapNativeMarkerViews: [first, second],
+    });
+    const detailState = {
+      selectedPublicLeadId: null as string | null,
+    };
+    (page as unknown as Record<string, unknown>).ensurePublicMapClient = vi.fn(
+      () => ({
+        state: { detail: detailState },
+        selectLead(publicLeadId: string) {
+          detailState.selectedPublicLeadId = publicLeadId;
+          return Promise.resolve();
+        },
+      }),
+    );
+    (
+      page as unknown as Record<string, unknown>
+    ).loadPublicMapAuthorizationStatus = vi.fn();
+
+    call(page, "activateNativeMapMarker", first.markerId);
+    vi.advanceTimersByTime(90);
+    const interruptedLatitude = Number(page.data.mapNativeCenterLatitude);
+    expect(interruptedLatitude).toBeGreaterThan(31.21);
+    expect(interruptedLatitude).toBeLessThan(first.realLatitude);
+
+    call(page, "activateNativeMapMarker", second.markerId);
+    vi.advanceTimersByTime(420);
+    expect(Number(page.data.mapNativeCenterLatitude)).toBeGreaterThan(
+      interruptedLatitude,
+    );
+    expect(Number(page.data.mapNativeCenterLatitude)).toBeLessThan(
+      second.realLatitude,
+    );
+    expect(Number(page.data.mapNativeCenterLongitude)).toBeGreaterThan(121.41);
+    expect(Number(page.data.mapNativeCenterLongitude)).toBeLessThan(
+      second.realLongitude,
+    );
+    expect(detailState.selectedPublicLeadId).toBe(second.publicLeadId);
     call(page, "onUnload");
   });
 
@@ -1000,7 +2411,7 @@ describe("V1-E page behavior", () => {
     call(page, "onLoad");
     await call(page, "refreshCloudRecords");
     expect(page.data.cloudRecords).toMatchObject([
-      { recordId: "private-1", recordStateLabel: "待核对" },
+      { recordId: "private-1", recordStateLabel: "已上传" },
     ]);
     expect(page.data.cloudClues).toHaveLength(1);
     expect(stored.has(LOCAL_DRAW_DRAFTS_KEY)).toBe(false);
@@ -1912,6 +3323,236 @@ describe("V1-E page behavior", () => {
     call(failedRead, "onUnload");
   });
 
+  it("shares a confirmed direct upload automatically and reports the server acknowledgement", async () => {
+    const baseCloudCall = cloudCallFunctionMock.getMockImplementation()!;
+    cloudCallFunctionMock.mockImplementation(async (request) => {
+      if (request.name === "manage-map-contribution-consent")
+        return {
+          result: {
+            ok: true,
+            termsVersion: PRODUCTION_MAP_TERMS.version,
+            scopeDigest: PRODUCTION_MAP_TERMS.scopeDigest,
+            accepted: true,
+          },
+        };
+      return baseCloudCall(request);
+    });
+    const page = createRuntimePage();
+    call(page, "onLoad");
+    await call(page, "onImportBoard", baseEvent({ flowMode: "direct-upload" }));
+    call(page, "onCameraReady");
+    await call(page, "onCaptureBoardMedia");
+    await confirmFrozenBoard(page);
+    call(page, "onRecognitionIpInput", { detail: { value: "确认上传版面" } });
+    call(page, "onRecognitionLocationInput", {
+      detail: { value: "本次位置备注" },
+    });
+    call(page, "onRecognitionPriceInput", { detail: { value: "650" } });
+    await confirmR2Board(page);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(page.data.modalView).toBe("board-upload-submitted");
+    expect(page.data.mapUploadSharingMessage).toContain("本条记录已上传");
+    expect(page.data.mapUploadSharingMessage).not.toContain("已公开");
+    expect(
+      cloudCallFunctionMock.mock.calls.filter(
+        ([r]) =>
+          r.name === "finalize-board-observation" &&
+          r.data.uploadSharing?.disclosureVersion ===
+            UPLOAD_SHARING_DISCLOSURE_VERSION,
+      ),
+    ).toHaveLength(1);
+    call(page, "onSubmittedExit");
+    expect(page.data.modalView).toBe("");
+    expect(page.data.currentView).toBe("start");
+    call(page, "onUnload");
+  });
+
+  it("keeps rejected direct notes local and lets my uploads edit and retry after restart", async () => {
+    const baseCall = cloudCallFunctionMock.getMockImplementation()!;
+    const originalLocation = wx.getLocation;
+    const locationSpy = vi.spyOn(wx, "getLocation");
+    let rejectNote = true,
+      released = false;
+    cloudCallFunctionMock.mockImplementation(async (request) => {
+      if (request.name === "release-recognition") released = true;
+      if (request.name === "reserve-recognition" && released) {
+        const r = await baseCall(request);
+        return {
+          ...r,
+          result: {
+            ...r.result,
+            data: { ...r.result.data, status: "recognized" },
+          },
+        };
+      }
+      if (request.name === "finalize-board-observation" && rejectNote)
+        return {
+          result: { ok: false, error: { code: "LOCATION_NOTE_REVIEW_FAILED" } },
+        };
+      return baseCall(request);
+    });
+    const page = createRuntimePage();
+    call(page, "onLoad");
+    await call(page, "onImportBoard", baseEvent({ flowMode: "direct-upload" }));
+    call(page, "onCameraReady");
+    await call(page, "onCaptureBoardMedia");
+    await confirmFrozenBoard(page);
+    call(page, "onRecognitionIpInput", { detail: { value: "安全备注测试" } });
+    call(page, "onRecognitionLocationInput", { detail: { value: "拒绝备注" } });
+    call(page, "onRecognitionPriceInput", { detail: { value: "650" } });
+    delete app.globalData.pendingBoardLocation;
+    const reservationsBeforeConfirm = cloudCallFunctionMock.mock.calls.filter(
+      ([r]) => r.name === "reserve-recognition",
+    ).length;
+    locationSpy.mockImplementationOnce((options) => {
+      void call(page, "resumePendingFinalizations");
+      expect(
+        cloudCallFunctionMock.mock.calls.filter(
+          ([r]) => r.name === "reserve-recognition",
+        ),
+      ).toHaveLength(reservationsBeforeConfirm);
+      originalLocation(options);
+    });
+    await confirmR2Board(page);
+    expect(page.data.currentView).toBe("contributions");
+    const failed = JSON.parse(String(stored.get(LOCAL_DRAW_DRAFTS_KEY)))[0];
+    expect(failed).toMatchObject({
+      recordType: "board-upload",
+      verificationStatus: "note-failed",
+      uploadStatus: "not-uploaded",
+      submissionState: "local",
+      pendingFinalization: {
+        sourcePath: "direct-upload",
+        locationNote: "拒绝备注",
+      },
+    });
+    expect(failed.pendingFinalization.location).toBeDefined();
+    expect(failed.pendingFinalization.recognitionIdempotencyKey).toBeTruthy();
+    expect(failed.pendingFinalization).not.toHaveProperty("jobToken");
+    expect(page.data.pendingDirectUploads).toMatchObject([
+      { recordStateLabel: "备注未通过", verificationAction: "edit-note" },
+    ]);
+    const recognitionCount = cloudCallFunctionMock.mock.calls.filter(
+      ([r]) => r.name === "recognize-board",
+    ).length;
+    const locationCount = locationSpy.mock.calls.length;
+    call(page, "onUnload");
+    const restarted = createRuntimePage();
+    call(restarted, "onLoad");
+    await call(restarted, "resumePendingFinalizations");
+    expect(
+      cloudCallFunctionMock.mock.calls.filter(
+        ([r]) => r.name === "finalize-board-observation",
+      ),
+    ).toHaveLength(1);
+    call(restarted, "onEditTicketNote", baseEvent({ boardId: failed.boardId }));
+    expect(restarted.data).toMatchObject({
+      modalView: "note-review",
+      noteReviewSourcePath: "direct-upload",
+    });
+    call(restarted, "onReviewNoteInput", {
+      detail: { value: "修改后的安全备注" },
+    });
+    rejectNote = false;
+    await call(restarted, "onSubmitNoteReview");
+    expect(
+      JSON.parse(String(stored.get(LOCAL_DRAW_DRAFTS_KEY)))[0],
+    ).toMatchObject({
+      uploadStatus: "uploaded",
+      submissionState: "uploaded",
+      verificationStatus: "verified",
+      locationNote: "修改后的安全备注",
+    });
+    expect(
+      JSON.parse(String(stored.get(LOCAL_DRAW_DRAFTS_KEY)))[0],
+    ).not.toHaveProperty("pendingFinalization");
+    expect(restarted.data.pendingDirectUploads).toEqual([]);
+    const requests = cloudCallFunctionMock.mock.calls.filter(
+      ([r]) => r.name === "finalize-board-observation",
+    );
+    expect(requests[1]?.[0].data).toMatchObject({
+      locationNote: "修改后的安全备注",
+      recognitionJobId: failed.recognitionJobId,
+      location: failed.pendingFinalization.location,
+      confirmedSnapshot: failed.pendingFinalization.confirmedSnapshot,
+      uploadSharing: {
+        disclosureVersion: UPLOAD_SHARING_DISCLOSURE_VERSION,
+        rightsAttested: true,
+      },
+    });
+    expect(
+      cloudCallFunctionMock.mock.calls.filter(
+        ([r]) => r.name === "recognize-board",
+      ),
+    ).toHaveLength(recognitionCount);
+    expect(locationSpy.mock.calls).toHaveLength(locationCount);
+    expect(
+      cloudCallFunctionMock.mock.calls.some(
+        ([r]) => r.name === "recognize-draw-tickets",
+      ),
+    ).toBe(false);
+    call(restarted, "onUnload");
+    locationSpy.mockRestore();
+  });
+
+  it("preserves confirmed direct-upload sharing when the later local record cache fails", async () => {
+    const baseCloudCall = cloudCallFunctionMock.getMockImplementation()!;
+    let finalized = false;
+    const originalWrite = wx.setStorageSync;
+    const write = vi
+      .spyOn(wx, "setStorageSync")
+      .mockImplementation((key, value) => {
+        if (finalized && key === LOCAL_DRAW_DRAFTS_KEY)
+          throw new Error("local cache failed");
+        originalWrite(key, value);
+      });
+    cloudCallFunctionMock.mockImplementation(async (request) => {
+      if (request.name === "manage-map-contribution-consent")
+        return {
+          result: {
+            ok: true,
+            termsVersion: PRODUCTION_MAP_TERMS.version,
+            scopeDigest: PRODUCTION_MAP_TERMS.scopeDigest,
+            accepted: true,
+          },
+        };
+      const response = await baseCloudCall(request);
+      if (request.name === "finalize-board-observation") finalized = true;
+      return response;
+    });
+    const page = createRuntimePage();
+    try {
+      call(page, "onLoad");
+      await call(
+        page,
+        "onImportBoard",
+        baseEvent({ flowMode: "direct-upload" }),
+      );
+      call(page, "onCameraReady");
+      await call(page, "onCaptureBoardMedia");
+      await confirmFrozenBoard(page);
+      call(page, "onRecognitionIpInput", { detail: { value: "上传已确认" } });
+      call(page, "onRecognitionLocationInput", {
+        detail: { value: "本条位置备注" },
+      });
+      call(page, "onRecognitionPriceInput", { detail: { value: "650" } });
+      await confirmR2Board(page);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(page.data.generationState).toBe("failed");
+      expect(
+        cloudCallFunctionMock.mock.calls.filter(
+          ([r]) =>
+            r.name === "finalize-board-observation" &&
+            r.data.uploadSharing?.disclosureVersion ===
+              UPLOAD_SHARING_DISCLOSURE_VERSION,
+        ),
+      ).toHaveLength(1);
+    } finally {
+      write.mockRestore();
+      call(page, "onUnload");
+    }
+  });
+
   it("keeps the direct-upload mode through recognition and saves its private cloud terminal state", async () => {
     const page = createRuntimePage();
     call(page, "onLoad");
@@ -1949,6 +3590,16 @@ describe("V1-E page behavior", () => {
 
     await confirmR2Board(restored);
     expect(restored.data.modalView).toBe("board-upload-submitted");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(restored.data.mapUploadSharingMessage).toContain("本条记录已上传");
+    expect(restored.data.mapUploadSharingMessage).not.toContain(
+      "已上传并保存分享授权",
+    );
+    expect(
+      [...stored.keys()].some((key) =>
+        key.startsWith("ichi.map-shared-uploads."),
+      ),
+    ).toBe(false);
     const pendingUploads = JSON.parse(
       String(stored.get(LOCAL_DRAW_DRAFTS_KEY)),
     ) as Array<Record<string, unknown>>;
@@ -1966,7 +3617,7 @@ describe("V1-E page behavior", () => {
     expect(pendingUploads[0]?.recordCode).toMatch(/^[A-Z0-9]{6}$/);
     expect(restored.data.startDrafts).toEqual([]);
     expect(restored.data.contributions).toMatchObject([
-      { recordType: "board-upload", recordStateLabel: "待核对" },
+      { recordType: "board-upload", recordStateLabel: "已上传" },
     ]);
 
     stored.set(
@@ -1983,7 +3634,7 @@ describe("V1-E page behavior", () => {
     expect(restored.data.contributions).toMatchObject([
       {
         recordType: "board-upload",
-        recordStateLabel: "待核对",
+        recordStateLabel: "已上传",
       },
     ]);
     call(restored, "onSubmittedExit");
@@ -2433,6 +4084,193 @@ describe("V1-E page behavior", () => {
         createdAtLabel: "8/13 11:45",
       },
     ]);
+    call(page, "onUnload");
+  });
+
+  it("does not grant map sharing when continuing or saving a private draw", () => {
+    const page = createRuntimePage();
+    enterDraw(page);
+    page.setData({ modalView: "share-decision" });
+    call(page, "onContinueDraw");
+    call(page, "onSaveDraftAndExit");
+    expect(
+      [...stored.keys()].some((key) =>
+        key.startsWith("ichi.map-shared-uploads."),
+      ),
+    ).toBe(false);
+    expect(
+      cloudCallFunctionMock.mock.calls.some(
+        ([r]) => r.data?.command === "SET_INITIAL_CHOICE",
+      ),
+    ).toBe(false);
+    call(page, "onUnload");
+  });
+
+  it("automatically grants only the explicitly submitted draw after trusted verification", async () => {
+    const baseCloudCall = cloudCallFunctionMock.getMockImplementation()!;
+    let approved = false;
+    cloudCallFunctionMock.mockImplementation(async (request) => {
+      if (request.name === "manage-map-contribution-consent")
+        return {
+          result: {
+            ok: true,
+            termsVersion: PRODUCTION_MAP_TERMS.version,
+            scopeDigest: PRODUCTION_MAP_TERMS.scopeDigest,
+            accepted: true,
+          },
+        };
+      const r = await baseCloudCall(request);
+      if (request.name === "recognize-draw-tickets") {
+        if (request.data.action !== "submit") approved = true;
+        return {
+          result: {
+            ...r.result,
+            data: { ...r.result.data, boardId: request.data.boardId },
+          },
+        };
+      }
+      return r;
+    });
+    const page = createRuntimePage();
+    enterDraw(page);
+    page.setData({
+      shareImagePath: "wxfile://map-share.jpg",
+      shareNote: "确认分享",
+      shareReady: true,
+    });
+    await call(page, "onSubmitEvidence");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(approved).toBe(true);
+    const grants = cloudCallFunctionMock.mock.calls.filter(
+      ([r]) =>
+        r.name === "finalize-board-observation" &&
+        r.data.action === "prepare-new-upload" &&
+        Boolean(r.data.uploadSharing),
+    );
+    expect(grants).toHaveLength(1);
+    expect(grants[0]?.[0].data).toMatchObject({
+      action: "prepare-new-upload",
+      uploadSharing: {
+        disclosureVersion: UPLOAD_SHARING_DISCLOSURE_VERSION,
+        rightsAttested: true,
+      },
+    });
+    expect(
+      [...stored.entries()]
+        .filter(([key]) => key.startsWith("ichi.map-shared-uploads."))
+        .map(([, value]) => JSON.parse(String(value))),
+    ).toEqual([[]]);
+    call(page, "onUnload");
+  });
+
+  it.each(["verification retry", "replacement photo", "note review"] as const)(
+    "retries the existing upload-sharing intent when a cloud-only %s succeeds",
+    async (route) => {
+      const recordId = "record_0123456789abcdef0123456789abcdef";
+      const boardId = "board-draw-1";
+      const key = `ichi.map-shared-uploads.${PRODUCTION_MAP_TERMS.version}.${PRODUCTION_MAP_TERMS.scopeDigest}`;
+      // A prior explicit submission persisted this intent before the local draft was removed.
+      stored.set(key, JSON.stringify([recordId]));
+      const baseCloudCall = cloudCallFunctionMock.getMockImplementation()!;
+      let approved = false;
+      cloudCallFunctionMock.mockImplementation(async (request) => {
+        if (request.name === "manage-map-contribution-consent")
+          return {
+            result: {
+              ok: true,
+              termsVersion: PRODUCTION_MAP_TERMS.version,
+              scopeDigest: PRODUCTION_MAP_TERMS.scopeDigest,
+              accepted: true,
+            },
+          };
+        const response = await baseCloudCall(request);
+        if (request.name === "recognize-draw-tickets") {
+          if (request.data.action !== "submit") approved = true;
+          return {
+            result: {
+              ...response.result,
+              data: {
+                ...response.result.data,
+                recordId,
+                boardId,
+                submissionVersion: request.data.submissionVersion,
+                status:
+                  request.data.action === "submit"
+                    ? "PHOTO_PENDING"
+                    : "APPROVED",
+              },
+            },
+          };
+        }
+        return response;
+      });
+      const page = createRuntimePage();
+      page.setData({
+        cloudRecords: [
+          {
+            recordId,
+            boardId,
+            submissionVersion: 1,
+            userNote: "待修复备注",
+            verificationPending: {
+              recordId,
+              boardId,
+              submissionVersion: 1,
+              imageFileId: "cloud://test/ticket.jpg",
+              captureSource: "camera",
+              capturedAt: Date.now(),
+              albumSaveWarning: false,
+              image: { width: 1200, height: 1600, byteLength: 1000 },
+            },
+          },
+        ],
+      });
+      expect(stored.has(LOCAL_DRAW_DRAFTS_KEY)).toBe(false);
+      if (route === "verification retry")
+        call(page, "onRetryTicketVerification", baseEvent({ boardId }));
+      else if (route === "replacement photo")
+        await call(page, "onReuploadTicketEvidence", baseEvent({ boardId }));
+      else {
+        call(page, "onEditTicketNote", baseEvent({ boardId }));
+        call(page, "onReviewNoteInput", {
+          detail: { value: "通过安全审核的新备注" },
+        });
+        await call(page, "onSubmitNoteReview");
+      }
+      await vi.advanceTimersByTimeAsync(0);
+      expect(approved).toBe(true);
+      expect(
+        cloudCallFunctionMock.mock.calls.filter(
+          ([r]) =>
+            r.name === "finalize-board-observation" &&
+            r.data.action === "confirm-upload-sharing",
+        ),
+      ).toHaveLength(1);
+      expect(JSON.parse(String(stored.get(key)))).toEqual([]);
+      call(page, "onUnload");
+    },
+  );
+
+  it("does not manufacture a sharing intent when refreshing or approving an old cloud-only record", async () => {
+    const page = createRuntimePage();
+    page.setData({
+      noteReviewRecordId: "record_0123456789abcdef0123456789abcdef",
+      noteReviewBoardId: "board-draw-1",
+      noteReviewSubmissionVersion: 1,
+      shareNote: "历史备注",
+    });
+    await call(page, "onSubmitNoteReview");
+    await vi.advanceTimersByTimeAsync(0);
+    expect(
+      [...stored.keys()].some((key) =>
+        key.startsWith("ichi.map-shared-uploads."),
+      ),
+    ).toBe(false);
+    expect(
+      cloudCallFunctionMock.mock.calls.some(
+        ([r]) => r.name === "manage-map-player-source",
+      ),
+    ).toBe(false);
     call(page, "onUnload");
   });
 
@@ -2988,5 +4826,71 @@ describe("V1-E page behavior", () => {
       activeDraft: null,
     });
     call(page, "onUnload");
+  });
+});
+
+describe("TASK21 upload-only discovery defaults", () => {
+  it("starts with upload-only unselected and lets users add it or explicitly show all", () => {
+    const page = createRuntimePage();
+    const options = page.data.mapDiscoveryTagOptions as {
+      id: string;
+      selected: boolean;
+      emoji: string;
+    }[];
+    expect(page.data.mapSelectedDiscoveryTagIds).toHaveLength(5);
+    expect(options.find((tag) => tag.id === "UPLOAD_ONLY")).toMatchObject({
+      emoji: "📤",
+      selected: false,
+    });
+    expect(page.data.mapAllDiscoveryTagsSelected).toBe(false);
+    const update = vi.fn((search: string, ids: string[]) =>
+      page.setData({ mapSearchText: search, mapSelectedDiscoveryTagIds: ids }),
+    );
+    (
+      page as unknown as Record<string, unknown>
+    ).updateMapDiscoveryPresentation = update;
+    call(
+      page,
+      "onMapToggleDiscoveryFilter",
+      baseEvent({ tagId: "UPLOAD_ONLY" }),
+    );
+    expect(page.data.mapSelectedDiscoveryTagIds).toHaveLength(6);
+    call(
+      page,
+      "onMapToggleDiscoveryFilter",
+      baseEvent({ tagId: "LAST_CHANCE" }),
+    );
+    const otherTags = [
+      "UPLOAD_ONLY",
+      "GRAND_PRIZE_REMAINS",
+      "GRAND_PRIZE_RATIO",
+      "SPLIT_SET",
+      "LOW_OPPORTUNITY",
+    ];
+    expect(page.data.mapSelectedDiscoveryTagIds).toEqual(otherTags);
+    call(
+      page,
+      "onMapToggleDiscoveryFilter",
+      baseEvent({ tagId: "LAST_CHANCE" }),
+    );
+    expect(page.data.mapSelectedDiscoveryTagIds).toHaveLength(6);
+    for (const tagId of ["LAST_CHANCE", ...otherTags]) {
+      const before = page.data.mapSelectedDiscoveryTagIds as string[];
+      call(page, "onMapToggleDiscoveryFilter", baseEvent({ tagId }));
+      expect(page.data.mapSelectedDiscoveryTagIds).toEqual(
+        before.filter((id) => id !== tagId),
+      );
+    }
+    expect(page.data.mapSelectedDiscoveryTagIds).toEqual([]);
+    call(
+      page,
+      "onMapToggleDiscoveryFilter",
+      baseEvent({ tagId: "UPLOAD_ONLY" }),
+    );
+    expect(page.data.mapSelectedDiscoveryTagIds).toEqual(["UPLOAD_ONLY"]);
+    page.setData({ mapSearchText: "query" });
+    call(page, "onMapResetDiscoveryFilters");
+    expect(page.data.mapSelectedDiscoveryTagIds).toHaveLength(6);
+    expect(page.data.mapSearchText).toBe("");
   });
 });

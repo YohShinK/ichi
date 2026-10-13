@@ -1,0 +1,572 @@
+{
+  "status": "LOCAL_PROPOSAL_PENDING_FOUNDER_RESOURCE_APPROVAL",
+  "proposalVersion": "v2-19-shadow-2-exact-contract",
+  "autoApply": false,
+  "environmentId": "cloud1-d7gxqfwv783a1f131",
+  "region": "ap-shanghai",
+  "dataScope": "SYNTHETIC_REHEARSAL_ONLY",
+  "clientDatabaseAccess": false,
+  "existingV1ResourceMutation": false,
+  "environmentWideConfigurationMutation": false,
+  "newCollections": [
+    {
+      "name": "v2ShadowSourceFixtures",
+      "permission": "ADMINONLY",
+      "purpose": "Synthetic V1-shaped current-publication, approved-submission, rights and location fixtures only",
+      "indexes": [
+        {
+          "name": "owner_observedAt",
+          "unique": false,
+          "keys": {
+            "ownerSubjectDigest": 1,
+            "observedAt": -1
+          },
+          "indexKind": "ORDERED",
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Owner-scoped synthetic observation time retrieval",
+          "orderedFields": [
+            {
+              "path": "ownerSubjectDigest",
+              "orderOrGeo": 1
+            },
+            {
+              "path": "observedAt",
+              "orderOrGeo": -1
+            }
+          ]
+        }
+      ],
+      "dataCategory": "SYNTHETIC_FIXTURE_ONLY",
+      "dataSource": "LOCALLY_GENERATED_REHEARSAL_ONLY_NO_V1_PRIVATE_RECORD_COPY",
+      "aclBoundary": "ADMINONLY_SERVER_ONLY_CLIENT_READ_WRITE_DENIED",
+      "v1ProductionReadAllowed": false
+    },
+    {
+      "name": "v2ShadowBoardInstances",
+      "permission": "ADMINONLY",
+      "purpose": "Versioned candidate instances and last verified structured facts; location generates candidates only",
+      "indexes": [
+        {
+          "name": "candidate_point_geo",
+          "unique": false,
+          "keys": {
+            "candidatePoint": "2dsphere"
+          },
+          "indexKind": "GEO_2DSPHERE",
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Nearby candidate generation only, never identity equality",
+          "orderedFields": [
+            {
+              "path": "candidatePoint",
+              "orderOrGeo": "2dsphere"
+            }
+          ]
+        },
+        {
+          "name": "state_lastObservedAt",
+          "unique": false,
+          "keys": {
+            "lifecycleState": 1,
+            "lastObservedAt": -1
+          },
+          "indexKind": "ORDERED",
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Recent candidates by lifecycle state",
+          "orderedFields": [
+            {
+              "path": "lifecycleState",
+              "orderOrGeo": 1
+            },
+            {
+              "path": "lastObservedAt",
+              "orderOrGeo": -1
+            }
+          ]
+        }
+      ],
+      "dataCategory": "SYNTHETIC_DERIVED_PRIVATE",
+      "dataSource": "SYNTHETIC_VERIFIED_BOARD",
+      "aclBoundary": "ADMINONLY_SERVER_ONLY_CLIENT_READ_WRITE_DENIED",
+      "v1ProductionReadAllowed": false
+    },
+    {
+      "name": "v2ShadowAssociationDecisions",
+      "permission": "ADMINONLY",
+      "purpose": "Append-only link, unlink and relink decisions; never rewrite observations",
+      "indexes": [
+        {
+          "name": "observation_decisionVersion",
+          "unique": true,
+          "keys": {
+            "observationVersionId": 1,
+            "decisionVersion": 1
+          },
+          "indexKind": "ORDERED",
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Idempotent decision version per observation",
+          "orderedFields": [
+            {
+              "path": "observationVersionId",
+              "orderOrGeo": 1
+            },
+            {
+              "path": "decisionVersion",
+              "orderOrGeo": 1
+            }
+          ]
+        },
+        {
+          "name": "instance_decisionVersion",
+          "unique": false,
+          "keys": {
+            "boardInstanceId": 1,
+            "decisionVersion": -1
+          },
+          "indexKind": "ORDERED",
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Latest decision history per instance",
+          "orderedFields": [
+            {
+              "path": "boardInstanceId",
+              "orderOrGeo": 1
+            },
+            {
+              "path": "decisionVersion",
+              "orderOrGeo": -1
+            }
+          ]
+        }
+      ],
+      "dataCategory": "SYNTHETIC_DERIVED_PRIVATE_AUDIT",
+      "dataSource": "SYNTHETIC_OBSERVATION_DECISION_EVENTS",
+      "aclBoundary": "ADMINONLY_SERVER_ONLY_CLIENT_READ_WRITE_DENIED",
+      "v1ProductionReadAllowed": false
+    },
+    {
+      "name": "v2ShadowHumanAssistanceRequests",
+      "permission": "ADMINONLY",
+      "purpose": "One proactive request per synthetic observation; owner, policy, expiry, cooldown and answer state",
+      "indexes": [
+        {
+          "name": "observation_once",
+          "unique": true,
+          "keys": {
+            "observationVersionId": 1
+          },
+          "indexKind": "ORDERED",
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "At most one proactive request per synthetic observation",
+          "orderedFields": [
+            {
+              "path": "observationVersionId",
+              "orderOrGeo": 1
+            }
+          ]
+        },
+        {
+          "name": "owner_state_expiresAt",
+          "unique": false,
+          "keys": {
+            "ownerSubjectDigest": 1,
+            "state": 1,
+            "expiresAt": 1
+          },
+          "indexKind": "ORDERED",
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Owner pending and expiry filter without auto-deletion",
+          "orderedFields": [
+            {
+              "path": "ownerSubjectDigest",
+              "orderOrGeo": 1
+            },
+            {
+              "path": "state",
+              "orderOrGeo": 1
+            },
+            {
+              "path": "expiresAt",
+              "orderOrGeo": 1
+            }
+          ]
+        }
+      ],
+      "dataCategory": "SYNTHETIC_DERIVED_PRIVATE",
+      "dataSource": "SYNTHETIC_AMBIGUITY_AND_TEST_POLICY",
+      "aclBoundary": "ADMINONLY_SERVER_ONLY_CLIENT_READ_WRITE_DENIED",
+      "v1ProductionReadAllowed": false
+    },
+    {
+      "name": "v2ShadowHumanAssistanceEvidence",
+      "permission": "ADMINONLY",
+      "purpose": "Append-only SAME, DIFFERENT or CANNOT_TELL evidence with provenance; SKIP remains request state",
+      "indexes": [
+        {
+          "name": "action_once",
+          "unique": true,
+          "keys": {
+            "actionId": 1
+          },
+          "indexKind": "ORDERED",
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Answer retry and double-tap idempotency",
+          "orderedFields": [
+            {
+              "path": "actionId",
+              "orderOrGeo": 1
+            }
+          ]
+        }
+      ],
+      "dataCategory": "SYNTHETIC_TEST_ANSWER_PRIVATE_AUDIT",
+      "dataSource": "TEST_CALLER_ANSWER_TO_SYNTHETIC_REQUEST",
+      "aclBoundary": "ADMINONLY_SERVER_ONLY_CLIENT_READ_WRITE_DENIED",
+      "v1ProductionReadAllowed": false
+    },
+    {
+      "name": "v2ShadowControlState",
+      "permission": "ADMINONLY",
+      "purpose": "Server-only read stop, rate limits, Human Assistance budget and cooldown accounting",
+      "indexes": [
+        {
+          "name": "kind_subject_window",
+          "unique": true,
+          "keys": {
+            "kind": 1,
+            "subjectDigest": 1,
+            "windowKey": 1
+          },
+          "indexKind": "ORDERED",
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Unique operational/rate/HA test budget window",
+          "orderedFields": [
+            {
+              "path": "kind",
+              "orderOrGeo": 1
+            },
+            {
+              "path": "subjectDigest",
+              "orderOrGeo": 1
+            },
+            {
+              "path": "windowKey",
+              "orderOrGeo": 1
+            }
+          ]
+        },
+        {
+          "name": "expiresAt",
+          "unique": false,
+          "keys": {
+            "expiresAt": 1
+          },
+          "indexKind": "ORDERED",
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Locate expired operational windows without TTL deletion",
+          "orderedFields": [
+            {
+              "path": "expiresAt",
+              "orderOrGeo": 1
+            }
+          ]
+        }
+      ],
+      "dataCategory": "SYNTHETIC_OPERATIONAL_PRIVATE",
+      "dataSource": "SHADOW_FUNCTIONS_ONLY",
+      "aclBoundary": "ADMINONLY_SERVER_ONLY_CLIENT_READ_WRITE_DENIED",
+      "v1ProductionReadAllowed": false
+    },
+    {
+      "name": "v2ShadowProjectionOutbox",
+      "permission": "ADMINONLY",
+      "purpose": "Monotonic versioned projector events, retries, hide-first and no-resurrection reconciliation",
+      "indexes": [
+        {
+          "name": "instance_eventSequence",
+          "unique": true,
+          "keys": {
+            "boardInstanceId": 1,
+            "eventSequence": 1
+          },
+          "indexKind": "ORDERED",
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Ordered idempotent projector events per instance",
+          "orderedFields": [
+            {
+              "path": "boardInstanceId",
+              "orderOrGeo": 1
+            },
+            {
+              "path": "eventSequence",
+              "orderOrGeo": 1
+            }
+          ]
+        },
+        {
+          "name": "status_nextAttemptAt",
+          "unique": false,
+          "keys": {
+            "status": 1,
+            "nextAttemptAt": 1
+          },
+          "indexKind": "ORDERED",
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Due projector retry selection",
+          "orderedFields": [
+            {
+              "path": "status",
+              "orderOrGeo": 1
+            },
+            {
+              "path": "nextAttemptAt",
+              "orderOrGeo": 1
+            }
+          ]
+        }
+      ],
+      "dataCategory": "SYNTHETIC_DERIVED_PRIVATE_AUDIT",
+      "dataSource": "SYNTHETIC_EVENTS_ONLY",
+      "aclBoundary": "ADMINONLY_SERVER_ONLY_CLIENT_READ_WRITE_DENIED",
+      "v1ProductionReadAllowed": false
+    },
+    {
+      "name": "v2ShadowPublicMapLeads",
+      "permission": "ADMINONLY",
+      "purpose": "Allowlisted synthetic public serving projection and retired tombstones",
+      "indexes": [
+        {
+          "name": "public_location_point_geo",
+          "unique": false,
+          "keys": {
+            "publicLocation.point": "2dsphere"
+          },
+          "indexKind": "GEO_2DSPHERE",
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Public-precision viewport geo lookup",
+          "orderedFields": [
+            {
+              "path": "publicLocation.point",
+              "orderOrGeo": "2dsphere"
+            }
+          ]
+        },
+        {
+          "name": "publicLeadId_servedVersion",
+          "unique": true,
+          "keys": {
+            "publicLeadId": 1,
+            "servedVersion": -1
+          },
+          "indexKind": "ORDERED",
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Unique served version and public ID read-back",
+          "orderedFields": [
+            {
+              "path": "publicLeadId",
+              "orderOrGeo": 1
+            },
+            {
+              "path": "servedVersion",
+              "orderOrGeo": -1
+            }
+          ]
+        }
+      ],
+      "dataCategory": "SYNTHETIC_PUBLIC_PROJECTION",
+      "dataSource": "SHADOW_OUTBOX_ONLY",
+      "aclBoundary": "ADMINONLY_SERVER_ONLY_CLIENT_READ_WRITE_DENIED",
+      "v1ProductionReadAllowed": false
+    },
+    {
+      "name": "v2ShadowPublicMapQuerySnapshots",
+      "permission": "ADMINONLY",
+      "purpose": "Opaque bounded page snapshot references, maximum 500, 120-second validity",
+      "indexes": [
+        {
+          "name": "expiresAt",
+          "unique": false,
+          "keys": {
+            "expiresAt": 1
+          },
+          "indexKind": "ORDERED",
+          "ttlPolicy": "NORMAL_NO_AUTO_TTL",
+          "purpose": "Locate expired cursor snapshots for shadow-code cleanup",
+          "orderedFields": [
+            {
+              "path": "expiresAt",
+              "orderOrGeo": 1
+            }
+          ]
+        }
+      ],
+      "dataCategory": "SYNTHETIC_EPHEMERAL_QUERY_STATE",
+      "dataSource": "SHADOW_PUBLIC_QUERY_ONLY",
+      "aclBoundary": "ADMINONLY_SERVER_ONLY_CLIENT_READ_WRITE_DENIED",
+      "v1ProductionReadAllowed": false
+    }
+  ],
+  "newFunctions": [
+    {
+      "name": "v2-shadow-query-public-map-leads",
+      "entry": "PUBLIC_READ_TEST_ALLOWLIST",
+      "collections": [
+        "v2ShadowPublicMapLeads",
+        "v2ShadowPublicMapQuerySnapshots",
+        "v2ShadowControlState"
+      ],
+      "v1ProductionReadAllowed": false
+    },
+    {
+      "name": "v2-shadow-get-public-map-lead-detail",
+      "entry": "PUBLIC_READ_TEST_ALLOWLIST",
+      "collections": ["v2ShadowPublicMapLeads", "v2ShadowControlState"],
+      "v1ProductionReadAllowed": false
+    },
+    {
+      "name": "v2-shadow-resolve-observation",
+      "entry": "SERVER_REHEARSAL_ONLY",
+      "collections": [
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowHumanAssistanceRequests",
+        "v2ShadowControlState",
+        "v2ShadowProjectionOutbox"
+      ],
+      "v1ProductionReadAllowed": false
+    },
+    {
+      "name": "v2-shadow-get-my-assistance",
+      "entry": "OWNER_TEST_ALLOWLIST",
+      "collections": [
+        "v2ShadowSourceFixtures",
+        "v2ShadowHumanAssistanceRequests",
+        "v2ShadowControlState"
+      ],
+      "v1ProductionReadAllowed": false
+    },
+    {
+      "name": "v2-shadow-answer-assistance",
+      "entry": "OWNER_TEST_ALLOWLIST",
+      "collections": [
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowHumanAssistanceRequests",
+        "v2ShadowHumanAssistanceEvidence",
+        "v2ShadowControlState",
+        "v2ShadowProjectionOutbox"
+      ],
+      "v1ProductionReadAllowed": false
+    },
+    {
+      "name": "v2-shadow-reconcile-projection",
+      "entry": "SERVER_REHEARSAL_ONLY",
+      "collections": [
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowProjectionOutbox",
+        "v2ShadowPublicMapLeads",
+        "v2ShadowPublicMapQuerySnapshots",
+        "v2ShadowControlState"
+      ],
+      "v1ProductionReadAllowed": false
+    }
+  ],
+  "functionLocalConfiguration": [
+    {
+      "name": "ICHI_V2_SHADOW_BOUNDARY",
+      "initialValue": "synthetic_only",
+      "initialValueCategory": "FIXED_ENUM_SYNTHETIC_ONLY"
+    },
+    {
+      "name": "ICHI_V2_SHADOW_READ_ENABLED",
+      "initialValue": "false",
+      "initialValueCategory": "BOOLEAN_FALSE_FAIL_CLOSED"
+    },
+    {
+      "name": "ICHI_V2_SHADOW_RESOLVE_ENABLED",
+      "initialValue": "false",
+      "initialValueCategory": "BOOLEAN_FALSE_FAIL_CLOSED"
+    },
+    {
+      "name": "ICHI_V2_SHADOW_HUMAN_ASSISTANCE_ENABLED",
+      "initialValue": "false",
+      "initialValueCategory": "BOOLEAN_FALSE_FAIL_CLOSED"
+    },
+    {
+      "name": "ICHI_V2_SHADOW_PROJECTOR_ENABLED",
+      "initialValue": "false",
+      "initialValueCategory": "BOOLEAN_FALSE_FAIL_CLOSED"
+    },
+    {
+      "name": "ICHI_V2_SHADOW_TEST_CALLER_DIGESTS",
+      "initialValue": "unset_fail_closed",
+      "initialValueCategory": "EMPTY_ALLOWLIST_FAIL_CLOSED"
+    },
+    {
+      "name": "ICHI_V2_SHADOW_CURSOR_HMAC_KEY",
+      "initialValue": "unset_fail_closed_secret",
+      "initialValueCategory": "SECRET_ABSENT_FAIL_CLOSED",
+      "secretStatus": {
+        "generation": "NOT_GENERATED",
+        "existence": "NOT_BOUND_TO_NEW_FUNCTIONS",
+        "validation": "NOT_RUN"
+      }
+    },
+    {
+      "name": "ICHI_V2_SHADOW_PRINCIPAL_HMAC_KEY",
+      "initialValue": "unset_fail_closed_secret",
+      "initialValueCategory": "SECRET_ABSENT_FAIL_CLOSED",
+      "secretStatus": {
+        "generation": "NOT_GENERATED",
+        "existence": "NOT_BOUND_TO_NEW_FUNCTIONS",
+        "validation": "NOT_RUN"
+      }
+    },
+    {
+      "name": "ICHI_V2_SHADOW_REHEARSAL_HMAC_KEY",
+      "initialValue": "unset_fail_closed_secret",
+      "initialValueCategory": "SECRET_ABSENT_FAIL_CLOSED",
+      "secretStatus": {
+        "generation": "NOT_GENERATED",
+        "existence": "NOT_BOUND_TO_NEW_FUNCTIONS",
+        "validation": "NOT_RUN"
+      }
+    },
+    {
+      "name": "ICHI_V2_SHADOW_HA_POLICY_VERSION",
+      "initialValue": "unset_fail_closed",
+      "initialValueCategory": "UNSET_FAIL_CLOSED_CANDIDATE_TEST_ONLY_PILOT_CALIBRATION_REQUIRED",
+      "productParameterFrozen": false
+    },
+    {
+      "name": "ICHI_V2_SHADOW_HA_COOLDOWN_SECONDS",
+      "initialValue": "unset_fail_closed",
+      "initialValueCategory": "UNSET_FAIL_CLOSED_CANDIDATE_TEST_ONLY_PILOT_CALIBRATION_REQUIRED",
+      "productParameterFrozen": false
+    },
+    {
+      "name": "ICHI_V2_SHADOW_HA_BUDGET_WINDOW_SECONDS",
+      "initialValue": "unset_fail_closed",
+      "initialValueCategory": "UNSET_FAIL_CLOSED_CANDIDATE_TEST_ONLY_PILOT_CALIBRATION_REQUIRED",
+      "productParameterFrozen": false
+    },
+    {
+      "name": "ICHI_V2_SHADOW_HA_BUDGET_MAX",
+      "initialValue": "unset_fail_closed",
+      "initialValueCategory": "UNSET_FAIL_CLOSED_CANDIDATE_TEST_ONLY_PILOT_CALIBRATION_REQUIRED",
+      "productParameterFrozen": false
+    }
+  ],
+  "newTriggers": [],
+  "newStoragePrefixes": [],
+  "existingV1CollectionsOrFunctionsInAccessList": [],
+  "productionManifestMutation": false,
+  "productionResourceReadAllowed": false,
+  "frontendHumanAssistanceCoverage": {
+    "uploadSuccessState": "TASK_V2_19_LOCAL_COVERAGE_REQUIRED_NOT_IMPLEMENTED",
+    "myUploadedBoards": "TASK_V2_19_LOCAL_COVERAGE_REQUIRED_NOT_IMPLEMENTED",
+    "currentScope": "SYNTHETIC_CANDIDATE_ONLY_NO_V1_PRODUCTION_BINDING"
+  }
+}

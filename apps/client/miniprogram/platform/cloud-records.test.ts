@@ -6,6 +6,39 @@ import {
 } from "./cloud-records.js";
 
 describe("private cloud record adapter", () => {
+  it.each([true, false])(
+    "uses V1 receipt independently of map sharing acknowledgement for a finalized direct upload: %s",
+    async (acknowledged) => {
+      const api = {
+        callFunction: vi.fn(async () => ({
+          result: {
+            ok: true,
+            data: {
+              records: [
+                {
+                  recordId: "record_private_direct",
+                  recordCode: "CUFZBP",
+                  boardId: "direct-board",
+                  sourcePath: "direct-upload",
+                  status: "clue_submitted",
+                  mapUploadAcknowledged: acknowledged,
+                  initialSnapshot: {
+                    ip: "IP",
+                    totalTickets: 50,
+                    remainingTickets: 43,
+                  },
+                  prizeTicketVerificationStatus: "LOCATION_PENDING",
+                },
+              ],
+            },
+          },
+        })),
+      };
+      expect((await loadMyCloudRecords(api)).records[0]?.recordStateLabel).toBe(
+        "已上传",
+      );
+    },
+  );
   it("sanitizes server records into the existing three-line card model", async () => {
     const callFunction = vi.fn(async () => ({
       result: {
@@ -38,7 +71,7 @@ describe("private cloud record adapter", () => {
         title: "仅上传版面 · A1B2C3",
         identityMeta: expect.stringContaining("IP: 葬送的芙莉莲"),
         statsMeta: "余 63 / 65",
-        recordStateLabel: "待核对",
+        recordStateLabel: "已上传",
       }),
     ]);
     expect(JSON.stringify(result)).not.toContain("must-not-leak");

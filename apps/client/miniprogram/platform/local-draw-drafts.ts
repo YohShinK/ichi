@@ -98,6 +98,7 @@ export interface LocalDrawDraft {
   readonly recognitionJobId?: string;
   readonly pendingFinalization?: {
     readonly recognitionJobId: string;
+    readonly recognitionIdempotencyKey?: string;
     readonly sourcePath: CloudRecognitionSourcePath;
     readonly confirmedSnapshot: ConfirmedBoardSnapshot;
     readonly locationNote?: string;
@@ -362,6 +363,10 @@ export const isLocalDrawDraft = (value: unknown): value is LocalDrawDraft => {
     (value.pendingFinalization === undefined ||
       (isRecord(value.pendingFinalization) &&
         typeof value.pendingFinalization.recognitionJobId === "string" &&
+        (value.pendingFinalization.recognitionIdempotencyKey === undefined ||
+          (typeof value.pendingFinalization.recognitionIdempotencyKey ===
+            "string" &&
+            value.pendingFinalization.recognitionIdempotencyKey.length > 0)) &&
         (value.pendingFinalization.sourcePath === "assisted-draw" ||
           value.pendingFinalization.sourcePath === "direct-upload") &&
         isRecord(value.pendingFinalization.confirmedSnapshot) &&
@@ -592,8 +597,18 @@ export const summarizeLocalDrawDraft = (
       return "已上传" as const;
     if (recordType === "draw" && draft.verificationStatus === "photo-failed")
       return "照片核验失败" as const;
-    if (recordType === "draw" && draft.verificationStatus === "note-failed")
+    if (draft.verificationStatus === "note-failed")
       return "备注未通过" as const;
+    if (
+      recordType === "board-upload" &&
+      draft.verificationStatus === "note-pending"
+    )
+      return "待核对" as const;
+    if (
+      recordType === "board-upload" &&
+      draft.verificationStatus === "provider-failed"
+    )
+      return "核验异常" as const;
     if (
       recordType === "draw" &&
       (draft.verificationStatus === "mismatch" ||
@@ -609,6 +624,8 @@ export const summarizeLocalDrawDraft = (
     )
       return "核验异常" as const;
     if (submissionState === "uploaded") return "已上传" as const;
+    if (recordType === "board-upload" && draft.uploadStatus === "uploaded")
+      return "已上传" as const;
     if (submissionState === "pending-review") return "待核对" as const;
     return "待上传" as const;
   })();
@@ -635,9 +652,12 @@ export const summarizeLocalDrawDraft = (
       draft.verificationStatus === "mismatch" ||
       draft.verificationStatus === "invalid-evidence")
       ? { verificationAction: "reupload" as const }
-      : recordType === "draw" && draft.verificationStatus === "note-failed"
+      : draft.verificationStatus === "note-failed" &&
+          (recordType === "draw" ||
+            draft.pendingFinalization?.sourcePath === "direct-upload")
         ? { verificationAction: "edit-note" as const }
-        : recordType === "draw" &&
+        : (recordType === "draw" ||
+              draft.pendingFinalization?.sourcePath === "direct-upload") &&
             (draft.verificationStatus === "needs-review" ||
               draft.verificationStatus === "provider-failed")
           ? { verificationAction: "retry" as const }

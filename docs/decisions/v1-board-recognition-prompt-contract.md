@@ -1,5 +1,7 @@
 # V1 版面识别机器协议
 
+> HISTORICAL PRE-R2 CONTRACT. 本文件记录 Provider v3/T/P 语义演进；当前生产已冻结为 R2 direct remaining。不得从本文件恢复旧字段、旧模型或旧 map 依赖；以 V1 release manifest、R2 三项 SHA、实际代码／测试和 Current System Truth Registry 为准。
+
 > 状态：V1-F 当前生产候选（自动回归已覆盖）
 > Prompt：`ichi-board-vlm-3.0.0-rc1`
 > Provider Schema：`board-provider-extraction-3.0.0-rc1`

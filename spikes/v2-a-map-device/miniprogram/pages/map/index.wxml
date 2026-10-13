@@ -1,0 +1,99 @@
+<view class="page-shell">
+  <view class="notice-card">
+    <text class="notice-title">V2-A 独立地图技术验证</text>
+    <text class="notice-copy">全部点位都是上海合成数据；无 CloudBase、数据库、Storage、私有集合或生产 API 连接。</text>
+  </view>
+
+  <map
+    id="device-map"
+    class="device-map"
+    longitude="{{centerLongitude}}"
+    latitude="{{centerLatitude}}"
+    scale="{{scale}}"
+    markers="{{markers}}"
+    show-location="{{permissionState === 'GRANTED'}}"
+    enable-zoom="true"
+    enable-scroll="true"
+    enable-rotate="false"
+    bindregionchange="onRegionChange"
+    bindmarkertap="onMarkerTap"
+    bindupdated="onMapUpdated"
+  ></map>
+
+  <view class="status-grid">
+    <view class="status-cell"><text>Markers</text><text>{{markerCount}} / 30</text></view>
+    <view class="status-cell"><text>Scale</text><text>{{scale}}</text></view>
+    <view class="status-cell"><text>Generation</text><text>{{activeGeneration}}</text></view>
+    <view class="status-cell"><text>Discarded</text><text>{{discardedResponses}}</text></view>
+  </view>
+
+  <view class="diagnostic-card">
+    <text class="card-title">Viewport / lifecycle</text>
+    <text class="mono-line">{{viewportSummary}}</text>
+    <text class="state-line">Lifecycle: {{lifecycleState}} · map updated: {{mapUpdatedCount}}</text>
+    <view class="button-row">
+      <button size="mini" bindtap="onZoomOut">缩小</button>
+      <button size="mini" bindtap="onZoomIn">放大</button>
+      <button size="mini" bindtap="onUseShanghaiFallback">重置上海</button>
+    </view>
+  </view>
+
+  <view class="diagnostic-card">
+    <text class="card-title">定位权限</text>
+    <text class="state-line">{{permissionState}} · {{permissionMessage}}</text>
+    <view class="button-row">
+      <button size="mini" type="primary" bindtap="onRequestLocation">请求定位</button>
+      <button size="mini" bindtap="onOpenSettings">打开设置</button>
+    </view>
+    <picker mode="selector" range="{{cityOptions}}" bindchange="onCityChange">
+      <view class="picker-field">手选城市：{{selectedCity}}</view>
+    </picker>
+  </view>
+
+  <view class="diagnostic-card">
+    <text class="card-title">可控网络与数据错误</text>
+    <text class="state-line">系统网络: {{actualNetwork}} · mock 模式: {{networkMode}}</text>
+    <radio-group class="radio-row" bindchange="onNetworkModeChange">
+      <label><radio value="online" checked="{{networkMode === 'online'}}" />正常</label>
+      <label><radio value="weak" checked="{{networkMode === 'weak'}}" />弱网</label>
+      <label><radio value="offline" checked="{{networkMode === 'offline'}}" />断网</label>
+    </radio-group>
+    <view class="button-row button-row--wrap">
+      <button size="mini" bindtap="onReload">加载 mock</button>
+      <button size="mini" bindtap="onForceMockError">模拟加载错误</button>
+      <button size="mini" bindtap="onRunRace">测试响应丢弃</button>
+    </view>
+    <text class="load-state load-state--{{loadState}}">{{loadState}} · {{loadMessage}}</text>
+  </view>
+
+  <view class="diagnostic-card">
+    <view class="card-head">
+      <text class="card-title">列表 fallback</text>
+      <button size="mini" bindtap="onToggleList">{{listVisible ? '收起' : '展开'}}</button>
+    </view>
+    <view wx:if="{{listVisible}}" class="marker-list">
+      <view wx:if="{{records.length === 0}}" class="empty-state">当前没有可显示的合成数据；可切回“正常”后重新加载。</view>
+      <view
+        wx:for="{{records}}"
+        wx:key="publicLeadId"
+        class="marker-row"
+        data-id="{{item.id}}"
+        bindtap="onListMarkerTap"
+      >
+        <view><text>{{item.title}}</text><text class="marker-meta">{{item.sourceType}} · {{item.verificationState}}</text></view>
+        <text class="marker-coordinate">{{item.latitude}}, {{item.longitude}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="diagnostic-card log-card">
+    <view class="card-head">
+      <text class="card-title">诊断日志</text>
+      <button size="mini" bindtap="onClearLogs">清空</button>
+    </view>
+    <view wx:for="{{logs}}" wx:key="id" class="log-row">
+      <text class="log-head">{{item.time}} [{{item.type}}] {{item.message}}</text>
+      <text wx:if="{{item.detail}}" class="log-detail">{{item.detail}}</text>
+    </view>
+  </view>
+</view>

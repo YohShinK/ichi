@@ -1,11 +1,11 @@
 import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const sourcePath =
-  "/Users/cunfu/Downloads/ChatGPT Image 2026年8月9日 23_44_26.png";
+const sourcePath = path.join(process.cwd(), "source", "camera-icon.png");
 
 export async function GET() {
   const image = await readFile(sourcePath);

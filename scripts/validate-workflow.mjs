@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { validateUploadSharingFlow } from "./validate-upload-sharing-flow.mjs";
 
 const root = process.cwd();
 const required = [
@@ -198,6 +199,8 @@ if (!architecture.includes("文件权限按变更目的和活动区块判断")) 
     "architecture.md must define block-linked file write permissions.",
   );
 }
+
+errors.push(...validateUploadSharingFlow(root));
 
 if (errors.length) {
   console.error(errors.map((error) => `- ${error}`).join("\n"));

@@ -8,6 +8,8 @@
 
 > 2026-08-19 注：工具链与 CloudBase 运行时部分继续有效；本文件下方旧识别模型、双调用、Base64 请求体和图片体积限制均已由 `memory-bank/tech-stack.md`、`docs/decisions/v1-board-recognition-prompt-contract.md` 与 V1-F 当前方案取代，只保留为历史决策记录。当前照片经私有 `recognition-temp/{jobId}/` 二进制临时对象传输，同步事件只传任务绑定的 `fileID`；低于 `20 MiB` 保留原图，完成后客户端与云函数双删，异常孤儿对象以 COS 最短 `1` 天过期删除兜底。
 
+> 2026-09-08 authority note：本文件的识别候选、模型名、超时、Base64、内存处理和成本数字全部为历史方案，不能作为当前运行或 V2 实施输入。当前冻结事实只认 V1 release manifest、R2 三项 SHA、运行代码／测试和 Memory Bank Current System Truth Registry。
+
 ## 锁定组合
 
 V1-A 使用 Node.js 24.11、pnpm 11.9.0、TypeScript 6.0.3、Vitest 4.1.10、ESLint 10.8.0、Prettier 3.9.6 和 typescript-eslint 8.66.0。pnpm 11.9.0 是本机已安装并用于生成锁文件的验证版本；TypeScript 不采用当日最新 7.0.2，因为当前 typescript-eslint 8.66.0 的官方 peer 范围为 `<6.1.0`，6.0.3 是可安装且仍在该兼容范围内的最新 6.0 版本。

@@ -1,6 +1,8 @@
-# 账号、提醒、分享与“我的”面板方案（V2 范围已批准）
+# 账号、提醒、分享与“我的”面板方案（历史提案）
 
-> 状态：PARTIALLY APPROVED（账号、地图提醒与分享进入 V2 已确认；微信登录实现、账号标识分层、资料规则、提醒触发与分享路径为推荐基线，待 V2-00／V2-03 批准）
+> HISTORICAL ONLY — NOT EXECUTABLE. Silent Account、公开 ICHI ID 与可选 Profile 已在 V1 完成；Profile 不等于登录。提醒、订阅消息和结果海报不属于当前 V2 completion scope。旧 `Session/ContributionDraft/Contribution` 结构与图片公开描述不得覆盖 Current Publication、explicit public consent 和 PublicMapLead 计划。
+
+> 状态：`HISTORICAL / SUPERSEDED`
 >
 > 原因：用户确认账号系统在 V2 随地图贡献上线，用于把地图版面与提交者账号稳定关联；V2 不建设论坛或通用社群。
 

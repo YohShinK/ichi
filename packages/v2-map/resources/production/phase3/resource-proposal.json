@@ -1,0 +1,51 @@
+{
+  "task": "TASK-V2-22",
+  "phase": "PHASE3",
+  "status": "LOCAL_PROVISIONAL_DIFF_NOT_APPLIED",
+  "externalWrites": 0,
+  "preserveExistingPhase1Phase2": true,
+  "newCollections": [],
+  "newCloudFunctions": [],
+  "indexes": [
+    {
+      "collection": "publicMapLeads",
+      "name": "network_public_deadline",
+      "keys": {
+        "kind": 1,
+        "lifecycleState": 1,
+        "sourceIcon": 1,
+        "publicUntil": 1
+      },
+      "unique": false,
+      "expireAfterSeconds": null,
+      "purpose": "Bounded internal due-source selection; visibility cutoff is also enforced by read-time public core validation. History must not use TTL deletion."
+    },
+    {
+      "collection": "boardInstances",
+      "name": "active_public_lead",
+      "keys": { "activePublicLeadId": 1 },
+      "unique": false,
+      "expireAfterSeconds": null,
+      "purpose": "Internal expiry reconciliation finds the private instance without adding private instance identity to publicMapLeads or request-time private joins."
+    }
+  ],
+  "privateSourceKinds": [
+    "NETWORK_SOURCE_RECORD",
+    "NETWORK_SOURCE_REVISION",
+    "OBSERVATION_VERSION",
+    "LINEAGE_HEAD"
+  ],
+  "privateAuditKinds": [
+    "NETWORK_ADMISSION_RECEIPT",
+    "NETWORK_TAKEDOWN_RECEIPT"
+  ],
+  "networkPolicyTemplate": {
+    "policyVersion": "network-visibility-30d-v1",
+    "servingSchemaVersion": "public-map-v4",
+    "publicMaxAgeMs": 2592000000,
+    "curatorAuthorityIds": []
+  },
+  "trustedDecisionPort": "Internal authenticated backend only; read(sourceId, sourceVersion, tx) must bind authoritative Founder decision, independent item rights and exact note safety in the same final transaction. No client-supplied proof or self-approval.",
+  "productionIntegration": "Not applied. A future exact-diff-authorized batch must bind real authorities, policy, maintenance timer and transaction store and verify actual SDK/index/readback behavior. Do not replay Phase1/2 resources or bridge batches.",
+  "rollback": "Local artifacts can be discarded independently. Before any future apply, preserve the actual current remote baseline and form a new exact diff; reject network admission and hide/retire network supports through the shared projector, retaining source/audit history and valid PLAYER supports. No destructive cleanup."
+}

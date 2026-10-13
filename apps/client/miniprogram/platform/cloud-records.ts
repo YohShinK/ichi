@@ -256,34 +256,36 @@ const parseRecord = (value: unknown): CloudRecordSummary | null => {
       "",
   );
   const state: CloudRecordStateLabel =
-    verificationStatus === "APPROVED" || verificationStatus === "VERIFIED"
+    directUpload && record.status === "clue_submitted"
       ? "已上传"
-      : verificationStatus === "PHOTO_FAILED"
-        ? "照片核验失败"
-        : verificationStatus === "NOTE_FAILED"
-          ? "备注未通过"
-          : verificationStatus === "LOCATION_FAILED" ||
-              verificationStatus === "MISMATCH" ||
-              verificationStatus === "INVALID_EVIDENCE"
-            ? "核验失败"
-            : verificationStatus === "NEEDS_REVIEW" ||
-                verificationStatus === "PROVIDER_FAILED"
-              ? "核验异常"
-              : verificationStatus === "PENDING" ||
-                  verificationStatus === "LOCATION_PENDING" ||
-                  verificationStatus === "PHOTO_PENDING" ||
-                  verificationStatus === "NOTE_PENDING" ||
-                  verificationStatus === "PROCESSING"
-                ? "待核对"
-                : record.status === "uploaded"
-                  ? "已上传"
-                  : record.status === "review_pending" ||
-                      record.status === "clue_submitted" ||
-                      record.status === "needs_user_confirmation"
-                    ? "待核对"
-                    : directUpload || canResume
-                      ? "待上传"
-                      : "无法恢复";
+      : verificationStatus === "APPROVED" || verificationStatus === "VERIFIED"
+        ? "已上传"
+        : verificationStatus === "PHOTO_FAILED"
+          ? "照片核验失败"
+          : verificationStatus === "NOTE_FAILED"
+            ? "备注未通过"
+            : verificationStatus === "LOCATION_FAILED" ||
+                verificationStatus === "MISMATCH" ||
+                verificationStatus === "INVALID_EVIDENCE"
+              ? "核验失败"
+              : verificationStatus === "NEEDS_REVIEW" ||
+                  verificationStatus === "PROVIDER_FAILED"
+                ? "核验异常"
+                : verificationStatus === "PENDING" ||
+                    verificationStatus === "LOCATION_PENDING" ||
+                    verificationStatus === "PHOTO_PENDING" ||
+                    verificationStatus === "NOTE_PENDING" ||
+                    verificationStatus === "PROCESSING"
+                  ? "待核对"
+                  : record.status === "uploaded"
+                    ? "已上传"
+                    : record.status === "review_pending" ||
+                        record.status === "clue_submitted" ||
+                        record.status === "needs_user_confirmation"
+                      ? "待核对"
+                      : directUpload || canResume
+                        ? "待上传"
+                        : "无法恢复";
   const ipLabel = [ipName, themeName]
     .filter(
       (part): part is string =>

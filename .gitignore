@@ -8,3 +8,18 @@ project.private.config.json
 services/cloudbase/**/.env*
 !services/cloudbase/**/.env.example
 services/cloudbase/.deploy/
+
+# Local evidence, exports, credentials and generated files stay on this computer.
+artifacts/
+exports/
+.cloudbase/
+tmp/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.tsbuildinfo
+房屋无偿使用协议_A4范本.docx

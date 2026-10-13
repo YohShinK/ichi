@@ -90,6 +90,8 @@ importers:
         specifier: workspace:*
         version: link:../session
 
+  packages/v2-map: {}
+
   services/cloudbase/functions/recognize-board:
     dependencies:
       ajv:

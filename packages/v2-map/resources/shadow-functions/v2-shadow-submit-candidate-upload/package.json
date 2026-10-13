@@ -1,0 +1,11 @@
+{
+  "name": "v2-shadow-submit-candidate-upload",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.19.0 <21"
+  },
+  "dependencies": {
+    "wx-server-sdk": "4.0.2"
+  }
+}

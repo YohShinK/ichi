@@ -1,5 +1,7 @@
 # V1 版面多模态模型选型
 
+> HISTORICAL PRE-R2 DECISION. 当前生产模型／Prompt／Schema／resolver 只以 V1 release manifest、冻结 R2 三项 SHA、实际代码／测试和 Current System Truth Registry 为准。
+
 > 状态：APPROVED FOR INTEGRATION；真实黄金样本仍待最终验收
 > 日期：2026-08-19
 

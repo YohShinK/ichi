@@ -1,0 +1,113 @@
+{
+  "status": "LOCAL_ARTIFACTS_ONLY",
+  "environmentId": "cloud1-d7gxqfwv783a1f131",
+  "proposalVersion": "v2-19-shadow-2-exact-contract",
+  "generatedAt": "2026-09-25",
+  "deployed": false,
+  "cloudWrite": false,
+  "functions": [
+    {
+      "name": "v2-shadow-query-public-map-leads",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/v2-shadow-query-public-map-leads.zip",
+      "sha256": "136baafd9e15a3e2e784a4e0eeb3e6bac2423eb073029d33355f7b21736e5918",
+      "runtime": "nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowPublicMapLeads",
+        "v2ShadowPublicMapQuerySnapshots",
+        "v2ShadowControlState"
+      ],
+      "featureFlags": ["ICHI_V2_SHADOW_READ_ENABLED"],
+      "staticValidation": "PASS",
+      "deployed": false,
+      "cloudWrite": false
+    },
+    {
+      "name": "v2-shadow-get-public-map-lead-detail",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/v2-shadow-get-public-map-lead-detail.zip",
+      "sha256": "34baaa7637a5246384922a5128b78ba85be2d70a84368edcfbc416c1e9e8b2c7",
+      "runtime": "nodejs20.19",
+      "entry": "index.main",
+      "collections": ["v2ShadowPublicMapLeads", "v2ShadowControlState"],
+      "featureFlags": ["ICHI_V2_SHADOW_READ_ENABLED"],
+      "staticValidation": "PASS",
+      "deployed": false,
+      "cloudWrite": false
+    },
+    {
+      "name": "v2-shadow-resolve-observation",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/v2-shadow-resolve-observation.zip",
+      "sha256": "343f0ad3a623ebc7ee828fa7154a2001c2f7f18c62cb6d0a8ffb527627c6f899",
+      "runtime": "nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowHumanAssistanceRequests",
+        "v2ShadowControlState",
+        "v2ShadowProjectionOutbox"
+      ],
+      "featureFlags": ["ICHI_V2_SHADOW_RESOLVE_ENABLED"],
+      "staticValidation": "PASS",
+      "deployed": false,
+      "cloudWrite": false
+    },
+    {
+      "name": "v2-shadow-get-my-assistance",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/v2-shadow-get-my-assistance.zip",
+      "sha256": "fce1041972e77b87de65172bc463e0183c49337e266032e31a28b1f4660e5e7b",
+      "runtime": "nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowSourceFixtures",
+        "v2ShadowHumanAssistanceRequests",
+        "v2ShadowControlState"
+      ],
+      "featureFlags": ["ICHI_V2_SHADOW_HUMAN_ASSISTANCE_ENABLED"],
+      "staticValidation": "PASS",
+      "deployed": false,
+      "cloudWrite": false
+    },
+    {
+      "name": "v2-shadow-answer-assistance",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/v2-shadow-answer-assistance.zip",
+      "sha256": "8f2c014f5275c2d1de8546d2726f1182d10a818e0b62aa5ff7672275c0600482",
+      "runtime": "nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowHumanAssistanceRequests",
+        "v2ShadowHumanAssistanceEvidence",
+        "v2ShadowControlState",
+        "v2ShadowProjectionOutbox"
+      ],
+      "featureFlags": ["ICHI_V2_SHADOW_HUMAN_ASSISTANCE_ENABLED"],
+      "staticValidation": "PASS",
+      "deployed": false,
+      "cloudWrite": false
+    },
+    {
+      "name": "v2-shadow-reconcile-projection",
+      "artifact": "packages/v2-map/resources/shadow-functions/artifacts/v2-shadow-reconcile-projection.zip",
+      "sha256": "db949195d67e6c3374e22c4ffdfbf713cc4669d8a327496c78ca047623752f04",
+      "runtime": "nodejs20.19",
+      "entry": "index.main",
+      "collections": [
+        "v2ShadowSourceFixtures",
+        "v2ShadowBoardInstances",
+        "v2ShadowAssociationDecisions",
+        "v2ShadowProjectionOutbox",
+        "v2ShadowPublicMapLeads",
+        "v2ShadowPublicMapQuerySnapshots",
+        "v2ShadowControlState"
+      ],
+      "featureFlags": ["ICHI_V2_SHADOW_PROJECTOR_ENABLED"],
+      "staticValidation": "PASS",
+      "deployed": false,
+      "cloudWrite": false
+    }
+  ]
+}

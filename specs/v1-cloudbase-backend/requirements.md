@@ -1,6 +1,8 @@
 # V1 CloudBase 后端需求
 
-> 状态：已批准实施
+> HISTORICAL V1 SPECIFICATION — IMPLEMENTED AND CLOSED. 文中未来式、`1 小时` lifecycle、早期照片／模型／地图措辞是实施过程输入，不是当前运行事实；当前以 V1 release manifest、实际代码／测试、`services/cloudbase/database/resources.json` 与 Memory Bank Current System Truth Registry 为准。
+
+> 状态：`COMPLETED / HISTORICAL BASELINE`
 >
 > 范围：V1-F 私有账号、微信身份映射、公开 ICHI ID、每日识别配额、结构化版面观察、六位记录码、删除、审计与仓库先行部署
 

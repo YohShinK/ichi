@@ -1,0 +1,857 @@
+# ICHI 实施计划历史
+
+> **历史归档，仅用于追溯。不得覆盖 `memory-bank/implementation-plan.md` 中的当前计划，也不得作为当前任务自动执行。**
+>
+> 本文件保存截至 2026-09-08 authoritative knowledge reconciliation 之前的 V1／V2／V3 计划与执行证据。所有状态、门禁和下一步只以 `memory-bank/implementation-plan.md` 为准。
+
+## V2 PRE-DEVELOPMENT PLANNING PASS（2026-09-08 blocked draft snapshot）
+
+> 状态日期：2026-09-08
+>
+> 状态：`HISTORICAL / BLOCKED DRAFT — NOT EXECUTABLE`
+>
+> branch：`feature/v2-board-map`
+>
+> base：`origin/main@929d189a06e13010e50abf4927bfec3b1ebd49fc`
+>
+> 当前活动区块：无；V2 implementation tasks 全部 `LOCKED / NOT_STARTED`
+>
+> Review Packet：`docs/delivery/v2-pre-development-review-packet.md`
+
+本节取代本文下方旧 V2 task list 的执行权，但不删除旧任务历史。V1.0.0 是 `COMPLETED / HISTORICAL BASELINE`；V1.0.1 sharing source 已合入 main，正式 `v1.0.1` tag 仍等待实际微信 `APPROVED + PUBLISHED`。本轮只做审计、认知同步和计划重建，不开始 TASK-V2-01，不修改 runtime、测试、CloudBase、数据库、Storage、生产配置或冻结识别契约。
+
+### Knowledge Propagation Protocol
+
+当任一 `TASK-X` 产生新认知 `K-X`，且改变产品假设、数据语义、系统边界、架构、接口、状态机、安全、UX、部署、测试或依赖时，必须在继续下游 task 前完成：
+
+1. 在 `progress.md` 记录 Knowledge Entry、证据、置信度和首次影响点。
+2. 沿本计划的 `DEPENDENCIES` 与 `DOWNSTREAM TASKS TO UPDATE` 找到全部未开始受影响 task。
+3. 将相关 task 标为 `AFFECTED_BY_K-X`；不允许按已被推翻的假设继续。
+4. 修改受影响 task 的 assumptions、data contract、steps、test strategy 与 acceptance criteria。
+5. 产品行为先同步 `design-document.md`；技术选择先同步 `tech-stack.md`；真实结构变化同步 `architecture.md`。
+6. 如果变化涉及产品范围、平台、隐私、核心架构或区块顺序，停止并建立新的 `DECISION_GATE` 交用户批准；否则记录局部调整后继续。
+7. 重新运行 workflow/contract 验证，再解锁下一个 task。
+
+区块解锁时，区块内所有未完成 step 一并转为 `READY`；本轮 human review 未通过前，下面五个区块都不得解锁。
+
+### Map Source of Truth（规划决定，尚未实现）
+
+私有事实链是 `Current Cloud Publication P1 pointer → publishedSubmissionVersion → exact APPROVED Upload Submission`。公开地图不得直接读取 Local Board、Submission history、P1、私有 Observation collection 或 `recordCode`。V2 公开查询的唯一 source of truth 规划为新的最小化 `PublicMapLead` read model：它只能由服务端 projector 在独立 public-eligibility、privacy、moderation gate 全部通过后生成，并只通过受控 viewport/detail API 读取。
+
+- 新 submission `FAILED/PENDING`：旧 `PublicMapLead` 保持不变。
+- APPROVED 新版本且 public gate 通过：以单调版本原子更新同一 public lead。
+- Local Board 删除：不改变 public lead。
+- Publication withdrawal/cloud deletion：先从公开 API 隐藏，再用 durable tombstone/deletion job 清理，stale projector 不得复活。
+- 旧 publication version：保留私有审计，不作为 current public lead；若需历史展示必须另立产品决定。
+- `null=unknown`、`0=confirmed zero`；任何字段不得使用 falsy coercion。
+- 默认不公开图片；任何图片需求必须建立 `EXPLICIT_V2_UNLOCK_DECISION`，不能修改 V1 Storage frozen boundary。
+
+## V2：好版地图（重建后的权威计划）
+
+### V2-A｜产品、领域与决策门
+
+> 区块状态：LOCKED；等待本 planning pass 人工审阅和 DG-V2-01—10 决策。
+
+#### TASK-V2-01｜Product scope and decision closure
+
+- **TASK_ID / STATUS：** `TASK-V2-01` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 关闭 V2 首发范围、供给切片、公开对象与十个 Decision Gates；不以技术可得性补产品需求。
+- **WHY_NOW：** 所有 domain/API/UI 都依赖匿名性、location、供给、moderation、freshness 与首发 extras 的选择。
+- **INPUTS / PRECONDITIONS：** 本 Review Packet、PRD、V1 lessons；用户批准开始此 task。
+- **AFFECTED DOMAIN：** product scope、source identity、public audience、release tranche。
+- **ARCHITECTURE DECISION：** 只冻结边界与约束；不创建 collection/module。
+- **FILES / MODULES EXPECTED：** PRD、design、tech、plan、progress、decision records；docs only。
+- **DATA CONTRACT：** public field categories、source types、freshness vocabulary 的产品级定义。
+- **SECURITY / PRIVACY IMPACT：** 决定匿名读取、贡献者披露、location 与图片边界。
+- **DEPENDENCIES / BLOCKS：** 依赖 human review；阻 blocks 02—17。
+- **IMPLEMENTATION STEPS：** 逐项关闭 DG-V2-01—10；记录 rejected/deferred；冻结 IN/OUT/DEFERRED。
+- **TEST STRATEGY：** decision trace completeness、跨五份 Memory Bank 一致性、workflow validator。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** NO / NO / NO。
+- **ACCEPTANCE CRITERIA：** 用户明确批准首发 scope 与所有阻塞 gate；没有 blocks/unblocks 可追溯。
+- **ROLLBACK / FAILURE BOUNDARY：** 决策不足即保持全部 task LOCKED；不做 provisional implementation。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** 合规意见、平台能力、供给研究、用户对“非实时”理解。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 02—17 全部。
+
+#### TASK-V2-02｜Domain source-of-truth and lifecycle
+
+- **TASK_ID / STATUS：** `TASK-V2-02` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 冻结 B/S/P 私有事实到 public eligibility 的领域模型与完整地图生命周期。
+- **WHY_NOW：** source-of-truth 不清会把 FAILED、Local 或历史 attempt 误放上图。
+- **INPUTS / PRECONDITIONS：** 01；V1 Current Publication 七规则、deletion tombstone、R2 contract。
+- **AFFECTED DOMAIN：** Board、Submission、Publication、PublicLead、withdrawal、version。
+- **ARCHITECTURE DECISION：** private pointer+approved facts 与 public projection 分离；`recordCode` 非 identity。
+- **FILES / MODULES EXPECTED：** domain decision/schema docs；未来 contracts/shared domain（本 task 批准后才确定）。
+- **DATA CONTRACT：** created/updated/failed/withdrawn/local-deleted/stale-reference/account-change/old-version/refresh/eventual-consistency matrix。
+- **SECURITY / PRIVACY IMPACT：** 私有 lineage 不进入 public payload；owner 只用于服务端授权。
+- **DEPENDENCIES / BLOCKS：** 依赖 01；blocks 03—17。
+- **IMPLEMENTATION STEPS：** 枚举状态与事件；定义 monotonic version/tombstone/no-resurrection；分类 Global/V2-specific。
+- **TEST STRATEGY：** domain transition table、property cases、failure/late-event model tests。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** NO / NO / NO。
+- **ACCEPTANCE CRITERIA：** 每个生命周期事件恰有一个 private/public outcome；旧可信 publication 不被失败 attempt 改变。
+- **ROLLBACK / FAILURE BOUNDARY：** 语义冲突退回 01 Decision Gate；不更改 V1 contracts。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** CanonicalBoard 决定、historical backfill、location source、account deletion policy。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 03—17。
+
+#### TASK-V2-03｜Public fields, privacy and moderation policy
+
+- **TASK_ID / STATUS：** `TASK-V2-03` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 冻结 public allowlist、绝不公开字段、moderation、owner privacy、abuse 与登录边界。
+- **WHY_NOW：** V1 APPROVED 不自动证明未来地图字段 public-safe。
+- **INPUTS / PRECONDITIONS：** 01—02；现有 msgSecCheck、Storage CUSTOM、privacy/review lessons。
+- **AFFECTED DOMAIN：** PublicMapLead、source identity、note/store/profile/location disclosure。
+- **ARCHITECTURE DECISION：** allowlist projection + fail-closed review；默认无图片、无私有 evidence。
+- **FILES / MODULES EXPECTED：** security/privacy decision、public schema policy、threat model。
+- **DATA CONTRACT：** public/private/never-public 字段表；moderationStatus、reason、reviewVersion、withdrawalStatus。
+- **SECURITY / PRIVACY IMPACT：** 匿名枚举、精准位置、贡献者关联、内容安全、rate abuse。
+- **DEPENDENCIES / BLOCKS：** 依赖 01—02；blocks 04—09、11—17。
+- **IMPLEMENTATION STEPS：** data-flow inventory；threat model；msgSecCheck coverage gap；retention/takedown/SLA；DG-V2-09 image branch。
+- **TEST STRATEGY：** negative payload、enumeration、PII leak、moderation bypass、permission matrix。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** NO / NO / NO。
+- **ACCEPTANCE CRITERIA：** 每个字段有分类、审核者、保留期和下线行为；Profile incomplete 不阻断核心功能。
+- **ROLLBACK / FAILURE BOUNDARY：** 未分类字段默认不公开；不能通过放宽 V1 Storage 解决。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** 法律/微信审核意见、新 source type、新 UGC/图片需求。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 04—17。
+
+### V2-B｜公开契约、查询与资源设计
+
+> 区块状态：LOCKED；仅在 V2-A 全部完成并人工验收后解锁。
+
+#### TASK-V2-04｜PublicMapLead read-model contract
+
+- **TASK_ID / STATUS：** `TASK-V2-04` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 定义公开地图唯一读取对象及其 schema/version/identity/null/tombstone 语义。
+- **WHY_NOW：** backend、API、client 与 UI 必须共享同一最小 public contract。
+- **INPUTS / PRECONDITIONS：** 02—03；DG-V2-02/04/05/07/09 closed。
+- **AFFECTED DOMAIN：** public lead、source、location、board snapshot summary、freshness。
+- **ARCHITECTURE DECISION：** materialized sanitized projection；不复制 authoritative events 或私有 full snapshot。
+- **FILES / MODULES EXPECTED：** future public JSON Schema/types/fixtures and design docs。
+- **DATA CONTRACT：** publicLeadId、projectionVersion、sourceType/label、observedAt/serverPublishedAt、publicGeo/precision、IP/theme、nullable counts、freshness、moderation/withdrawal/version。
+- **SECURITY / PRIVACY IMPACT：** ownerAccountId、recordId、recordCode、exact private geo、draw events、notes/evidence 默认缺席。
+- **DEPENDENCIES / BLOCKS：** 02—03；blocks 05—17。
+- **IMPLEMENTATION STEPS：** schema + examples；compatibility/versioning；projection input mapping；public allowlist proof。
+- **TEST STRATEGY：** schema positive/negative、null/zero、unknown field rejection、version compatibility、snapshot leakage tests。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** NO / NO / NO。
+- **ACCEPTANCE CRITERIA：** public payload 单独即可解释线索且无法恢复 private identity/evidence；source-of-truth 获批。
+- **ROLLBACK / FAILURE BOUNDARY：** contract 不完整则不建 API/UI；schema 版本可并存回退。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** public field、location、canonicalization、image/freshness 决定。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 05—17。
+
+#### TASK-V2-05｜Viewport query, security and performance contract
+
+- **TASK_ID / STATUS：** `TASK-V2-05` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 冻结 viewport/detail 查询、cursor/limit、filter、cluster/cache、rate limit 和 stale semantics。
+- **WHY_NOW：** “显示 marker”不是可扩展完成标准，query shape 决定索引与 client state。
+- **INPUTS / PRECONDITIONS：** 03—04；freshness/provider decisions。
+- **AFFECTED DOMAIN：** query API、geospatial index、cache、abuse prevention。
+- **ARCHITECTURE DECISION：** owner-unscoped public API only；bounded viewport query；server-controlled limits/cursors。
+- **FILES / MODULES EXPECTED：** API/schema/performance decision、benchmark plan、future query contracts。
+- **DATA CONTRACT：** bbox/zoom/filter/cursor/requestId、items/clusters/nextCursor/asOf/cacheTTL；null-safe filter rules。
+- **SECURITY / PRIVACY IMPACT：** anti-scraping/rate limits、precision downgrade、no private collection access。
+- **DEPENDENCIES / BLOCKS：** 03—04；blocks 06、08、10—16。
+- **IMPLEMENTATION STEPS：** platform spike；define budgets/density; pagination/dedupe; cache/stale/network failure rules。
+- **TEST STRATEGY：** property/contract、large dataset、boundary viewport、cursor mutation、rate/abuse negative tests。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** NO / NO / NO。
+- **ACCEPTANCE CRITERIA：** bounded response/time/size budgets、deterministic paging、stale indicator 与 retry 规则批准。
+- **ROLLBACK / FAILURE BOUNDARY：** provider/cost不满足则回到 DG-V2-10；禁止退化为 client 全表读取。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** target CloudBase geo capability、map SDK cost、density/freshness study。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 06、08、10—16。
+
+#### TASK-V2-06｜Cloud resources, indexes, migration and rollback plan
+
+- **TASK_ID / STATUS：** `TASK-V2-06` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 在写代码前形成精确 public resource/index/backfill/rollback 清单与环境停止条件。
+- **WHY_NOW：** CloudBase 真实能力、ACL 和迁移边界决定实现是否成立。
+- **INPUTS / PRECONDITIONS：** 04—05；DG-V2-06/10 closed；目标环境只读 inventory。
+- **AFFECTED DOMAIN：** collections/indexes/functions/jobs/config/migrations。
+- **ARCHITECTURE DECISION：** 新 public resources 与 V1 13 ADMINONLY collections 分离；仓库先行、可重复 dry-run。
+- **FILES / MODULES EXPECTED：** future resources manifest、indexes、migration spec、deploy/rollback checklist。
+- **DATA CONTRACT：** resource ownership、index keys、migration cursor/checkpoint/idempotency/report/tombstone。
+- **SECURITY / PRIVACY IMPACT：** ACL least privilege、no public write、backfill consent/eligibility。
+- **DEPENDENCIES / BLOCKS：** 04—05；blocks 07—09、14—16。
+- **IMPLEMENTATION STEPS：** capability read-only spike；exact diff；migration dry-run；rollback/disable switches；cost budget。
+- **TEST STRATEGY：** manifest static validation、empty/nonempty dry-run、resume/duplicate/partial failure、no-public-write proof。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** NO / NO（本 task） / YES（计划是否执行由 DG-V2-06）。
+- **ACCEPTANCE CRITERIA：** 用户批准精确资源变化、停止条件、迁移/不迁移与回滚；V1 frozen resources untouched。
+- **ROLLBACK / FAILURE BOUNDARY：** capability/ACL mismatch 立即停止后续 backend；不在控制台临时补逻辑。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** CloudBase limits、anonymous auth、index availability、historical consent count。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 07—09、14—16。
+
+### V2-C｜投影、公开 API 与治理
+
+> 区块状态：LOCKED；仅在 V2-B 全部完成并人工验收后解锁。
+
+#### TASK-V2-07｜Publication projector and lifecycle enforcement
+
+- **TASK_ID / STATUS：** `TASK-V2-07` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 实现 exact APPROVED version 到 PublicMapLead 的幂等单调投影及 withdrawal/no-resurrection。
+- **WHY_NOW：** API 只能在受控公开事实存在后实现。
+- **INPUTS / PRECONDITIONS：** 04—06；resources approved/deployed batch authorized。
+- **AFFECTED DOMAIN：** projector、publication transaction、deletion job、audit。
+- **ARCHITECTURE DECISION：** pointer+exact submission server-side join；public gate pass 才写 projection。
+- **FILES / MODULES EXPECTED：** future CloudBase functions/shared projector/contracts/resources tests。
+- **DATA CONTRACT：** projectionVersion/sourceVersion/idempotencyKey/moderationVersion/tombstone/lastError checkpoints。
+- **SECURITY / PRIVACY IMPACT：** service-only write；allowlist mapper；owner cannot choose approval/public fields。
+- **DEPENDENCIES / BLOCKS：** 04—06；blocks 08—16。
+- **IMPLEMENTATION STEPS：** create/update/failed/late/withdraw/delete/retry handlers；stage-specific error classification；observability。
+- **TEST STRATEGY：** unit/contract/integration/failure injection/concurrency/late response/no-resurrection/cloud black-box。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** NO / YES / conditional YES。
+- **ACCEPTANCE CRITERIA：** failed/late attempt leaves old public lead; approved update atomic; withdrawal hides first and never resurrects。
+- **ROLLBACK / FAILURE BOUNDARY：** disable projector/public read; retain private publication and audit; no destructive bulk reset。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** new public schema、moderation path、canonicalization、CloudBase transaction limits。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 08—16。
+
+#### TASK-V2-08｜Public viewport and detail API
+
+- **TASK_ID / STATUS：** `TASK-V2-08` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 实现 bounded public viewport/detail API，唯一读取 PublicMapLead。
+- **WHY_NOW：** client 不能直接读 private/public collection，API 是权限、精度、限流和 cache 边界。
+- **INPUTS / PRECONDITIONS：** 05—07；anonymous/auth policy approved。
+- **AFFECTED DOMAIN：** API、query planner、cache、rate limiting、deep link resolution。
+- **ARCHITECTURE DECISION：** response allowlist；server-side filters；unpublished/tombstoned lead always 404/absent。
+- **FILES / MODULES EXPECTED：** future query functions/adapters/contracts/integration tests。
+- **DATA CONTRACT：** V2-05 request/response; stable publicLeadId; public-safe error codes; asOf/cursor。
+- **SECURITY / PRIVACY IMPACT：** enumeration/precision/rate controls；no owner/private filters leaked。
+- **DEPENDENCIES / BLOCKS：** 05—07；blocks 09—16。
+- **IMPLEMENTATION STEPS：** viewport/detail handlers；filter/index mapping；rate/cache；withdrawal invalidation；logs。
+- **TEST STRATEGY：** contract/cloud/integration、unauth/auth、injection、pagination、deleted/stale、rate abuse。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** NO / YES / NO。
+- **ACCEPTANCE CRITERIA：** only public allowlist returned; bounded latency/size; no direct DB client access; deleted link fail closed。
+- **ROLLBACK / FAILURE BOUNDARY：** server kill switch returns controlled unavailable; private V1 unaffected。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** query budgets、provider capability、precision/rate policy。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 09—16。
+
+#### TASK-V2-09｜Moderation, withdrawal and operations
+
+- **TASK_ID / STATUS：** `TASK-V2-09` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 实现 independent public review、rejection、appeal/takedown、abuse 与运营可观测性。
+- **WHY_NOW：** Submission APPROVED 不是 public moderation；公开 API 上线前必须有下线能力。
+- **INPUTS / PRECONDITIONS：** 03、06—08；moderation SLA/roles approved。
+- **AFFECTED DOMAIN：** review queue、moderation decision、withdrawal、audit、alerts。
+- **ARCHITECTURE DECISION：** model/client cannot publish；review decision versioned；takedown beats stale update。
+- **FILES / MODULES EXPECTED：** future moderation functions/contracts/ops docs/tests。
+- **DATA CONTRACT：** review state/reasons/actor/version/timestamps、withdrawal request/status、abuse flags。
+- **SECURITY / PRIVACY IMPACT：** least-privilege reviewer、minimal logs、no public shaming、owner-scoped request。
+- **DEPENDENCIES / BLOCKS：** 03、06—08；blocks 10—17。
+- **IMPLEMENTATION STEPS：** queue; decision API; owner withdrawal; rights-holder takedown; retries; alert/SLA dashboard。
+- **TEST STRATEGY：** role/ownership negative、moderation bypass、race、retry、audit、full takedown drill。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** NO / YES / NO。
+- **ACCEPTANCE CRITERIA：** unpublished never queryable；一次端到端 withdrawal 隐藏/审计/防复活通过。
+- **ROLLBACK / FAILURE BOUNDARY：** fail closed to hidden/pending; disable publication; never fall back to private query。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** reviewer model/operations capacity、new UGC/source、legal SLA。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 10—17。
+
+### V2-D｜客户端状态、地图体验与平台
+
+> 区块状态：LOCKED；仅在 V2-C 全部完成并人工验收后解锁。
+
+#### TASK-V2-10｜Client map state, cache and async consistency
+
+- **TASK_ID / STATUS：** `TASK-V2-10` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 建立 viewport/filter/detail client state、cache、refresh、error 与 stale-response reducer。
+- **WHY_NOW：** 迟到请求覆盖新 viewport/active page 是 V1 已证实风险。
+- **INPUTS / PRECONDITIONS：** 05、08—09；public API stable。
+- **AFFECTED DOMAIN：** client state machine、request identity、cache、offline/error UI state。
+- **ARCHITECTURE DECISION：** request generation + viewport/filter key；旧结果不写当前 state；cache 显示 asOf/stale。
+- **FILES / MODULES EXPECTED：** future miniprogram platform/map adapter, reducer, storage cache, tests。
+- **DATA CONTRACT：** idle/loading/ready/stale/error/refreshing、requestId/queryKey/asOf/nextCursor/detail version。
+- **SECURITY / PRIVACY IMPACT：** cache only public payload；logout/account change 不混入 private identity。
+- **DEPENDENCIES / BLOCKS：** 05、08—09；blocks 11—16。
+- **IMPLEMENTATION STEPS：** reducer; cancel/ignore; pagination dedupe; cache TTL; network fallback; account/route reset rules。
+- **TEST STRATEGY：** unit/race/property/integration、A→B late A、refresh/delete、offline/stale、pagination mutation。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** NO / NO / NO。
+- **ACCEPTANCE CRITERIA：** late async cannot replace current map/detail; stale data explicit; no private cache fields。
+- **ROLLBACK / FAILURE BOUNDARY：** clear only V2 public cache; preserve active V1 Board and local records。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** API cursor/cache semantics、map SDK event order、account policy。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 11—16。
+
+#### TASK-V2-11｜Map, list, filter and detail UX
+
+- **TASK_ID / STATUS：** `TASK-V2-11` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 在批准 contract/state 上实现地图、列表、筛选、cluster、详情和非实时解释。
+- **WHY_NOW：** UI 必须消费真实 public API/state，而不是 mock private collection。
+- **INPUTS / PRECONDITIONS：** 04—05、08、10；freshness/location/content decisions closed。
+- **AFFECTED DOMAIN：** map/list/detail UX、accessibility、empty/error/stale states。
+- **ARCHITECTURE DECISION：** view model 只接受 PublicMapLead；no profile/login gate for permitted browsing。
+- **FILES / MODULES EXPECTED：** future approved web baseline/miniprogram page/components/styles/tests。
+- **DATA CONTRACT：** source/time/precision/freshness/not-real-time/null display; cluster/count/empty/error models。
+- **SECURITY / PRIVACY IMPACT：** no internal IDs/exact private geo/note/evidence; copy/share public allowlist only。
+- **DEPENDENCIES / BLOCKS：** 04—05、08、10；blocks 12—16。
+- **IMPLEMENTATION STEPS：** low-fi human approval；platform-neutral view models；map/list/filter/detail；accessibility/error copy。
+- **TEST STRATEGY：** component/snapshot/e2e/accessibility、null/zero、long text、deleted/stale、misunderstanding tasks。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** NO（本 task） / NO / NO。
+- **ACCEPTANCE CRITERIA：** 每条线索显示来源/观察时间/精度/非实时；用户能找到目标且不误解为库存。
+- **ROLLBACK / FAILURE BOUNDARY：** public map可独立关闭并保留 V1 recognize/my tabs。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** user research、field/freshness rules、map SDK limits、package budget。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 12—16。
+
+#### TASK-V2-12｜WeChat map, location permission and public deep link
+
+- **TASK_ID / STATUS：** `TASK-V2-12` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 接入微信地图/定位/权限与 public-safe deep link，验证拒绝和降级。
+- **WHY_NOW：** 微信 API 行为、审核声明和真机权限不能由网页/模拟器替代。
+- **INPUTS / PRECONDITIONS：** 01、05、08、10—11；DG-V2-01/02/08/10 closed。
+- **AFFECTED DOMAIN：** platform adapter、permission state、map events、routing/share link。
+- **ARCHITECTURE DECISION：** device location only on explicit foreground action；city/manual browse fallback；deep link only publicLeadId/allowlist。
+- **FILES / MODULES EXPECTED：** future miniprogram adapters/page config/privacy declarations/platform tests。
+- **DATA CONTRACT：** permission states、GCJ-02 conversion/accuracy metadata、viewport events、safe route params。
+- **SECURITY / PRIVACY IMPACT：** no background tracking；denial works；query never carries owner/private geo/profile。
+- **DEPENDENCIES / BLOCKS：** 01、05、08、10—11；blocks 13—16。
+- **IMPLEMENTATION STEPS：** SDK spike；adapter；permission UX；manual/city fallback；deep-link open/deleted handling。
+- **TEST STRATEGY：** platform mocks/contract/e2e plus true-device allow/deny/cancel/settings/weak network/share open。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** YES / NO / NO。
+- **ACCEPTANCE CRITERIA：** 真机定位、拒绝、重新授权、地图交互、公开链接与下线链接行为获批。
+- **ROLLBACK / FAILURE BOUNDARY：** map/location adapter unavailable时降级列表/城市浏览；不阻断 V1 功能。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** WeChat API/review change、provider coordinate semantics、share support。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 13—16。
+
+#### TASK-V2-13｜Scale, network and package-size resilience
+
+- **TASK_ID / STATUS：** `TASK-V2-13` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 证明大结果集、marker density、cluster、cache、弱网与主包预算可运行。
+- **WHY_NOW：** V1 分享图已证明资产会显著推高包体；地图瓶颈不只在 marker 渲染。
+- **INPUTS / PRECONDITIONS：** 05、08、11—12；代表性 density/asset fixtures。
+- **AFFECTED DOMAIN：** performance、asset pipeline、network/cache、map rendering。
+- **ARCHITECTURE DECISION：** bounded markers/clusters、lazy detail、no bundled large static dataset/public images by default。
+- **FILES / MODULES EXPECTED：** future benchmarks/fixtures/package audit/performance budgets。
+- **DATA CONTRACT：** response bytes、marker/cluster max、cache TTL、latency/error metrics、asset manifest。
+- **SECURITY / PRIVACY IMPACT：** cache/telemetry 不保存精准用户位置或 private payload。
+- **DEPENDENCIES / BLOCKS：** 05、08、11—12；blocks 14—16。
+- **IMPLEMENTATION STEPS：** load fixtures；zoom/pan stress；network throttling；cache invalidation；asset/package audit。
+- **TEST STRATEGY：** load/performance/network/package regression；真机低端设备 pan/zoom/cluster。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** YES / conditional YES / NO。
+- **ACCEPTANCE CRITERIA：** 批准的 p95/size/density/cache budgets 通过；miniprogramRoot 保持发布限制及项目 2 MiB 门内。
+- **ROLLBACK / FAILURE BOUNDARY：** 降低 limit/关闭图片或 map mode，退回列表；不扩大 public data exposure。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** real density、SDK memory、API cost、new assets/images。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 14—16。
+
+### V2-E｜分层验证、真机、试验与发布
+
+> 区块状态：LOCKED；仅在 V2-D 全部完成并人工验收后解锁。
+
+#### TASK-V2-14｜Layered integration, migration and security gate
+
+- **TASK_ID / STATUS：** `TASK-V2-14` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 将 unit/contract/integration/cloud/migration/negative/security/release regression 绑定成 V2 自动门。
+- **WHY_NOW：** release 前必须证明跨层失败边界，不以单一 E2E 掩盖根因。
+- **INPUTS / PRECONDITIONS：** 06—13；所有实现 task 自动验证已绿。
+- **AFFECTED DOMAIN：** whole V2 stack + frozen V1 regression。
+- **ARCHITECTURE DECISION：** provider/validation/DB/projection/API/client/UI checkpoints 分层报告。
+- **FILES / MODULES EXPECTED：** future CI scripts/test matrices/fixtures/release evidence。
+- **DATA CONTRACT：** test evidence schema、deployment/migration versions、failure stage codes。
+- **SECURITY / PRIVACY IMPACT：** negative ACL/enumeration/precision/moderation/takedown tests；secret/log scan。
+- **DEPENDENCIES / BLOCKS：** 06—13；blocks 15—17。
+- **IMPLEMENTATION STEPS：** build matrix；frozen SHA/storage checks；migration rehearsal；failure injection；full regression。
+- **TEST STRATEGY：** unit、contract、integration、cloud/backend、migration、negative/security、production_device prereq、release regression 全部独立结果。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** conditional / YES / conditional YES。
+- **ACCEPTANCE CRITERIA：** 全部自动门绿；V1 frozen contracts byte-identical；无 P0/P1 known failure。
+- **ROLLBACK / FAILURE BOUNDARY：** 任一层失败阻止 15；只修首个失败层，不改写其他错误分类。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** new provider/resource/field/permission/release requirement。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 15—17。
+
+#### TASK-V2-15｜True-device validation matrix
+
+- **TASK_ID / STATUS：** `TASK-V2-15` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 在代表性真机验证地图、定位、权限、分享/链接、上传、弱网、refresh 与删除。
+- **WHY_NOW：** simulator/local tests 已被 V1 证明不能替代微信真实行为。
+- **INPUTS / PRECONDITIONS：** 12—14；体验版/测试账号/安全测试数据已准备。
+- **AFFECTED DOMAIN：** WeChat runtime、permissions、network、CloudBase integration、review UX。
+- **ARCHITECTURE DECISION：** 人工视觉由用户负责；Agent 只提供构建与可复现矩阵，除非用户另行明确要求浏览器操作。
+- **FILES / MODULES EXPECTED：** true-device checklist/evidence docs；必要修复另回到所属 implementation task。
+- **DATA CONTRACT：** device/OS/WeChat/base library/network/permission/scenario/result/evidence。
+- **SECURITY / PRIVACY IMPACT：** exact location/log/screenshot 最小化；测试数据可删除。
+- **DEPENDENCIES / BLOCKS：** 12—14；blocks 16—17。
+- **IMPLEMENTATION STEPS：** allow/deny/cancel；pan/zoom/filter/detail；background/return；late response；withdraw/delete；weak/offline；public link。
+- **TEST STRATEGY：** true-device only matrix + results correlated to automated case IDs。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** YES / YES / conditional YES。
+- **ACCEPTANCE CRITERIA：** 用户批准代表性设备矩阵；无未关闭 P0/P1；所有真实差异回写 docs/tasks。
+- **ROLLBACK / FAILURE BOUNDARY：** 失败回到 owning task 并传播认知；不在 device pass 内临时改 production。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** device/API/review variance、real network/density、permission declaration。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 16—17。
+
+#### TASK-V2-16｜Closed pilot and release candidate gate
+
+- **TASK_ID / STATUS：** `TASK-V2-16` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 用授权供给封闭试验验证发现价值、误解率、moderation/withdrawal SLA，并组装 release candidate。
+- **WHY_NOW：** 技术可运行不代表供给稳定或用户理解成立。
+- **INPUTS / PRECONDITIONS：** 09、13—15；合法样本/参与者、运营与回滚已批准。
+- **AFFECTED DOMAIN：** product metrics、operations、release、privacy/review submission。
+- **ARCHITECTURE DECISION：** pilot 可被 kill switch 整体关闭；不绕过 public gate 填充地图。
+- **FILES / MODULES EXPECTED：** pilot protocol/results、release checklist、CloudBase deployed-version manifest、privacy declarations。
+- **DATA CONTRACT：** supply/source、discovery time、misunderstanding、freshness、query performance、takedown SLA metrics。
+- **SECURITY / PRIVACY IMPACT：** consent、data minimization、participant deletion、production smoke safety。
+- **DEPENDENCIES / BLOCKS：** 09、13—15；blocks 17。
+- **IMPLEMENTATION STEPS：** deploy verified versions；pilot；measure；fix/retest；package/index/migration/privacy/review/rollback/GitHub sync checklist。
+- **TEST STRATEGY：** production smoke、release regression、permission/privacy review、rollback drill、true-device recheck。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** YES / YES / conditional YES。
+- **ACCEPTANCE CRITERIA：** quality/package/deployed versions/index/migration/privacy/WeChat review/true-device/rollback 全 PASS；用户批准或停止发布。
+- **ROLLBACK / FAILURE BOUNDARY：** supply/understanding/security gate fail 时关闭 public read/projector，V1 继续独立可用。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** pilot evidence、WeChat review feedback、cost/abuse、rollback drill。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** 17；实质变化回写 01—15 affected tasks。
+
+#### TASK-V2-17｜Actual publication and immutable release closure
+
+- **TASK_ID / STATUS：** `TASK-V2-17` / `LOCKED / NOT_STARTED`。
+- **TITLE / GOAL：** 完成 upload/review/actual publication、online-source commit、GitHub sync 与 publication 后 immutable tag。
+- **WHY_NOW：** tag 必须表示真实上线源，不得在审核前创建。
+- **INPUTS / PRECONDITIONS：** 16 user-approved RC；exact source/backend/resource manifest。
+- **AFFECTED DOMAIN：** release metadata、Git history、WeChat publication、operations handoff、V3 decision input。
+- **ARCHITECTURE DECISION：** latest main→version branch→development→PR→merge main→actual WeChat publication→immutable tag；single worktree。
+- **FILES / MODULES EXPECTED：** release manifest/progress/architecture closure; no new feature code。
+- **DATA CONTRACT：** version、onlineSourceCommit、mainMergeCommit、CloudBase versions、migration/index state、publication status/tag target。
+- **SECURITY / PRIVACY IMPACT：** final privacy declaration、deployed ACL/rules read-back、no secrets in evidence。
+- **DEPENDENCIES / BLOCKS：** 16；blocks V3 research decision。
+- **IMPLEMENTATION STEPS：** freeze；source commit/push/PR/merge；upload/review；actual publish smoke；tag exact online source；closure docs。
+- **TEST STRATEGY：** final quality/package/cloud/resource/production smoke/true-device/release regression + tag target verification。
+- **TRUE_DEVICE_REQUIRED / CLOUD_DEPLOY_REQUIRED / MIGRATION_REQUIRED：** YES / YES / conditional YES。
+- **ACCEPTANCE CRITERIA：** 微信实际 PUBLISHED、main/GitHub/online source 对齐、immutable V2 tag 精确指向上线 source；rollback/on-call documented。
+- **ROLLBACK / FAILURE BOUNDARY：** review rejection不 tag；线上问题执行批准 kill switch/rollback；保留审计与 private V1。
+- **KNOWLEDGE THAT MAY INVALIDATE THIS TASK：** review rejection、production smoke、deployed hash/index/migration mismatch。
+- **DOWNSTREAM TASKS TO UPDATE IF KNOWLEDGE CHANGES：** V3 decision/research only；未发布前回写 01—16 affected tasks。
+
+## V1.0.1 THREE TAB SPLIT SHARE IMAGE EXPERIMENT（COMPLETED / HISTORICAL BASELINE）
+
+> 状态日期：2026-08-31
+>
+> 状态：`SOURCE MERGED TO MAIN / WECHAT PUBLICATION UNCONFIRMED`
+>
+> 分支：`feature/v1.0.1-sharing`
+>
+> V1.0.0：`RELEASED / FROZEN`
+
+- [x] 审计真实结构与素材：三个 UI Tab 共用 `/pages/home/index`；Profile 的真实默认头像固定为 `/assets/v1-29/ichi-avatar.png`，上一轮大图只有 sharing 引用。
+- [x] 先建立好友／朋友圈分离常量、三 Tab payload、两类素材实存、好友 5:4、不同 URL、隐私与 listener 生命周期回归。
+- [x] 删除上一轮 1254×1254 分享图；从默认头像确定性生成唯一 800×640 白底 5:4 `/assets/share/ichi-share-message.png`，朋友圈直接复用未修改的默认头像。
+- [x] 根据真机反馈只重生成好友图：从原始默认头像将主体由 400×400 精确放大 30% 至 520×520，画布、白底、居中、路径及全部分享合同保持。
+- [x] 完成 targeted sharing/home tests、`pnpm quality`、workflow/V1-F、冻结 SHA 与差异门。
+- [x] 用户在长期主工作区确认三 Tab 好友 5:4 图片、朋友圈默认头像、复制链接与落地页最终真机效果 PASS。
+- [x] 用户授权 source candidate 精确 commit、普通 push、PR、required CI 与 merge commit；backend／CloudBase／DB／Storage 变更固定为 0，`v1.0.1` tag 继续等待微信正式发布。
+
+## V1.0.0 FINAL PUBLICATION CLOSURE（当前权威状态）
+
+> 状态日期：2026-08-30
+>
+> V1 development：`CLOSED`
+>
+> V1 architecture、security / infrastructure：`FROZEN`
+>
+> V1 automated validation、true-device validation：`CLOSED`
+>
+> V1 WeChat review：`APPROVED`
+>
+> V1 WeChat publication：`PUBLISHED`
+>
+> V1.0.0：`RELEASED / FROZEN`
+>
+> V1 active plans：`0`
+>
+> `WECHAT_PREMATURE_PROFILE_AUTH_GATE`：`RESOLVED / CLOSED`
+
+微信小程序 ICHI V1.0.0 已于 2026-08-30 正式上线。线上产品源码固定为 `03942f2067959a4b8b0eb6223c949e51e768587d`；此后的 release closure docs、CI metadata、merge commit、tag 与 GitHub Release 不改变 `ONLINE_SOURCE_COMMIT`。V1 产品源码、R2 三 SHA、Storage CUSTOM、`recognition-temp/ Days=1`、13 个私有集合 ACL、Local Board／Upload Submission／Current Cloud Publication 七条规则、PHOTO 与 quota 全部冻结。
+
+工作集：
+
+- [x] AUTH-1—AUTH-6：fresh identity 静默建号、首页无授权墙、两个功能入口不受 profile incomplete 阻塞、默认资料与老用户兼容。
+- [x] AUTH-7—AUTH-10：头像临时路径不入库、稳定 fileID 持久化与重启恢复、昵称 msgSecCheck 与持久化。
+- [x] AUTH-11—AUTH-13：取消资料编辑不影响基础功能、bootstrap 幂等、技术失败不转成资料授权。
+- [x] 定向测试、全量回归、TypeScript、ESLint、Prettier、contracts、workflow/V1-F、CloudBase 静态校验、冻结哈希与 `git diff --check`。
+- [x] 只部署 `bootstrap-account`、`get-my-profile`、`bind-wechat-profile`，完成反向源码、运行时、入口、状态与环境键存在性核验。
+- [x] 用户真机复现审核路径与头像／昵称 smoke：Fresh User、Existing User、生产 Account 创建、默认资料、两个功能入口、头像与昵称重启持久化全部 PASS；状态转为 `READY_FOR_RESUBMISSION`。
+- [x] 精确提交 `fix: use silent account bootstrap before profile setup`，对应线上源码 commit `03942f2067959a4b8b0eb6223c949e51e768587d`。
+- [x] 微信重新送审、审核通过、正式发布与线上确认全部完成；V1.0.0 successful publication plan `COMPLETE / CLOSED`。
+
+## V1.0.0 plan closure（当前权威状态）
+
+> 状态日期：2026-08-30
+>
+> V1 development：`COMPLETED / CLOSED`
+>
+> V1 architecture：`FROZEN / CLOSED`
+>
+> V1 release candidate、release commit、微信 upload／送审、备案与上架准备：`COMPLETED / CLOSED`
+>
+> V1 successful publication：`COMPLETE / CLOSED`
+
+本节取代本文所有较早日期条目的活动状态；下方 `READY`、`IN_PROGRESS`、`AWAITING_REVIEW`、`BLOCKED` 或“待真机／待部署／待发布”只保留为历史执行证据，不再代表当前工作。V1 active plans 为 `0`，V1.0.0 source 永久冻结；普通新功能只能进入 V1.0.1 或更高版本。
+
+### V1.0.0 WECHAT SUCCESSFUL PUBLICATION
+
+> 当前状态：`COMPLETE / CLOSED`
+
+DONE：
+
+- [x] V1 feature freeze
+- [x] V1 architecture freeze
+- [x] automated regression
+- [x] true-device blocker closure
+- [x] release candidate and release commit `f6aa06fca21104a0a406823e5e8c6cc4ab493ab7`
+- [x] WeChat upload and submission
+- [x] filing、privacy 与 listing preparation
+- [x] `WECHAT_PREMATURE_PROFILE_AUTH_GATE` 修复、生产部署与 Fresh／Existing User 真机验收
+- [x] 微信重新送审、审核通过、正式发布、正式版 `1.0.0` 与最小线上确认
+
+### V1 closure registry
+
+| 分类 | 数量 | 当前结论 |
+| --- | ---: | --- |
+| CLOSED V1 major plans | 12 | Product Development、Architecture、Security/Infrastructure、Recognition V1、Automated Validation、True-device Validation、Blocker Closure、Release Candidate Assembly、Release Commit、Filing/Listing Preparation、WeChat Upload/Submission、WeChat Successful Publication 全部关闭 |
+| SUPERSEDED V1 intermediate plans | 8 | 多 Observation 展示、每次上传新 Current Observation、Cloud fallback 重建 MY_RECORDS、显式删除后 lazy-create P2、technical failure→PHOTO_FAILED、technical failure 即时删 evidence、P1 复制大字段、后台 refresh 无条件清 active identity 均由最终 V1 方案替代 |
+| BACKLOG plan groups | 2 | V1.0.1 performance/quality 与 V2 collaborative map；均 `NOT_STARTED` |
+| ACTIVE V1 plans | 0 | 无 |
+
+V1.0.1 backlog 共 8 项：首页转发给好友、首页分享到朋友圈、分享落地页／bootstrap 真机验证、`lazyCodeLoading=requiredComponents`、优化 `ichi-camera-cutout.png`、`ichi-avatar.png`、`ichi-recognition-mascot.png`、重新运行微信代码质量检查。分享能力是下一阶段优先任务，但本轮不设计、不实施。V2 backlog 共 6 项：CanonicalBoard、cross-user same-board matching、contributors、merge/unmerge、canonical version、多人协作地图。
+
+2026-08-29 V1.0.0 最终冻结门 `COMPLETED`：用户真机确认原 `recordId`、原 submission v3 与原 `imageFileId` 的 same-version retry 已直接进入 `APPROVED`，未重新上传、未创建新 submissionVersion、未重复 draw 或 quota；DRAW SESSION blocker 未再复现，用户据此明确批准 V1.0.0 完全冻结。当前只允许组装并人工审阅 staged release candidate，不再开发功能，不解锁 V2，不执行 commit、push、tag、微信上传、提审或发布。微信开发者工具的组件按需注入与随包图片／音频累计大小两项均为非阻塞建议，V1.0.0 `SHIP_AS_IS`，优化任务 `DEFER_TO_1_0_1`。
+
+2026-08-29 V1 DRAW_SESSION_EXIT + PHOTO_VERIFICATION_END_TO_END_CLOSURE 工作集 `CLOSED`：生产只读取证确认最新两条真实 PHOTO_FAILED 分别是不同 Board 的 version 1 与 version 5，且连同同一 Board 的四次前序重传形成六次连续 `PRIZE_TICKET_PROVIDER_FAILED`；全部 LOCATION PASS、当前版本 image 路径正确、authoritative version 一致并保存 `A1/B2/C1/D1` 五条 draw events。生产在更早同模型/Prompt/Schema 下对相同五票计数已有 HTTP 200、AJV PASS、VERIFIED 对照。根因是技术失败 catch 被错误终态化并即时删除 evidence，不是 draw、boundary、stable P1、schema normalize 或照片 mismatch。红灯已锁定 503 被写 PHOTO_FAILED、HTTP 状态丢失和删除图片；最小修复后同一 submission/image 为 PROVIDER_FAILED 可重试，技术 checkpoint 持久化，正确五票 fixture PASS、错误赏级 fixture FAIL。最新定向 10 文件／213 项与整库 56 文件／539 项及全部静态门通过；只部署 `recognize-draw-tickets`，最终线上配置 6 键恢复、运行状态与反向 7 文件树 hash 核对通过；same-version v3 真机重试最终 `APPROVED`。
+
+2026-08-29 V1 DRAW_SESSION_EXIT + PHOTO_VERIFICATION_END_TO_END_CLOSURE 历史阻塞快照 `BLOCKED_PRODUCTION_EVIDENCE`（已由上方取证结论解除）：ACTIVE_DRAW 的 late cloud refresh 红灯已精确复现，最小修复为恢复链保留 active `boardId`；自动组合用例覆盖两抽持久化、云刷新不退出、重建页面、再抽两次、NEW upload 的四条 authoritative events，以及同一 record/board/version/image verify identity。此时尚缺的两条生产 PHOTO 证据现已取得，不再是当前阻塞。
+
+2026-08-28 V1 CURRENT_PUBLICATION_ARCHITECTURE_CLOSURE 工作集 `CLOSED / FROZEN`：完成 B1／S1…／P1 三层领域矩阵、所有创建／重传／刷新／删除／重启链路审计；以红灯回归锁定 owner+board 最多 0/1 个 current P1、成功重传覆盖同一 P1、失败 attempt 隔离、版本单调与迟到结果抑制、B1-only 本机删除、P1 删除当前设备级联、网络／404 保留 B1、pending marker 崩溃恢复和墓碑禁止惰性复活。自动门覆盖定向 152 项、整库 56 文件／534 项、TypeScript、ESLint、Prettier、contracts/workflow、V1-F preflight、19 函数 CloudBase build/static validation、Next production build、Playwright 26/26、冻结三 SHA 与差异检查。生产只部署四个受影响函数并完成反向哈希核对；只读盘点显示 5 条历史 P1 全部 deleting、active duplicate=0，故无需迁移。最终真机与 release freeze 已通过；V2 MAP 保持 backlog。
+
+2026-08-28 V1 MY_RECORDS_PROJECTION_OWNERSHIP_CLOSURE 历史工作集：其中 MY_RECORDS local-only、Local Board repository-only 删除和 quota 优化继续有效；“MY_UPLOADS observation-only、同 Board 多 Observation”验收目标已由上方 Current Publication 工作集正式取代，不再作为待验收行为。
+
+2026-08-28 V1 Closure Storage 最终权限 + orphan-proofing 工作集 `PASS`：生产 `CUSTOM` rule 和只作用于 `recognition-temp/` 的 COS 1 天 Expiration 均已应用并读回；客户端权限矩阵、服务端绕过边界、头像排除、24 小时 orphan 分类与未知头像保护已进入自动门。应用层即时删除与既有 maintenance 补偿不变，未新增 scheduler。Storage 专项无剩余 implementation gap，后续只随 V1-F 总区块执行用户真机／人工验收和发布门。
+
+2026-08-28 V1 Closure Storage 专项工作集：只审计并收口 `profile-avatars/`、`recognition-temp/`、头像／版面／赏票生命周期、遗留 orphan 和生产 Storage 权限。先建立只读对象—数据库—代码—Golden 来源分类，再只删除证据闭合的对象；当前头像保持长期资产。发现真实缺口时只复用现有 `deletionJobs`、`reconcile-stuck-jobs` 与 `retry-deletions`，不新增 scheduler，不修改冻结 R2／H0、LOCATION／PHOTO／文本安全／draw 语义。自动门覆盖活动头像保护、替换／绑定失败／账号删除、赏票终态与到期补偿、orphan 分类、完整回归和部署反向核验；只部署直接受影响函数。应用层、遗留对象、生产客户端权限与平台 1 天 lifecycle 均已完成并读回，专项最终状态 `PASS`。
+
+2026-08-27 V1-F 最终上线收口工作集：只完成批准的 `PRIZE_TICKET_LOCATION_RADIUS_METERS=200` 生产配置、“我上传” LOCATION／PHOTO／NOTE 三种失败呈现、当前真实差异所需业务函数兼容发布和无 Qwen 最小 smoke。先锁定 machine-readable mapper 与 PHOTO/NOTE checkpoint 回归，再依序执行定向测试、类型／Lint／格式、19 函数构建静态校验、contracts/workflow、整库 Vitest 和差异检查；全绿后只部署真实需要的 `finalize-draw-update`、`get-my-records`、`recognize-draw-tickets`、`bind-wechat-profile`，反向核对 200m、OpenAPI 权限、函数状态、13 集合 ADMINONLY 与 Storage PRIVATE。明确不部署 `recognize-board`，不调用版面／赏票 Qwen smoke，不迁移数据库，不改变 ACL 或冻结 R2/H0。
+
+2026-08-27 V1-F 用户文本安全统一工作集：只抽取一个 CloudBase 共享文本安全 module，将 `PROFILE_NICKNAME→scene 1` 与 `MAP_NOTE→scene 2` 固定在服务端；`bind-wechat-profile` 在数据库写入前审核昵称，失败保持旧值并返回稳定错误；现有 NOTE gate 仅把底层直接 `msgSecCheck` 改为共享调用，保持备注变更失效和 LOCATION/PHOTO checkpoint 不变。自动门覆盖 scene 映射、未知 usage、所有非 pass／异常 fail closed、可信 OPENID、昵称先审后写、MAP_NOTE pass/fail/retry、唯一生产 OpenAPI 调用点、两个函数权限、冻结 R2 hash 与完整回归；不部署、不配置位置半径、不修改识别／事务／图片／地图 UI。
+
+2026-08-27 V1-F R2 第二阶段送审加固工作集：在冻结 R2 识别协议与 H0 fallback 的前提下，(1) 审计并锁定初始 R 与 draw-event 投影语义，(2) 用 CloudBase 事务实现稳定 eventId 的完整事件批次送审一致性、并发冲突和同版本幂等，逐抽仍保留现有本机 history 边界，(3) 增加必填用户原文 `userNote` 与 LOCATION→PHOTO→NOTE→APPROVED 服务端有限状态机，(4) 接入真实 CloudBase 文本安全适配器、显式地点距离配置和 fail-closed 行为，(5) 让客户端按 LOCATION 终态失败、PHOTO 重传、NOTE 修改备注分别恢复，(6) 只部署通过本地门且不涉及 `recognize-board` 的实际变更业务函数。自动验证至少覆盖并发不超卖、同批次重试、R=0/null、三门顺序、备注修改失效、服务不可用不批准、图片终态清理、APPROVED 投影、旧记录兼容及无 T/P 新写入；无明确地点阈值时相关生产部署保持阻塞，不猜测配置。
+
+2026-08-27 V1-F R2 第二阶段增量工作集：在不修改冻结 R2 Prompt／Provider Schema／resolver 和 H0 fallback 的前提下，(1) 把识别结果页迁移为 IP／主题／手填价格／nullable R，(2) 恢复“设定大赏”中间视图并持久化手动 `isGrandPrize`，(3) 让版面状态球由初始 R 与抽取事件恢复且不产生负数，(4) 新增 `board-record-r2-1.0.0` 结构化 CloudBase 写入、旧 H0/R1 read adapter 与未来地图投影，(5) 回归赏票、记录、观察窗口和 H0/R1 历史读取。自动门覆盖用户列出的 20 个 R2 场景、CloudBase contract/runtime、根与 Web TypeScript、ESLint、完整 Vitest、CloudBase 构建校验、小程序构建和 workflow；不执行破坏性历史迁移，不创建 V2 公共发布能力。
+
+> 状态：APPROVED
+>
+> 版本：1.31
+>
+> 本计划只包含任务、验证和验收，不包含实现代码。
+
+2026-08-29 V1-43K fresh failure closure `CLOSED`：技术异常与业务照片失败分流已在真机确认；最新 fresh failure 的 Provider HTTP 200、JSON/AJV 和五票结构化内容均成功，真实 blocker 位于已批准结果写入 P1 的 observation 大字段回归。自动收口改为小型 published-version pointer + 精确 approved-submission 读取投影，并保留 same-version 原图重核验；新增生产等价 `-502001` 约束、失败 attempt 不覆盖 current publication、正确／错误照片和技术重试回归。用户已用原 record、v3 与原图完成 same-version retry 并进入 `APPROVED`。
+
+## 0. 执行协议
+
+1. V1-A、V1-B 等区块是解锁、文件读写、联动和人工验收单元；表内 step 是区块内的细小执行与自动验证单元。
+2. 开始前完整读取 `architecture.md`、`design-document.md`、`tech-stack.md`、本计划和 `progress.md`，从 `progress.md` 确认唯一活动区块及区块内工作集。
+3. 区块解锁时，区块内所有未完成 step 一并转为 `READY`。它们可以互相引用中间产物，并按实际依赖串行、交错或并行推进；`IN_PROGRESS` 不产生对同区块其他 step 的排他锁。
+4. 每个 step 仍必须执行表中自动验证。验证通过后转为 `AWAITING_REVIEW`，其人工验收列作为区块末尾的验收证据，不阻止继续推进同区块其他 step。
+5. step 失败时记录原因；受影响的 step 转为 `BLOCKED`，修复前不得依赖其失败产物。与其无依赖的同区块工作可以继续，但区块不能进入人工验收。
+6. 区块内全部 step 自动验证和区块级集成回归通过后，区块转为 `AWAITING_REVIEW` 并由用户统一人工验收。通过后，区块及其 step 转为 `COMPLETED`，更新 `progress.md` 和 `architecture.md`。
+7. 下一区块只能在当前区块人工验收通过后整组解锁；后续锁定区块的产品能力不得提前实现。V2、V3 还必须通过前一版本的决策门，不因为计划已存在就自动启动。
+8. 开放区块同步开放为其服务的正式事实源、共享代码和测试文件。文件不因未来区块还会使用而整体冻结；只要变更直接服务当前区块即可读写，但不得借共享路径实现锁定区块范围。
+9. 活动区块内若出现产品行为变化，先更新 `design-document.md`；技术选择变化先更新 `tech-stack.md`；实际结构变化同步更新 `architecture.md`；step 状态、工作假设和验证证据同步更新 `progress.md`。
+10. 区块验收后把已确认新认知简记到 `progress.md`。解锁下一区块前，自动比较这些认知与下一区块全部 step 的目标、输入、产物、依赖和验收。
+11. 无影响时整组解锁；不改变产品范围、平台、隐私、核心架构或区块顺序的局部影响只修订下一区块并告知用户；实质影响必须先获得用户批准。
+12. 不批量改写远期区块；远期影响只在 `progress.md` 登记，解锁对应区块前再对齐。
+
+状态只使用：`LOCKED`、`READY`、`IN_PROGRESS`、`AWAITING_REVIEW`、`COMPLETED`、`BLOCKED`。
+
+同一组状态同时用于区块和 step：`LOCKED` 表示不可实施；`READY` 表示已获当前区块授权；`IN_PROGRESS` 表示正在产出；`AWAITING_REVIEW` 表示自动验证完成、等待区块验收；`COMPLETED` 表示已经随区块通过人工验收；`BLOCKED` 表示存在必须解决的阻塞。
+
+2026-08-27 V1-43D/43G R2 direct-remaining phase 1：在 V1-F 活动区块内冻结 R2 Prompt/Provider Schema，实现 Provider R 优先、可见观察对象计数回退且严格保留零的独立 resolver；接入 `recognize-board` 并以 R2 为生产默认，保留冻结 H0 为唯一 rollback 和 R1 历史回归。自动门覆盖精确文件 hash、Provider Schema、至少 14 类 resolver 情形、RecognitionContract、客户端 direct-R 不崩溃、H0/R1 回归、CloudBase 构建与工作流。通过后部署一次，执行一次真实 R2 默认路径 smoke 并核对日志；失败则恢复 H0。第一阶段不实施广泛 UI、数据库或 Board Builder 重构。
+
+2026-08-23 V1-F Golden 收口：四图独立 Ground Truth、真实 Qwen raw／AJV／Normalize／Contract 诊断和 deterministic fixtures 已建立；prefix ordinal 算术、null、A1/A2、SP 顺序与客户端解析自动验证通过。真实准确率验收未通过：Golden #1 的遮挡首空序号与 Golden #3 的跨行 H 续条在 Qwen raw 首先出错，Prompt／像素／分块修复不能同时保持四图正确。因此 V1-43 继续 `IN_PROGRESS`，不得进入 `AWAITING_REVIEW`；下一步只能在明确批准的同模型版本固定／模型 A-B 或新的通用视觉证据方案下重开真实四图，并在任何 model-facing 变化后重跑全部四张。
+
+2026-08-26 V1-43D H0 production migration：用户明确选择的冻结中文 Hybrid Direct-Pasted H0 已完成生产迁移。仓库 deterministic tests、五图 raw parity、五图真实 predeploy、远程 v4 默认 smoke、Hybrid 内部三图 smoke、生产默认三图 smoke、真实 `hybrid_semantic → v4 → hybrid_semantic` rollback 往返以及删除内部令牌后的安全／默认 Hybrid smoke 均通过；生产 `BOARD_RECOGNITION_MODE=hybrid_semantic`，内部 smoke token 缺席，v4 保留为 `LEGACY_V4_ROLLBACK`。客户端、quota、RecognitionContract、图片链和单次 `qwen3.7-flash` 配置未改变；不得继续调 Prompt 或加入 Evidence Primitive。V1-43D 的 H0 migration 子任务完成，V1-43 总区块仍按其余人工门状态推进。
+
+2026-08-27 V1-43D/43G R1 visible-evidence migration：在 V1-F 活动区块内执行一次完整生产迁移。先冻结生产 H0 快照；实现并验证只返回视觉证据的 R1 Prompt/Schema、五门确定性 resolver、30 类最小矩阵和客户端 T/U 编辑迁移；移除旧 `v4` 运行时别名，H0 成为唯一回滚。自动门必须覆盖提示词／Schema 静态禁词、resolver 单测、云函数模式白名单、旧草稿迁移、客户端字段语义、TypeScript、ESLint、Vitest、契约、CloudBase 构建、Next.js 构建、Playwright、workflow 与差异检查。通过后先部署代码但保持 H0，再切换生产默认 R1，完成 Pokémon／明日方舟／世界之外默认路径 smoke、真实 H0 往返 rollback drill，最后对指定六图做一次 R1 production experiment；任一 false zero、协议／Schema／系统失败自动恢复 H0。客户端只在存在非 GUI 发布路径时产出或上传发布物，否则明确记录 `CLIENT_RELEASE_BLOCKED_NO_NON_GUI_PATH`。最终只能保留 R1 或回滚 H0，不保留第三种模式。
+
+2026-08-27 R1.1 Pokémon 单板修复验证：保持 runtime mode `r1_remaining` 和现有 Logic Gate／客户端不变，以用户逐字给定的 Prompt/Schema 1.1.0 修复 Provider contract，并补齐授权 internal smoke 在 JSON/AJV failure 上的 raw、RequestId 和完整 AJV 取证。全量本地门通过后，代码先以 H0 默认部署并烟测，再只对 exact Pokémon Golden 执行一次无 override 的 R1 production-default 调用；无论结果均恢复 H0 并复测。本次不运行其余五图或 stability，单板成功也不构成 production-safe 结论。
+
+## V1：即时计算工具
+
+### V1-A｜产品基线与工程准备
+
+> 区块状态：COMPLETED；本区块全部 step 已于 2026-08-05 通过用户统一人工验收。
+
+| Step | 状态 | 指令 | 自动验证 | 人工验收 |
+| --- | --- | --- | --- | --- |
+| V1-01 | COMPLETED | 审阅 PRD、设计文档和技术栈，冻结 V1 的 UI 主端、版面语法、图像识别、一抽一记和范围边界；将决定写回正式文档 | 工作流校验通过；三份文档无相互冲突的 V1 范围 | 用户确认 V1 产品基线可进入开发 |
+| V1-01A | COMPLETED | 定义中国大陆与日本版面目录的覆盖集合、截止日期、允许来源、未知字段和更新责任 | 每个覆盖声明都能转化为可计数的分母；无来源字段不进入已验证数据 | 用户批准“全部”的可测量定义和允许来源 |
+| V1-01B | COMPLETED | 建立与具体产品无关的版面语法和本地饱和组件注册表：A—Z 奖级、券位、价格、总抽数、Last、Double Chance、说明、标识、二维码、版权和未知区块，并定义二维排布数据 | A—Z 无缺失且只由一个通用奖级组件承载；所有固定组件类型、计数排除项、人工补填项和未知区块通过 schema 与注册表校验；不依赖产品样本或远程组件 | 用户用任一实体版面核对组件、券位计数和排布语义 |
+| V1-01C | COMPLETED | 复用 V1-01B 的版面草稿 schema，定义识别请求／响应信封、字段问题原因码和人工操作指令；用固定数据案例锁定奖级、券位占用、辅助区块、归一化坐标、置信度、价格手填及总抽数推导门禁 | 仅在版面完整且确认一券位一抽时自动求和；Last／Double Chance 等不计入总抽数；完整图、缺图、手写价格、低置信和守恒失败进入确定路径 | 用户确认一张完整图与一张缺图都进入正确路径 |
+| V1-01D | COMPLETED | 定义本地 UI 包内通用组件的条件渲染、原版二维位置预览、阅读顺序、手机响应式重排和未知区块降级规则，并提供可检查的渲染计划 | 任意合法 A—Z 奖级列表与二维区块可由已知本地组件生成确定渲染计划；远程代码和未知可执行类型被拒绝 | 用户确认“识别只给数据，组件全部随包预置”，并核对二维预览与手机重排语义 |
+| V1-02 | COMPLETED | 形成 V1 计算术语表，冻结“概率、命中分布、期望抽数、成本与预算、包套、停止”的定义 | 每个术语均有输入、输出、限制和至少一个示例 | 用户能够区分六个术语并批准文案 |
+| V1-03 | COMPLETED | 建立固定测试向量，覆盖普通票池、目标为零、抽数为零、抽完全部、多个目标和非法输入 | 每个公式和边界至少有一个可人工复核向量 | 用户抽查代表向量并确认预期 |
+| V1-04 | COMPLETED | 记录微信小程序基础库、TypeScript、pnpm、Vitest、CloudBase 和候选识别服务的兼容版本与隐私决策 | 官方兼容性来源已记录；版本组合可安装；识别服务有超时、成本和图片删除边界 | 用户批准小程序工具链、版面语法和识别方案 |
+| V1-05 | COMPLETED | 初始化 pnpm workspace、微信小程序、核心包、版面语法包、识别契约、最小 CloudBase 识别代理和测试目录 | 安装、类型检查和空测试命令均成功 | 用户确认目录清晰，V1 云能力仅用于识别 |
+| V1-06 | COMPLETED | 建立 CI 或本地统一质量命令，串联格式、静态检查、类型检查和单元测试 | 故意制造一个错误时质量门失败，恢复后通过 | 用户确认命令可作为后续统一门禁 |
+
+### V1-B｜计算内核
+
+> 区块状态：COMPLETED；本区块全部 step 已于 2026-08-06 通过用户统一人工验收。
+
+| Step | 状态 | 指令 | 自动验证 | 人工验收 |
+| --- | --- | --- | --- | --- |
+| V1-07 | COMPLETED | 定义票池、奖项、目标、预算、计划抽数和计算结果的领域模型 | 严格类型检查通过；非法状态不能无约束进入计算入口 | 用户确认字段与产品术语一致 |
+| V1-08 | COMPLETED | 实现稳定组合数基础能力，处理大数、对称性和非法参数 | 与固定整数样本一致；非法参数有确定错误结果 | 用户查看测试报告并确认 |
+| V1-09 | COMPLETED | 实现单抽命中率和若干次至少命中一次 | V1-03 对应向量全部通过；结果限制在 0 到 1 | 用户用两个手算案例复核 |
+| V1-10 | COMPLETED | 实现命中数量的超几何分布 | 分布概率和为 1；边界和固定向量通过 | 用户确认分布解释可理解 |
+| V1-11 | COMPLETED | 实现多目标与指定数量的精确计算 | 小票池枚举结果与算法一致，不使用简单概率相乘 | 用户确认多目标示例 |
+| V1-12 | COMPLETED | 实现目标奖期望数量、首次命中期望抽数和必要边界 | 固定向量与解析结果一致 | 用户确认“期望不是保证”的展示前提 |
+| V1-13 | COMPLETED | 实现本轮成本、累计成本、剩余预算、最大可抽数和包套成本 | 零价格、预算不足、抽完和小数金额测试通过 | 用户确认金额规则和舍入方式 |
+| V1-14 | COMPLETED | 实现直接购买参考价与计划抽取、包套的现金差异，不引入个人价值或价值期望 | 未提供直接购买参考时显示未知；不生成净值或回本结论 | 用户确认现金比较不会被表达为市场价或购买建议 |
+| V1-15 | COMPLETED | 实现输入完整性、守恒和范围校验 | 信息不足、存在矛盾和可计算三类固定案例通过 | 用户确认不出现商家作弊结论 |
+| V1-16 | COMPLETED | 组合四种方案的解释数据，不输出神秘总分 | 每种方案均包含组成项、限制和可执行状态 | 用户确认抽、包、买、停是并列选择 |
+| V1-16A | COMPLETED | 在用户明确设置预算、最大抽数和最低目标概率后，返回满足全部约束的最少抽数；同时展示未达成概率、无解结果和 Last 仅包套保证，不放宽约束或产生促抽排名 | 可行结果满足概率门槛且前一抽数不满足；不超过预算、最大抽数或余票；缺少约束与无解、零门槛、多目标和 Last 边界均有固定测试 | 用户确认方案是“用户约束下的最少抽数”，不是中奖保证或系统主动促抽 |
+| V1-17 | COMPLETED | 为计算内核加入性质测试与回归基线 | 随机合法输入不产生 NaN、负概率或越界概率；约束方案最小性、失败概率和硬限制性质可复跑 | 用户确认计算内核达到 UI 接入门槛 |
+
+### V1-C｜会话、状态与本地数据
+
+> 区块状态：COMPLETED；V1-18—V1-25 已通过自动验证、微信开发者工具验证、区块回归和用户统一人工验收。
+
+| Step | 状态 | 指令 | 自动验证 | 人工验收 |
+| --- | --- | --- | --- | --- |
+| V1-18 | COMPLETED | 定义会话、单奖项轮次草稿、已确认轮次和已撤销轮次的状态转换 | 非法转换被拒绝；一轮无法记录多张奖券；合法路径测试通过 | 用户确认状态图符合一抽一记 |
+| V1-19 | COMPLETED | 实现本轮唯一奖项的选择、更换、清空和余量上限 | 不能记录已无余量的奖项；不存在批量数量控件 | 用户完成连续三次一抽一记 |
+| V1-20 | COMPLETED | 实现确认本轮的原子更新 | 奖项、余票、成本、历史和结果同时更新；中途失败不留下半状态 | 用户确认一次确认后的所有数字一致 |
+| V1-21 | COMPLETED | 实现最近一轮撤销 | 撤销恢复全部字段；重复撤销不会重复增加余量 | 用户完成误操作恢复任务 |
+| V1-22 | COMPLETED | 定义小程序本地存储接口和数据版本 | Storage 适配器契约、迁移和失败回退测试通过 | 用户确认平台细节未泄漏到业务层 |
+| V1-23 | COMPLETED | 实现随包版面语法版本、schema 兼容检查、本地草稿迁移和失败回退 | 无网络可使用内置注册表；未知 schema 或迁移失败不破坏可用会话 | 用户确认组件与规则只随小程序版本发布 |
+| V1-24 | COMPLETED | 实现微信小程序 Storage 保存、恢复、删除和容量提示 | 开发者工具中重启恢复，清理后不可恢复，接近上限有提示 | 用户在模拟器或真机确认 |
+| V1-25 | COMPLETED | 建立小规模经授权识别评估集和复制会话规则；评估集只用于 QA，不作为产品目录或运行时依赖 | A—Z／OTHER、券位、手写价格、缺图、低置信和计数矛盾均有确定结果；复制会话不污染历史 | 用户抽查识别、人工校正和失败退路 |
+
+### V1-D｜产品设计与组件
+
+> 区块状态：COMPLETED；本区块全部 step 已于 2026-08-11 通过用户统一人工验收。V1-26 最初以低保真页面流启动，但经 V1-29 完整设计与实现后，用户提供的 `网页 ui.html`、`V1-29 UI Design Tokens` 及全部已验收页面和交互共同构成 V1-E 的小程序一比一照搬基线。
+
+| Step | 状态 | 指令 | 自动验证 | 人工验收 |
+| --- | --- | --- | --- | --- |
+| V1-26 | COMPLETED | 在 Next.js 建立 V1 HTML/CSS 页面流与关键异常状态；该步骤最初以低保真为目标，后经 V1-29 持续完善为已经验收的完整小程序页面设计。完整页面提供手机端 `识别／好版地图／我的` 底部入口；点击导入后进入全屏纵向拍摄取景区域，下半屏使用独立控制区放置圆形拍摄与返回按钮，点击拍摄才进入识别；识别页逐项展示照片接收、奖级／余票读取、价格／Last 整理的勾选进度，完成后自动进入识别结果，失败自动进入“无法建立票池”恢复页；识别结果和一番赏版面优先在首屏展示更多奖级；工作台的余票／Last 顶栏和局面可能性／撤销／抽取记录右侧按钮固定在视口，“决定收手”以约 1 秒长按确认固定悬浮于底部导航上方，不跟随奖级内容滚动；“本地记录”展示全部本机记录及核对／上传双状态，“我的贡献”只展示其中已上传的记录；其余识别、版面工作台、会话缓存与“我的”框架沿用已验收基线 | 页面／状态清单与设计文档逐项对应；手机取景页无横向溢出，竖向版面辅助框覆盖拍摄区域，圆形拍摄／返回按钮可达；390×844 下识别结果和一番赏版面在底部导航上方均至少完整显示 5 个奖级；滚动奖级前后工作台顶栏、右侧按钮和“决定收手”位置不变；未满 1 秒松开不触发，读满后才进入共享选择；本地记录能同时呈现“未核对／未上传”和“已核对／已上传”，我的贡献不出现未上传记录；既有 V1-26 回归、Next.js 构建和真实浏览器路径继续通过 | 用户确认竖向取景和底部控制区符合手机相机使用习惯，并确认奖级首屏密度、工作台固定层、长按反馈和记录分工可接受 |
+| V1-27 | COMPLETED | 建立网页中间验证层的颜色、排版、间距、状态和响应式 Design Tokens，并记录小程序转译约束 | `apps/web/app/tokens.css` 定义可导出的中性灰阶、间距、圆角、导航安全区和模态阴影；错误、警告和正常状态不只靠颜色；手机与桌面重排通过，语义可转译为 WXSS | 用户批准网页视觉基础及小程序转译边界 |
+| V1-28 | COMPLETED | 建立 HTML/React 输入、按钮、奖项格、数量控制、结果卡、状态提示和弹层组件，固定其小程序对应关系 | `apps/web/app/ui/` 覆盖 `Button`、`StateLink`、`PrizeTile`、`TicketSlots`、`StatusNotice`、`Modal`、`BottomTabbar`；默认、禁用、异常和加载状态由网页路径覆盖，行为契约可转译到 WXML | 用户批准组件语义、可读性与转译边界 |
+| V1-29 | COMPLETED | 以用户提供的 `网页 ui.html` 作为唯一页面壳，直接复用其原始 HTML、字体、字号、图标、字符样式、布局、色彩和动效；不得用手写 JSX/CSS 近似或替换任何源 UI 元素。把 ICHI 已有路由、识别流程、版面算法、抽取、撤销、情境提醒、局面可能性、记录和提交前端状态逐项绑定到源页面已有控件；源网页已有的 Tailwind、图标和字体资源作为本轮保真运行时输入保留。原壳未定义的跨页面定位由 `V1-29 UI Design Tokens` 统一：页面互斥、稳定 iframe 路由、识别页面／滚动恢复、工作台固定层、阻塞式视觉中心模态卡和长按确认只能补齐功能，不改写原壳视觉语言。共享选择须提供“继续抽赏”和“暂不分享并退出”；后者按 `boardId` 保存可恢复本机草稿并返回识别首页，首页使用固定紧凑导入卡与独立滚动草稿区。未核对且未上传的本机草稿可在识别首页和本地记录中左滑删除，两处删除同一 `boardId`；已核对或已上传记录不可删除。“本地记录”使用同一记录模型展示全部本机记录及“核对／上传”双状态；“我的贡献”由上传状态筛选得到，只展示已上传条目，并为 V2 点赞数预留零值 UI | `docs/design/v1-29-mobile-visual-direction.md` 固定源 HTML 原样保真边界、控件绑定清单和网页回译差异；所有已有按钮能到达 ICHI 对应路径或执行对应行为；任意路由时只有一个页面可见、iframe 不重载、不闪现导入页，离开再返回识别可恢复最近稳定页面和滚动位置；局面可能性完整显示固定算法事件并与抽取记录共享中央阻塞模态几何，模态打开时导航不可用，固定控件滚动前后不位移，长按填充和取消路径可自动验证；同一 `boardId` 的本机草稿覆盖保存、退出返回识别、草稿列表滚动、点击恢复和双入口左滑删除通过 Playwright；本地记录完整展示状态组合，已核对／已上传条目不提供删除，我的贡献不渲染任何未上传条目且已上传条目显示点赞计数位置；视觉由用户人工检查，重构后映射到 WXML/WXSS | 用户确认新页面与提供的 `网页 ui.html` 在字体、图标、文字、间距、布局和动效上无肉眼差异，并确认功能绑定、固定工作台控件、中央模态框、草稿恢复、记录分层与长按交互可用 |
+| V1-30 | COMPLETED | 将 Tokens、通用奖级组件、总抽数、价格、Last、大／中／小赏本地派生规则和 schema 渲染约束落入 Next.js 基础层；以 `packages/board-layout` 的 `derivePrizeClassification` 固定 A—F 的 `totalSlots ≤ 5` 为大赏、`6—9` 为中赏、`≥ 10` 为小赏，G—Z／OTHER 为小赏，票数无效则返回未确认。V1-29 只负责以最新 `网页 ui.html` 页面壳承载这些稳定语义，不再继承此前的任何视觉描述 | 12 项 Playwright、TypeScript、ESLint、Prettier、Vitest、版面／识别契约、工作流和手机／桌面布局验证通过；不同奖级和抽数数据只通过 `app/ui/` 本地组件渲染，未知类型不执行 | 用户确认基础网页组件可承载中日代表版面 |
+| V1-30A | COMPLETED | 在 Next.js 完成“收手 → 是否共享 → 赏票取证相机框与地点备注 → 提交核对”的前端低保真流程；提交后移除独立的核对结果与待发布预览页面，仍停留在一番赏版面中央显示“已提交／后台正在核对本次提交”，提供“继续”关闭提示和“退出”返回导入版面。每张确认导入的版面持有稳定 `boardId`，再次提交时仅用当前抽取记录、票位与备注更新同一贡献快照。主版面底部提供“收手”入口，不调用真实相机、OCR、定位、云端保存或上传 | 勾／叉、取消、提交后版面内状态框、同一 `boardId` 覆盖、退出返回导入版面、后台核对中、需要重拍和核对通过均有状态占位；前台不等待 OCR；无网络写入 | 用户确认共享取证流程自然、可拒绝且清楚核对与发布均由后台负责 |
+| V1-30B | COMPLETED | 建立《情境提醒》规则文档和主界面提示：从抽赏记录与版面快照分析目标命中、意外大赏、连续小赏、连续同级中赏、连续多抽、目标达成、撤销和数据不足等情境；奖项只使用大赏、中赏和小赏三种互斥数量标签；复用本地分类，不设置成本节点或用户配置。以可测试的纯规则模块产生优先级和防沉迷文案，再由网页工作台将抽到的赏、剩余票数、累计花费和情境文案合并显示在同一个可关闭、自动消失的轻提醒框 | 文档与模块静态断言、分类边界、连续小赏 1／2／3／4+、重复触发、无成本节点、无闲置提醒、同框提示与撤销“已撤销”均通过；网页每次抽取都生成新的提示实例 | 用户确认提示语气、场景覆盖、轻提示时机和不诱导继续消费 |
+| V1-30D | COMPLETED | 在一番赏版面工作台的撤销按钮上方将“方案说明”调整为“局面可能性”快捷按钮；依赖 V1-30F 的固定算法，在同页视觉中心模态框完整展示当前版面特有事件概率和固定观察窗口的累计成本；不接入 AI 或外部服务，不提供排序、推荐或执行抽取按钮 | 固定算法测试、TypeScript、ESLint、Playwright 和 ego-browser 路径检查通过；目标缺失只隐藏目标事件，其他事件继续显示；模态框固定显示结果不保证和停止仍可选，并与抽取记录共享完整圆角和视觉中心 | 用户确认局面可能性有版面特化信息价值，且不构成促抽推荐 |
+| V1-30F | COMPLETED | 固定 `board-outlook-v1.1.0`：将当前已核对版面汇总为大赏、中赏、小赏、目标和总余票计数，使用最多 3 抽的固定观察窗口和精确不放回概率计算版面特有事件；实现为不依赖网页的 `packages/core` 纯函数 | 固定案例、空票池、类别边界、余票少于三张、撤销后的输入重算和格式化边界均通过；算法只输出事件，不读取累计花费以外的画像／外部数据，不输出排序或推荐 | 用户确认事件目录、观察窗口、文案边界和“不保证”语义 |
+| V1-30E | COMPLETED | 固定一番赏工作台的操作反馈可靠性：网页低保真用独立撤销栈支持连续撤销最近 50 抽；抽取事实与情境提醒继续同框；连续小赏在第 4 次及以后每次新抽取都生成新的提示实例 | 连续撤销、票位／余票／累计花费一致性、50 步上限、连续小赏第 1／2／3／4／5 次提示和同框关闭／自动消失均通过 | 用户连续抽取、连续撤销后确认记录、版面和提示均未丢失或错位 |
+| V1-30C | COMPLETED | 在 Next.js 搭建 V2 账号与云端保存所需的“我的”网页框架：头像、用户 ID、登录占位、账号管理、本地记录、我的贡献、提醒设置、隐私与数据和关于 ICHI；不接入真实登录、后端或云同步。该步骤建立的页面骨架在 V1-29 按最新认知细化为“本地记录全集、我的贡献为已上传派生子集”，不改变本步骤已完成的框架事实 | 未登录占位、入口可达、账号管理、本地记录与我的贡献彼此分离；手机视口无溢出；具体记录筛选、双状态和点赞占位由活动中的 V1-29 验证 | 用户确认 V1 框架足以承接 V2 真实账号能力 |
+
+### V1-E｜最终小程序页面实现
+
+> 区块状态：COMPLETED；V1-31—V1-39 的自动验证、区块级回归与用户授权的统一人工验收已于 2026-08-13 完成。该分支只建立本地待核对状态，不提前接入 V2 真实云端审核、账号或地图发布。以 `网页 ui.html`、`V1-29 UI Design Tokens` 和 Next.js 已验收页面为视觉基线；新增页面内容也必须使用同一设计系统。
+
+| Step | 状态 | 指令 | 自动验证 | 人工验收 |
+| --- | --- | --- | --- | --- |
+| V1-31 | COMPLETED | 在既有开始页与一级导航照搬基础上，将导入 Hero 的“拍摄版面”改为“进入辅助抽赏”，并在其下增加同尺寸“直接上传版面”次按钮；导入 Hero 不使用吉祥物水印。每张“抽赏草稿”胶囊卡及后续生成的抽赏记录卡同步增加取自轻提醒大赏四芒星眼状态的白色水印，固定 `180×143px`、`opacity: 0.432` 与 `-40deg`，相对初版向左 `36px`、向下 `14px`，允许被卡片自身裁切但不露出卡片外，且不遮挡正文和操作命中；直接上传记录不加水印。两个按钮分别使用扫描图标与“圆环内向上箭头”前置图标，图标尺寸和图文间距遵循同一按钮规范。两者必须复用同一拍摄／相册入口且保留流程模式，新增按钮不得隐藏或挤走“抽赏草稿”分区页头。其余安全区、导航、草稿、左滑删除和状态恢复规则不变 | WXML/WXSS 编译通过；导入 Hero 无吉祥物水印；草稿／抽赏记录水印的资产、透明镂空、定位、旋转、透明度、条件渲染、内容层级和不可交互状态，以及双按钮顺序、尺寸、前置图标、图文间距、模式路由、零草稿页头和有草稿可见区域有结构／行为覆盖 | 用户确认无水印导入卡、草稿／抽赏记录卡水印、双按钮与原页面风格、比例和草稿区共存自然 |
+| V1-32 | COMPLETED | 在既有版面拍摄、识别进度、识别结果和确认流程上复用同一页面增加两种模式：识别结果固定增加“IP”胶囊；总票数与已贴票数使用可为空编辑草稿，允许先完全删除再重填，不即时把空值回填为 `1`。辅助抽赏仅在 IP、价格与全部票数完整有效时激活“确认并生成版面”；直接上传在单抽价格下增加“地点与备注”胶囊，只有 IP、地点与备注、价格与全部票数完整有效时激活“上传版面”。总票数必须为正整数；已贴票数允许 `0`，但不得为空、为负数、非整数或超过总票数。所有阻塞提交的输入由同一个字段级校验结果显示与“进入辅助抽赏”同源的外发光晕；选填主题不发光，清空价格保持 `null`。直接上传提交后建立本地待核对上传记录，并显示正文为“后台正在核对。本次提交退出后可导入新的版面。”、只带“退出回首页”的弹窗；不进入目标奖／工作台或伪造云端完成。版面相机四角必须使用真机可渲染的透明 PNG `cover-image` | WXML/WXSS、类型和数据校验测试通过；两种模式贯穿拍摄／识别；清空总票数、清空已贴票数、重新输入、已贴 `0`、非法范围、动态／SP 赏级、光晕与按钮同源门禁和空值快照恢复均有回归；空值不能进入正式票池；IP 手填和未来预填状态可恢复；直接上传创建单条待核对记录且不创建抽赏会话；四个角标资源、结构和对称定位有静态回归 | 用户在真机确认两种入口、缺失字段光晕、字段清空／重填习惯、已贴 `0`、按钮状态、直接上传提交弹窗、四个构图角标和辅助抽赏旧路径均符合预期 |
+| V1-33 | COMPLETED | 一比一照搬“选择目标奖”完整页面：只显示识别出的奖级，保持网页的双列可滚动多选区、固定返回页头、固定主行动、字体图标、间距和状态动效；不恢复已从网页主流程移除的预算、计划抽数或个人价值输入 | 所有识别奖级可选；多选、取消、返回和固定行动不丢状态；不存在预算、回本或价值期望控件；逐页对照网页基线通过 | 用户确认目标奖选择的内容、视觉、动效和固定操作位置与网页基线一致 |
+| V1-34 | COMPLETED | 按用户指定的 React Spring 撕纸教程重做一番赏工作台撕拉：使用右移内部裁切窗口、随位移增宽的浅色纸背和等量反移的前纸形成揭开；外层轨道按当前赏票范围裁切，纸背到达本卡边缘后不覆盖相邻奖票；页面级触摸链读取距离与速度，松手后以阻尼弹簧回弹或甩出。保留 `96px` 基础行程、严格过半门禁、完整 `OPENED` 后单次提交、轻提醒、快捷操作、长按收手、三类吉祥物倾角和普通赏三行空白版式；甩出终点不静止停留，立即快速淡出并清理 | 无 React／React Spring 依赖、WXS 或 3D 残留；三层 `right / width / left` 插值、双层裁切边界、无活动卡提层、速度投影、双向跟手、最终触点重新判定、`50%` 严格阈值、`320ms` 弹簧回弹／甩至 `145%`、未过半零抽取、完整揭露后单次原子抽取／轻提醒、终点 `80ms` 线性淡出并立即复位均有结构、纯函数与页面行为回归；WXML/WXSS 编译通过 | 用户在真机确认前纸被裁掉、纸背增宽和投影形成与参考教程一致的撕纸感，离场严格限制在当前赏票内且快速淡出不悬停，慢拖／快甩／回滑／回弹／完成抽取均稳定且不会误开其他操作，并确认轻提醒与普通赏版式 |
+| V1-35 | COMPLETED | 接入即时概率、Last 包套成本和 `board-outlook-v1.1.0` 局面可能性；结果使用三位小数、固定观察窗口和视觉中心模态，不提供排序、推荐或执行抽取；模态页头占满卡片内容宽度，关闭按钮固定在标题同一水平线的最右侧 | 每次抽取／撤销后概率、余票、累计成本和事件立即重算；目标缺失、空票池与余票不足均无陈旧结果；页头宽度与关闭按钮右侧锚点有结构回归 | 用户确认变化原因、局面事件、“不保证／停止仍可选”语义及关闭按钮位置可理解 |
+| V1-36 | COMPLETED | 一比一照搬“决定收手”后的阻塞式共享选择、继续抽赏、暂不分享并退出、本地草稿保存、赏票拍摄／重拍、地点备注门禁和已提交状态；“决定收手”的长按触发阈值与黑色填充动画统一缩短为 `500ms`，提前释放仍归零且不触发；辅助抽赏共享取证与直接上传的已提交正文统一为“后台正在核对。本次提交退出后可导入新的版面。”；“拍摄赏票”进入即在既有取景框挂载原生相机，页内拍照后照片等比裁切铺满取景框，`212×52px` 主胶囊保持页面水平居中，常驻撤回按钮位于其右侧且不改变主胶囊中线；V1 仅实现已验收前端与本机状态，不接入 V2 真实上传、OCR 核对、账号或地图发布 | `499ms` 释放不触发，`500ms` 读满后打开共享选择，黑色填充与触发时长同步；模态打开时背景和导航不可操作；两条提交路径文案一致；赏票实时预览、页内 `takePhoto`、满框照片、主胶囊独立居中、继续、退出保存、拍摄／撤回、权限恢复、备注门禁和提交后继续／退出路径均通过；无云端写入 | 用户在真机确认 `500ms` 长按节奏、赏票实时取景、页内拍照、照片裁切和胶囊／文字对位自然，并确认整个共享取证流程不会误解为已上传 |
+| V1-37 | COMPLETED | 接入小程序会话与 Storage：为每次版面确认建立稳定六位大写字母数字辅助编码，兼容旧记录确定性派生；保存记录类型、IP、拍摄／提交时间、抽取历史、连续撤销最近 50 抽、同版面状态恢复、识别标签稳定恢复和记录列表。抽赏记录摘要显示精确到分钟的最后修改时间：继续草稿并新增抽取后暂存退出时刷新，原样打开退出不刷新；上传记录固定使用提交生成时间。全部可滚动页面使用原生边界弹性；抽取记录模态继续沿用网页白底分隔行 | 编码格式、会话起始历史基线、无变化退出不更新时间、新增抽取后同 `boardId`／同编码更新时间、上传记录时间稳定、旧记录迁移、两类记录字段与提交覆盖通过；50 轮记录守恒、连续撤销、重启恢复、跨导航返回、滚动／页面状态和越界操作保持一致 | 用户确认六位编码、IP、抽赏记录最后修改时间、上传记录提交时间和抽取统计容易查找且不混淆内部 ID |
+| V1-38 | COMPLETED | 一比一照搬好版地图占位、“我的”主页及所有二级页；识别首页抽赏草稿、本地记录与我的贡献共用三行卡片：类型／六位编码，IP／记录时间，余票／对应抽取统计；第一行不重复 IP。移除拍摄日期、上传日期和记录卡累计花费。抽赏卡随新增抽取后的暂存退出显示最新修改时间，上传卡保持提交生成时间。玩家现场直传提交后进入本地待核对列表；同一记录未来变为已核对／已上传后才进入“我的贡献”，不复制记录 | 二级页返回、固定统计栏、独立滚动、三处记录卡信息一致且第一行无重复 IP、时间精确到分钟、抽赏记录按实际新增抽取刷新、上传记录不显示抽数／花费且时间稳定、已核对且已上传贡献筛选、点赞零值和不可删除门禁通过 | 用户确认识别首页草稿、本地记录与我的贡献的信息层级、时间语义、记录分工和全部页面呈现符合预期 |
+| V1-39 | COMPLETED | 完成小程序全局空、权限拒绝、识别失败、计数矛盾、存储失败／容量、未知 schema、恢复、加载和阻塞模态生命周期；异常页与异常弹窗保留警告、撤回、数据库和垃圾桶等原始语义，只统一为黑底白色描线图标，并全部使用 V1-29 Design Tokens 中以“无法建立票池”为基准的卡片内部垂直节奏 | 已登记边界均有可见处理；语义图标与对应状态逐项匹配；单／双按钮异常卡片的五段间距和动作尺寸有静态回归；无空白页、静默失败、跨页残留模态或状态闪回；WXML/WXSS、类型和平台自动化回归通过；完成后自动遍历全部页面与关键状态，输出按页面命名的截图包和完整清单 | 用户审阅异常状态矩阵并在微信开发者工具或真机抽查恢复路径 |
+
+### V1-F｜跨端质量与小程序发布门
+
+> 区块状态：COMPLETED / CLOSED；V1-F 开发、自动验证、真机 blocker、发布候选、release commit、备案／上架准备、微信送审、审核通过与正式发布均已完成。V2 公共地图、现实版面自动合并、Luna 日常治理、来源审核和公开发布转入 V2 backlog。V1 active plans=`0`。
+
+> V1-F 状态覆盖：下表原状态列是执行时快照，现统一归档。V1-40—V1-45、V1-47、V1-48 及 V1-43A—V1-43H／V1-43J／V1-43K 均为 `COMPLETED / CLOSED`；V1-43I 的 Codex/Luna 治理验证转入 V2 backlog，V1-46 的独立代表性用户研究门由最终用户验收与发布决定取代，二者均不再是 V1 active 或发布 blocker。
+
+执行依赖：先完成 V1-43A；其后 V1-43B 与 V1-43D 可并行，V1-43C 依赖账号基础，V1-43E／V1-43F 依赖账号、位置与识别契约；V1-43J 在这些后端源码和验证完成后先部署、独立验收开发环境，V1-43G 再接入小程序前端，V1-43H 只在私有候选稳定后执行。V1-43I 可以在受限开发环境独立验证 Codex 账号能力，但不能阻塞其他无需人工介入的开发。随后重跑 V1-40—V1-45，完成 V1-46 人工理解度任务，最后由 V1-47 形成新发布候选；V1-48 仍是独立人工决策门。需要外部授权或人工选择的节点可以保留，其他无依赖工作继续推进。
+
+2026-08-22 识别协议与部署收口说明：本轮 V1-43D 的当前实现基线 supersede 早期 2.x／3.x 文案，生产请求使用 `ichi-board-vlm-4.0.0-rc1` + `board-provider-extraction-4.0.0-rc1`；旧 compact/verbose 只作为一次性历史迁移和回归夹具。端到端契约回归覆盖 Provider JSON → AJV → raw-tier Normalize → 完整 RecognitionContract／board-layout → 客户端严格解析；`recognize-board` 与新增 `release-recognition` 已部署并核验。授权黄金样本、E/F/G/H 真机首错层和 4.19MP／2.62MP 比较仍属于人工门，未以夹具代替视觉准确率。
+
+2026-08-22 产品减法覆盖说明：V1-40／43G 删除独立版面校正、客户端四角视觉算法和目标赏级选择。辅助抽赏固定为“实时相机 → 冻结／撤回 → 对勾确认 → 唯一权威预占 → fileID 识别 → 可编辑识别结果 → 直接进入抽赏版面”；新草稿不要求或写入 `targetTiers`，旧记录保持兼容读取。Provider／Schema／Normalize／RecognitionContract 及既有 E/F/G/H 回归不在本轮重构。
+
+2026-08-25 识别确认覆盖说明：V1-40／43C 的有效识别成功点改为“确认快照已构建为完整可恢复本地 draft，并由 `finalize-board-observation` 原子提交私有观察与 quota”。Provider HTTP 200 或可编辑 RecognitionContract 本身不消费额度。识别结果确认必须使用不可变 snapshot、generation token 和 stale-callback guard；本地 Board Builder 与持久化成功后立即显示版面，网络 finalize 以 `pendingFinalization` 在后台幂等执行并可恢复重试。主 IP 与可选主题在 Provider、Normalize、Contract、客户端和 UI 中保持独立。
+
+2026-08-25 叠贴计数覆盖说明：V1-43D 当前生产候选升级为 `ichi-board-vlm-5.0.1-rc1` + `board-provider-extraction-5.0.0-rc1`，以 `boardCountStyle` 和逐级 `countMode` 表达编号票位、层叠回收券、混合与未知；CloudBase 是唯一数学 authority。NIKKE 80/78/2 必须作为不经过模型的 deterministic contract／Board Builder fixture；真实样本必须保留 raw Provider 结论，当前固定模型未 exact 时维持准确率门 `IN_PROGRESS`，不得用 tier 特例放行。
+
+V1-43D 执行时不得读取同表旧 2.x／3.x 指令作为生产规格；当前生产 Prompt/Schema、独立票数观察、null 保留、无奖级重拍和端到端映射均以 4.0 文件及上述收口说明为准。
+
+V1-43G 的当前图片边界同样已收口：客户端约 8 MiB 为性能目标、20 MiB 为 Provider 硬边界，压缩后超过即拒绝；不得把 6 MiB 云函数事件限制套到 Storage 上传，也不得因此拒绝未超 Provider 边界的图片。识别事件、位置来源和 recognition-contract image acquisition 均只接受 camera，album 仅可出现在隔离的历史迁移材料中。
+
+2026-08-25 Simple Semantic 控制变量实验已完成首轮：生产 v4 与独立 Simple Prompt／Schema 对六张真实 Golden 各调用一次，模型、thinking、temperature、response format、图片 URL 与 `max_pixels` 保持一致。Simple 修复空位印刷 A 反例、降低延迟和 Schema 失败，但多个版面的已贴票数显著退化且 NIKKE G—K 仍不正确，结论为 `MIXED RESULT`。按实验门禁停止追加稳定性／Thinking 调用，不部署、不改变生产指针；V1-43D 的准确率门继续 `IN_PROGRESS`。
+
+2026-08-26 Universal Scene Model 控制变量实验已完成首轮：生产 v4 与独立 Scene Prompt 对五张用户指定真实原图各调用一次，且复用同一生产 v4 Schema、AJV、Normalize、RecognitionContract 与 CloudBase 数学。Scene 显著改善 printed-tier-letter pasted 判别并改善巨人纵向空栏，但没有修复 NIKKE dense overlap／multi-run 或 Pokémon vertical，且世界之外从 production B/C/D/E exact 退化为 Scene AJV failure，四个 SP raw items 仍被合并。结论 `NO BENEFIT / REGRESSION`；按门禁停止 stability，不继续调 Prompt、不部署，V1-43D 继续 `IN_PROGRESS`。
+
+2026-08-26 Evidence Primitive + Cloud Resolver 隔离实验已完成首轮：先以 20 项确定性测试验证 remaining label、first-open、open-count、pasted-count、unknown/conflict、range、null、A1/A2、SP 与 RecognitionContract；再对同五张原图各执行 Frozen Hybrid H0／Evidence H1 一次。双方 JSON/AJV 均 5/5，但 H1 total/pasted/remaining/tier exact 为 12/12/9/5（分母 58），低于 H0 的 45/38/30/30；pasted wrong-non-null 20→17 的同时 coverage 100%→50%，且出现 16 个多原语冲突、Snow Miku printed-letter 回退、Pokémon／世界之外退化和四 SP 合并。Quick gate 失败，按规则停止 3-run、production v4 final control 与 RC dual stack，不调 Prompt、不部署；V1-43D 继续 `IN_PROGRESS`。
+
+| Step | 状态 | 指令 | 自动验证 | 人工验收 |
+| --- | --- | --- | --- | --- |
+| V1-40 | COMPLETED | 重跑完整网页批准基线与微信小程序最终端的双入口端到端对照：辅助抽赏覆盖首次登录引导、首次相机／位置授权、页内拍摄、冻结／撤回／对勾直接识别、唯一预占、中文 IP／可选主题、识别结果人工核对、私有保存、直接进入版面、一抽一记、撕拉、概率、撤销、收手、草稿恢复与删除；识别首页导入卡仅显示每日额度提示，草稿区使用不被左滑手势截获的原生纵向惯性／回弹滚动；仅上传版面复用同一账号、权限、相机和配额路径，完成私有提交、状态恢复与退出，不创建抽赏会话 | 两条路径、首次授权与后续免重复提示、相机取景与裁切结果一致、实时／冻结控制几何稳定、过期相机错误不显示恢复层、票数字段清空／重填与已贴 `0`、重复点击、异常恢复、待上传／待核对／已上传分层、本机／云端同步和删除全链路通过；草稿多条时可自由上下滚动、边界自然回弹且横向左滑仍只影响当前卡片；不存在相册入口；测试明确断言 V1 无公共地图写入 | 用户在真机执行两条核心流程，并抽查首次登录、资料更新、相机、权限、位置、草稿滚动与私有保存披露 |
+| V1-41 | COMPLETED | 在新增账号、配额、私有保存和失败状态后，重跑完整网页批准基线与小程序代表性设备的逐页视觉与动效回归，保持 V1-E 已验收页面与 Design Tokens | 自动截图／几何／结构回归覆盖新增状态与批准页面；窄屏和常见手机无溢出；平台差异均记录且没有借后端接入重做 UI | 用户逐页检查账号、额度、保存／失败状态和原有页面，确认没有视觉退化 |
+| V1-42 | COMPLETED | 重跑网页与小程序可访问性和可操作性抽查，并覆盖登录／账号异常、额度耗尽、上传进度、私有保存失败、重试与删除确认 | 自动检查与平台语义断言无 P0 问题；状态不只靠颜色；读屏、文字放大和触控误差下仍能完成关键任务 | 用户抽查双入口、账号、配额、删除、抽赏和异常恢复的可读性与触控 |
+| V1-43 | COMPLETED | 在现有 CloudBase 代理上迁移为 `qwen3.7-flash` 单模型、单次整版多模态识别；客户端把长边控制在约 `2400px`、JPEG quality 约 `85`，二进制短暂直传私有 `recognition-temp/`。云函数事件只携带任务绑定 `fileID`，函数以 `getTempFileURL(maxAge=300s)` 获得 HTTPS URL并直接作为百炼 `image_url`，彻底删除 download Buffer → Base64 → Data URL 链。模型使用非思考 JSON Object 和约 4MP 视觉上限；提供方草稿经 AJV 和 Normalize 转成小程序稳定契约。完成后立即双端删除，异常遗留由 COS 最短 `1` 天过期兜底；图片和签名 URL不写数据库、日志、备份或持久引用 | 静态测试证明请求不含 Buffer／Data URL；授权样本通过固定模型、提示、Provider Schema 和图片预处理版本评估；超时、取消、临时 URL、上游、JSON、Schema 和低置信路径失败闭合；正常链零图片残留；分段耗时可计算 P50/P90/P95；模型输出不能直接写私有候选或公共数据 | 用户以授权真实版面验收 IP、赏级完整度、票区归属、票位状态、人工校正、P95、成本和失败恢复 |
+| V1-43A | COMPLETED | 固化 V1 后端产品与隐私契约：可信账号必须在新版面拍摄与权威识别预占前完成；首次使用以“使用微信登录”引导完成头像昵称资料；首次进入拍摄时分别请求相机和位置权限，已授权后不重复提示；普通账号北京时间每日 5 次版面识别；照片绝不持久化；仅上传版面保存用户确认的初始结构化快照，辅助抽赏再保存赏票事实并以减法生成最终快照；记录／账号删除分别在 `24` 小时／`7` 天内完成；界面统一使用“我的记录／我上传的版面”和“待上传／待核对／已上传”，其中已上传不等于 V2 地图公开 | 数据流、首次登录状态机、位置语义、权限矩阵、结构化保留／删除表、差量守恒和失败语义无冲突；相机与位置权限独立；所有会公开的数据仍受 V2 门禁；披露文案明确照片不保存、私有结构化保存不等于地图发布 | 用户确认需求、技术设计、任务拆分和披露文案准确 |
+| V1-43B | COMPLETED | 建立 CloudBase 最小账号基础：可信微信身份换取、内部 `accountId`、服务端会话、退出、会话恢复、账号异常和删除入口；账号在任何新识别与位置采集前完成，昵称／头像只作资料，不参与鉴权。资料未完成时，首次启动或辅助抽赏／仅上传任一入口显示同一个“使用微信登录”引导；任一路径授权头像与昵称后立即更新“我的”页和共享完成态，后续启动与另一入口不重复引导；再次点击头像或用户名可以通过带返回键的更新卡重新授权。头像临时 URL 失效时使用 owner-scoped 私有 fileID 持续显示，但不能改变内部账号、ICHI ID、记录归属或配额 | 伪造身份或 `ownerAccountId` 被拒绝；跨账号私有记录隔离；会话过期、重开、退出和删除可追溯；未建立账号不能开始新识别；内部 ID 不在公开 UI 或日志泄露；首次资料完成后不重复引导；双入口共用完成态；页面切换后头像昵称不回退；重复资料授权只更新展示字段，所有权保持不变 | 用户提供／授权 CloudBase 环境，并在真机完成首次登录引导、双入口共享、头像昵称授权、页面切换／重开不丢头像、再次授权更新资料、退出和删除任务 |
+| V1-43C | COMPLETED | 实现普通账号北京时间每日 5 次有效识别配额、任务幂等、原子预占／扣除／释放、卡住预占恢复和全项目调用量／费用熔断；辅助抽赏与仅上传版面共用额度，左上角分数环只展示服务端剩余／上限。两个入口点击后先只读检查额度，耗尽时不进入位置、相机或拍摄；冻结照片后的第二次对勾才执行唯一权威预占，完整可恢复版面成功建立后才正式扣减 | 两个入口均覆盖只读额度门；耗尽时不请求位置／相机、不创建 reservation；入口检查不预占、不扣减；并发请求不超扣，重复点击不重复扣；只有 finalize 成功扣一次，取消、权限／网络／提供方／Schema／Normalize／本地生成失败均释放；单任务只有一次模型调用；跨日与时区边界、熔断和剩余次数通过 | 用户确认额度文案、耗尽弹窗和费用上限 |
+| V1-43D | COMPLETED | 审核并锁定 `ichi-board-vlm-3.0.0-rc1` + `board-provider-extraction-3.0.0-rc1`：`qwen3.7-flash` 只返回主版面、中文主 IP、原始 IP 文字、可选主题、单抽价格、A—Z／SP1—SP4、奖品款式、票位总数／已贴／unknown、逐排计数和总数证据来源；不要求生产坐标或推理。总票数与已贴数是独立观察值，缺证据的已贴数为 null，空坐标数组、实体票容量和商品款式数都不能替代已贴数；只有完整逐排证据明确无 open／unknown 才判全贴。A1/A2、B1/B2 等所有字母分层并入所属字母，独立特殊赏映射 SP1—SP4。服务端 AJV 拒绝额外字段，Normalize 优先复算守恒的逐排证据、规范常见外文 IP 别名并拆分主题，同时负责计数冲突、问题动作和全部领域派生；已确认 pasted 即使有 unknown 也进入可编辑草稿，unknown 只让余票未决。模型不返回概率、分类或提交资格。主链 `enable_thinking=false`、`json_object`、`temperature=0`、`max_pixels=4194304`，不设 `max_tokens`；识别事件和位置来源均只接受 camera，生产链拒绝 album。`qwen3.7-plus strict` 仅作为待验证兜底，未通过图像接口、黄金样本、费用门和用户批准前保持关闭 | 机器文件可解析且版本互锁；Prompt、Provider JSON、AJV、Normalize、RecognitionContract、客户端解析和 UI 映射使用同一语义字段；逐排不守恒、聚合冲突、非法类型和缺失必要结构被拒绝或安全归一；SP1—SP4、中文 IP／主题分离、null 保留、局部识别和人工校正保持；分段耗时与 token 可诊断；黄金集比较 IP、主题、漏赏、票区归属、总数／已贴数、修正量、稳定性、P50/P90/P95 和成本；图片提示注入不能改变任务；正常链不出现第二模型调用；album 反例在云函数、领域和契约 Schema 测试中拒绝 | 用户按“发送／返回／后处理”审核并用授权真实单版面／多版面照片批准模型、提示、Schema、准确率和性能基线 |
+| V1-43E | COMPLETED | 实现可信账号下的私有结构化观察：新版面拍摄在进入相机前取得 GCJ-02 位置、精度、时间和同意版本，模型识别同时要求相机来源、有效位置和成功权威预占。用户确认后幂等保存模型原始结构化草稿、最终校正、字段差异、版本、`observedAt`、`serverReceivedAt`、位置快照和处理状态。仅上传版面的当前最终快照等于初始快照；辅助抽赏另保存小程序历史、赏票结构化事实和用户修订，并按规范奖级确定性相减；不保存照片、不公开地图 | 无账号或无位置时不能开始新版面拍摄及权威预占；拒绝位置不扣额度并提供恢复路径；未确认或取消不沉淀；确认重试不重复；跨账号读取和客户端公共写入被拒绝；数据库、日志和存储无照片 | 用户确认首次位置授权、后续不重复提示、照片不保存披露、本人可见状态、赏票核对、差量结果、冲突处理和删除结果 |
+| V1-43F | COMPLETED | 将六位大写字母数字码升级为服务端分配的观察记录码：每次新确认生成新码，同草稿／重试复用；旧本机码迁移并建立别名，不改变内部 `recordId`／`boardId`；多人同版面允许保留多个码 | 服务端唯一索引／冲突重试、幂等、旧记录迁移、离线临时候选回写和查找通过；短码不能读取私有记录、改变归属或参与现实版面去重 | 用户确认六位码用于搜索与溯源，不是密码、所有权或现实版面指纹 |
+| V1-43G | COMPLETED | 接入并修复小程序相机／资料：资料未完成的首次启动显示“使用微信登录”，授权后“我的”页显示微信头像昵称，后续点击头像或用户名可再次授权更新；账号管理不展示内部可信上下文或绑定状态。新版面入口先完成账号／只读额度、位置和相机权限门，再挂载页内相机；第一次快门冻结照片并显示对勾与常驻撤回槽，第二次对勾执行唯一权威预占并进入既有 fileID 识别链。识别页以四个真实事件驱动 `0—15/15—35/35—80/80—100` 目标进度，显示进度按帧平滑追赶但不越过未完成事件；Canvas 绘制浅灰底环与圆头黑弧，结果就绪后必须实际完成 `100%` 和最终勾选才通过一次性完成门跳转。识别成功保留 IP／主题／票数字段人工核对，确认后直接进入抽赏版面。二进制仍直传任务绑定私有对象，事件只传 `fileID`，不恢复 Base64 | 首次引导只在资料未完成时出现；再次授权可更新展示资料但不能改变账号归属；额度耗尽不进入位置／相机／拍摄；已授权相机／位置不重复弹窗；权限拒绝不扣额并有设置入口；tap→camera init→ready 可诊断；目标突变不造成显示跳变，进度不由固定计时器提前越界，`72/98 → 100` 均完整可见且只跳转一次；失败、返回和卸载不补到 `100%` 并取消帧；实时／冻结控制几何稳定；撤回不扣额、确认只预占一次；任一失败不显示演示 IP 或票数 | 用户在真机确认首次登录、再次更新资料、账号、额度、两条入口、取景范围、环形进度与节点三态、相机／位置授权和记录状态 |
+| V1-43H | COMPLETED | 为 V2 冷启动保留最小可迁移字段与离线预检：账号／公开授权状态、位置完整度、结构化来源完整度、模型与用户差异、守恒结果、`observedAt`、`serverReceivedAt`、重复／冲突原因和隐私状态；只生成私有资格报告，不实现现实版面自动合并、Luna 治理或公共发布 | 资格报告可由结构化输入重放；较早观察不会仅因时间而被拒绝，缺授权、缺位置、冲突、无法解释或隐私不合格候选不会误标可公开；仓库不存在 V1 公共地图写接口或客户端公共集合权限 | 用户确认 V1 积累的是带观察时间的历史结构化候选，V2 可展示时间但不会把它们说成实时库存 |
+| V1-43I | BACKLOG_TRANSFERRED | 在用户真实 Codex 账号和受限开发环境验证计划中的治理自动化能力：可用定时任务、实际可选 Luna 模型、CloudBase MCP 连接、凭据持续性、无人值守执行、审批行为、最小权限、日志、失败通知与重试；只读测试队列并写建议，不接触生产公共集合 | 保存一次完整测试记录，证明任务在无人交互时按计划运行、只能读取脱敏候选并写建议；中断、凭据失效、MCP 失败和权限越界均不会发布或损坏数据 | 用户登录真实 Codex 账号、配置受限 CloudBase 测试环境与 MCP 后，确认模型、权限、调度和失败通知实际可用 |
+| V1-43J | COMPLETED | 在 V1-43A—V1-43F 的仓库代码与自动验证通过后，先把账号、资料、配额、识别任务、观察、本人记录、删除与维护后端部署到绑定的 CloudBase 开发环境并独立验收；该步骤是 V1-43G 前置，不等待前端改造，不创建 V2 公共地图 | 资源、索引、私有权限、非秘密种子、事件函数和定时触发器与仓库清单一致；独立调用覆盖身份、幂等、配额摘要／预占、失败闭合、本人隔离、删除与维护；数据库、日志和存储无照片与公共写入口 | 用户批准精确部署清单；部署后确认目标环境资源可用于后续前端联调 |
+| V1-43K | COMPLETED | 建立独立实体赏票真实性核验：复用唯一生产入口 `recognize-draw-tickets` 与 `PrizeTicketVerificationProviderV1`；首次 camera evidence 的系统相册保存尝试与传输预处理并行，保存尝试结束且上传并持久化 PENDING 后进入“我上传的版面”，Qwen 核验作为可恢复后台任务运行。CloudBase 从已同步 authoritative draw events 重建 expected，确定性 canonicalize/count/exact reconcile，并保存不可变 submission version；v1 原始证据保留，v2+ 相册 replacement 不覆盖首次 metadata | PENDING 首次提交、相册保存等待期间黑色提交圆钮显示旋转加载、慢 Provider 不阻塞离页、VERIFIED/MISMATCH/NEEDS_REVIEW/INVALID_EVIDENCE/PROVIDER_FAILED 分离、原图技术重试、v2 相册重传、旧结果不覆盖新版、幂等 retry 和真实线上 Provider latency 均可验证；Qwen request 不含 expected counts/draw history；数据库/日志无临时 URL 或密钥 | 用户以真机 camera-only 确认原图进入系统相册，提交等待态不变白，进入上传列表后立即看到待核对，稍后状态只在“我上传的版面”变化；核验失败可重传、技术异常可复用原图重试，真实 CloudBase → Qwen 链可由 RequestId 与 latency 证明 |
+| V1-44 | COMPLETED | 重做版面语法、识别、账号、私有观察和身份契约审计：固定 `accountId`、`recordId`、`boardId`、六位记录码与未来 `boardInstanceId` 的不同职责，并核对 A—Z、SP1—SP4、编号款式合并、其他特殊赏级、辅助区块和未知降级 | schema 版本、A1／A2 → A、B1／B2 → B 并依此覆盖到 Z，SP1—SP4 顺序映射、超额特殊赏原文保留、推导门禁、身份权限、同记录幂等、两类记录隔离、旧数据迁移和服务端码冲突通过；形成 V2 防污染清单但不实现公共写入 | 用户确认身份、记录、现实版面和发布状态不会混淆 |
+| V1-45 | COMPLETED | 重跑性能、弱网／离线、定位与识别超时、临时图片请求、配额并发、Storage 容量／损坏／迁移、重启恢复、50 抽撤销、本机／云端删除和费用压力测试；部署并验证 CloudBase 定时维护：预占释放、卡住任务协调、私有资格报告与结构化删除重试 | 已建会话离线可继续；新版面识别与私有保存可安全重试；临时图片请求 p50／p95、配额与费用、无照片残留和异常回退达到批准要求；关键维护不依赖 Codex 运行，重复执行保持幂等 | 用户确认连续现场使用、弱网、重开、配额耗尽和删除无明显阻力，并查看一次定时任务运行证据 |
+| V1-46 | SUPERSEDED | 用代表性用户任务做可用性与理解度测试，重点验证两条入口、账号与位置先行、每日 5 次额度、“我的记录／我上传的版面”、待上传／待核对／已上传、本机草稿／私有后端候选／地图公开、六位码／账号归属／现实版面身份的区别 | 记录完成时长、放弃点、误触和术语误解；不存在把“已上传”误认为地图公开、把短码当密码／所有权或把历史候选当实时库存的关键误解 | 用户决定 Continue、Adjust 或 Stop，并确认发布前必须修复的问题 |
+| V1-47 | COMPLETED | 修复 V1-F 验收问题并形成新的微信小程序发布候选；重新冻结网页基线、平台差异、账号／隐私／配额／私有结构化数据边界、运维与回滚清单 | 网页质量门、微信构建／真机、识别黄金集、账号权限、配额、结构化观察与差量、无照片残留、Storage、删除、成本、契约和跨端回归全部通过；旧 2026-08-13 发布证据只作前置基线，新候选无 V2 公共写入 | 用户批准 V1 小程序发布候选及 CloudBase 生产配置 |
+| V1-48 | COMPLETED | 复盘 V1 决策门，决定深化 V1 或启动 V2 研究 | 指标、访谈和风险证据齐全，不用主观热情替代 | 用户明确作出下一阶段决定 |
+
+## V2 旧计划（SUPERSEDED / HISTORICAL MAPPING SOURCE）
+
+> 本节只作为 `OLD_PLAN_TO_V2_PLAN_MAPPING` 的历史输入，不再拥有执行权；上方重建计划为唯一 V2 实施门。
+
+#### Historical V2-A｜机会与合法供给
+
+> 区块状态：LOCKED；等待 V1 决策门。
+
+| Step | 状态 | 指令 | 自动验证 | 人工验收 |
+| --- | --- | --- | --- | --- |
+| V2-00 | LOCKED | 复用 V1-F 已批准的账号、私有观察与删除基础，冻结 `account-map-notification-share-v2.0.0` 的公开增量：公开 `ICHI ID`、昵称／头像、公开贡献者标识、来源身份、现实版面匹配、审核／发布、提醒订阅和分享字段；把“私有提交”“提交贡献”“社交分享”“地图发布”固定为独立状态，明确不建设论坛式社区 | V1 私有记录不能因版本升级自动公开；内部 ID 不公开，公开资料可控；游客可浏览地图；所有公共贡献绑定既有认证会话；提交贡献与社交分享互不触发；核对通过不等于已发布 | 用户批准 V2 公开账号资料、提醒、分享、贡献归属和非社群边界 |
+| V2-01 | LOCKED | 用 30—50 条公开案例研究用户如何发现、判断和放弃好版线索，只保存研究所需信息 | 样本有来源、时间和使用目的记录，不进入公开产品库 | 用户确认机会仍成立 |
+| V2-02 | LOCKED | 访谈用户在出发前与到场后的搜索行为，验证“线索不是库存”的理解 | 访谈记录可追溯，结论区分事实与假设 | 用户批准 V2 核心场景 |
+| V2-03 | LOCKED | 评审平台条款、版权、个人信息、缓存、回链、删除、微信登录、头像昵称填写、订阅消息模板／类目、朋友圈／图片分享和相册权限要求 | 每条候选数据流及平台能力有许可状态、审核前提、失败降级和停止条件；不把后台定位、长期订阅或第三方直发当作默认可用能力 | 用户确认 V2 可用的平台能力与合规边界 |
+| V2-04 | LOCKED | 证明至少一条合法、稳定、可下线的数据供给路线 | 授权或明确许可证据可保存；删除请求可执行 | 用户批准 V2 进入产品设计；否则停止 V2 |
+
+#### Historical V2-B｜数据与审核基础
+
+> 区块状态：LOCKED；仅在 V2-A 整区块通过人工验收后解锁。
+
+| Step | 状态 | 指令 | 自动验证 | 人工验收 |
+| --- | --- | --- | --- | --- |
+| V2-05 | LOCKED | 在 V1 Account、WeChatIdentity、Session、RecognitionJob、ObservationCandidate 与 DrawSubmission 上增量冻结 Profile、ContributionDraft、BoardInstance、BoardVersion、BoardSnapshot、BoardLead、WatchRule 和 NotificationDelivery 字段 | 数据字典覆盖多个结构化观察到同一现实版面的归因、历史候选重验、观察时间展示、审核、分享和删除；六位记录码不能作为账号键或现实版面指纹；不补建 V1 照片证据 | 用户批准公开账号资料、提醒、分享、线索与结构化溯源语义 |
+| V2-06 | LOCKED | 扩展既有 CloudBase 环境、权限与审计，增加现实版面、版本、审核、公开快照、关注规则和消息投递；公共集合只允许受控发布事务写入 | V1 私有数据与公开数据权限隔离；客户端、千问和治理模型都不能直接写公共集合；版本、下线、删除和审计可追溯 | 用户批准 V2 公共云资源与发布安全边界 |
+| V2-06A | LOCKED | 在既有小程序会话上增加公开 `ICHI ID`、资料编辑、地图贡献状态和必要跨端映射，不重新实现 V1 登录基础 | 资料变化不改变归属；内部账号主键不公开；地图贡献、公开资料和本人私有记录权限隔离 | 用户在真机完成公开 ID、资料、本人贡献和账号删除扩展任务 |
+| V2-06B | LOCKED | 实现账号资料页：显示可复制的公开 `ICHI ID`，支持编辑昵称、使用微信头像填写能力选择／更换头像及恢复默认资料；内部 `accountId` 永不展示或编辑 | 复制值只包含公开 ICHI ID；昵称与头像经过格式、内容安全、上传和缓存失效校验；拒绝头像、失败重试和默认资料不阻止核心任务；资料变化不改变任何贡献归属 | 用户真机完成复制 ICHI ID、改昵称、换头像、拒绝／失败恢复并确认身份稳定 |
+| V2-07 | LOCKED | 将玩家共享取证、玩家现场直传和门店／店员直传接入账号门禁、受控相机／相册、位置授权和私有证据上传，以 `ownerAccountId + boardId` 幂等创建可取消的私人核对草稿与后台任务 | 三类个人提交都绑定认证账号；跨账号同 `boardId` 不会互相覆盖；拒绝登录／权限、取消、弱网、上传失败和提交状态未知不产生公共数据或重复草稿；位置可手填或退出 | 用户在手机端完成三类提交、取消与断网恢复路径 |
+| V2-08 | LOCKED | 建立赏票计数 OCR 离线评估集与本机抽取记录差异比对，并测量上传、OCR、比对和状态写入的端到端 p50／p95 时延，为后台队列、重试与告警提供基线 | A—Z／SP1—SP4／OTHER、编号款式、遗漏、重复、低置信、成本和不一致案例可复核；OCR 不自动改写记录或发布；时延不会改变提交后立即进入后台核对的用户路径 | 用户抽查后台核对与不匹配结果 |
+| V2-09 | LOCKED | 实现账号下的核对状态、私有贡献草稿、本人贡献列表、服务端审核与地图发布隔离：用户提交后不出现核对结果／待发布预览页；核对通过只保存当前版面状态，逐抽记录和赏票证据不公开 | 各账号只能读取、撤回和删除自己的私有贡献；未同意、未最终确认、低置信或冲突字段阻止公开；核对通过、待审核、已发布、需重拍、提交未知均可追溯；模型或客户端不能直接发布 | 用户完成本人贡献查询、提交、后台核对、重拍、撤回、删除和已发布／拒绝状态任务 |
+| V2-10 | LOCKED | 实现历史观察时间展示：不足 24 小时按小时、1—6 天按天、7 天及以上显示精确日期时间；详情始终展示 `observedAt`、时区、来源和“历史现场记录，不代表当前库存”，并按最新已知观察排序 | 相对／绝对时间边界、缺失时间、时区和排序测试通过；任何记录都不会仅因较早而自动归档或被称为实时状态 | 用户确认观察时间文案清楚，旧记录不会被误解为当前库存 |
+| V2-11 | LOCKED | 实现原帖删除、售罄、退出和权利人下线流程 | 下线后公开查询不可见且保留必要审计 | 用户演练一次完整下线 |
+
+#### Historical V2-C｜地图产品
+
+> 区块状态：LOCKED；仅在 V2-B 整区块通过人工验收后解锁。
+
+| Step | 状态 | 指令 | 自动验证 | 人工验收 |
+| --- | --- | --- | --- | --- |
+| V2-12 | LOCKED | 在 Next.js 网页完成地图、列表、筛选、线索详情、来源提示和最小贡献者标识低保真；不创建用户主页、帖子、评论或关注入口 | 所有线索卡都显示来源、历史观察时间、非实时提示、允许公开的贡献者标识与必要回链；不泄露内部 `accountId`；网页路由无孤立状态或社群入口 | 用户批准网页低保真、贡献归属表达和误解防护 |
+| V2-13 | LOCKED | 接入地图服务并实现地点置信度门槛 | 低置信地点不上图；拒绝定位后仍可按城市浏览 | 用户确认地图权限体验 |
+| V2-14 | LOCKED | 实现列表、地图、系列和时间筛选 | 筛选组合、空状态、过期和删除状态测试通过 | 用户完成找到相关原帖的任务 |
+| V2-15 | LOCKED | 实现线索详情、来源回链和固定非实时提示 | 来源无法访问时状态明确，不伪造摘要 | 用户确认不会误读为实时库存 |
+| V2-16 | LOCKED | 在 Next.js 网页与必要的平台适配环境验证地图核心流程和差异 | 网页字段、筛选和下线结果一致；平台差异有记录 | 用户批准网页体验 |
+| V2-16A | LOCKED | 在地图筛选／详情和“我的 → 提醒设置”实现关注规则：目标 IP／系列、明确选择的关注地点、半径、可选筛选、启停、频率与删除；打开小程序时可用当次前台定位执行附近匹配，但不持续后台追踪用户 | 关注规则只绑定认证账号；定位拒绝可手选地点；坐标、半径、筛选、时区和删除测试通过；关闭小程序后不会声称按实时位置触发 | 用户真机完成新建、编辑、暂停、删除关注规则和定位拒绝降级 |
+| V2-16B | LOCKED | 接入微信小程序订阅消息：只在用户主动开启提醒时请求许可；新版面发布／有效更新后按关注规则匹配、去重、频控并发送，许可不可用时降级为应用内提醒 | 允许、拒绝、取消、许可耗尽、模板失败、重复更新、静默时段、过期／下线和点击回跳均有测试；无许可不发送，不反复索权，不把一次订阅当永久授权 | 用户真机完成授权、拒绝、收到一条匹配提醒、回跳详情和关闭提醒任务 |
+| V2-16C | LOCKED | 为已发布地图详情实现微信会话／群转发与平台允许的朋友圈入口，分享路径只引用可撤销的公开线索；平台不支持时提供复制安全链接或明确降级；公开详情转发不要求登录 | 分享标题、图片、路由参数、未登录打开、过期、下线和删除均回归；分享快照不会绕过当前审核状态或泄露内部账号、私有位置和证据 | 用户真机完成游客地图分享、接收方打开和下线后再打开任务 |
+| V2-16D | LOCKED | 在抽赏记录结束态实现本地 Canvas 结果海报：固定模板、隐私字段选择和预览；使用 `wx.showShareImageMenu` 分享到微信好友／群、朋友圈、收藏或下载，使用保存相册作为小红书等第三方平台的手动发布路径；游客本机记录也可生成，不自动代发 | 固定尺寸和长文本布局通过像素／快照测试；未登录仍可从本机记录生成；默认隐藏累计花费、精确门店、账号资料与六位记录码；目标基础库兼容、取消、相册拒绝、生成失败和微信图片面板不可用均不改变记录或创建贡献；第三方平台不出现虚假直发入口 | 用户以游客和登录状态分别生成海报、检查字段、分享到微信／朋友圈，并保存相册后手动用于小红书发布 |
+
+#### Historical V2-D｜封闭试验与决策门
+
+> 区块状态：LOCKED；仅在 V2-C 整区块通过人工验收后解锁。
+
+| Step | 状态 | 指令 | 自动验证 | 人工验收 |
+| --- | --- | --- | --- | --- |
+| V2-17 | LOCKED | 建立认证、账号归属、资料审核、来源、抽取、审核、新鲜度、提醒、分享和删除监控 | 越权、归属异常、消息误发／重复／失败、分享失效、失败和超时有告警；登录、资料修改、提交、提醒许可／投递、撤回、删除和下线审计可查询 | 用户批准运营可观测性 |
+| V2-18 | LOCKED | 用授权样本或人工策展开展封闭试验 | 记录发现耗时、点击回链、关注规则完成率、提醒授权／送达／回访、分享生成／打开、过期误解和删除时效 | 用户决定 Continue、Adjust 或 Stop |
+| V2-19 | LOCKED | 修复封闭试验问题并完成公开发布检查 | 合规、下线、来源、隐私和双端回归全部通过 | 用户批准或拒绝 V2 公开发布 |
+| V2-20 | LOCKED | 复盘 V2 与公共贡献需求，决定是否启动 V3 研究 | 贡献意愿、供给质量和误解风险证据齐全 | 用户明确作出 V3 决策 |
+
+## V3：可信票池社群
+
+> V3-A 只有在 V2-D 完成且 V2-20 明确批准后，才能整区块转为 `READY`。
+
+### V3-A｜身份、证据与治理研究
+
+> 区块状态：LOCKED；等待 V2 决策门。
+
+| Step | 状态 | 指令 | 自动验证 | 人工验收 |
+| --- | --- | --- | --- | --- |
+| V3-01 | LOCKED | 收集 20—30 组经许可的版面、赏券和编号样本，研究字段用途 | 样本授权、敏感级别和保留期限有记录 | 用户批准研究范围 |
+| V3-02 | LOCKED | 验证票池身份字段能否区分系列、批次和具体票池 | 误合并、误拆分和未知案例被明确记录 | 用户决定身份能力是否足以继续 |
+| V3-03 | LOCKED | 设计私人计算与公共贡献的双层流程 | 私人点击永不自动进入公共写入 | 用户批准“随手记，集中验” |
+| V3-04 | LOCKED | 定义证据等级、审核状态、影响等级和公开标签 | 每种状态有进入、退出和公共影响规则 | 用户批准治理术语 |
+| V3-05 | LOCKED | 完成隐私、内容治理、申诉、删除和反滥用评审 | 每类证据有存储、公开和删除策略 | 用户批准进入系统设计；否则停止 V3 |
+
+### V3-B｜事件与证据基础
+
+> 区块状态：LOCKED；仅在 V3-A 整区块通过人工验收后解锁。
+
+| Step | 状态 | 指令 | 自动验证 | 人工验收 |
+| --- | --- | --- | --- | --- |
+| V3-06 | LOCKED | 评估事务数据库、对象存储、队列和审核后台架构 | 并发、回退、成本和数据删除基准可比较 | 用户批准 V3 技术架构 |
+| V3-07 | LOCKED | 定义 PoolObservation、Contribution、EvidenceAsset 和版本事件模型 | 数据字典覆盖来源、时间、身份、证据和审核 | 用户批准数据模型 |
+| V3-08 | LOCKED | 建立追加式事件和不可静默覆盖规则 | 修改与删除只能产生新事件或受控失效 | 用户确认历史可追溯 |
+| V3-09 | LOCKED | 实现私人会话选择轮次并创建上传草稿 | 草稿不会改变公共状态；取消后不遗留公开数据 | 用户完成集中贡献任务 |
+| V3-10 | LOCKED | 实现产品内拍摄挑战与相册降级等级 | 相册证据自动降低等级；权限拒绝有退出路径 | 用户批准拍摄负担 |
+| V3-11 | LOCKED | 实现原图上传、生命周期、权限和删除 | 未授权访问被拒绝；过期和主动删除可验证 | 用户演练图片删除 |
+
+### V3-C｜识别、脱敏与审核
+
+> 区块状态：LOCKED；仅在 V3-B 整区块通过人工验收后解锁。
+
+| Step | 状态 | 指令 | 自动验证 | 人工验收 |
+| --- | --- | --- | --- | --- |
+| V3-12 | LOCKED | 建立奖项与数量识别评估集和模型基线 | 准确率、漏检、成本和失败类型可复核 | 用户批准模型仅作为草稿生成器 |
+| V3-13 | LOCKED | 实现识别草稿与私人点击记录差异比较 | 所有差异可见；模型结果不直接覆盖用户记录 | 用户完成修正流程 |
+| V3-14 | LOCKED | 实现二维码、活动码、票号和个人信息脱敏 | 固定敏感样本不出现在公开图；误遮挡可复核 | 用户批准公开证据预览 |
+| V3-15 | LOCKED | 实现图片感知哈希和跨提交重复检测 | 相同、裁切和轻微变换样本进入重复或复核状态 | 用户确认误报处理 |
+| V3-16 | LOCKED | 实现机器规则审核 | 守恒、身份、时间、重复和差异规则有明确原因码 | 用户抽查通过、冲突和驳回案例 |
+| V3-17 | LOCKED | 实现用户确认与修改痕迹 | 原识别、用户修改和差异均可审计 | 用户确认透明度 |
+| V3-18 | LOCKED | 实现内部人工审核台和高影响队列 | A 赏、Last、冲突和低质量账号能提高审核等级 | 用户完成代表审核任务 |
+| V3-19 | LOCKED | 实现申诉、纠错、删除和账号退出 | 每条流程都有状态、时限和审计结果 | 用户演练完整申诉与删除 |
+
+### V3-D｜公共版本链
+
+> 区块状态：LOCKED；仅在 V3-C 整区块通过人工验收后解锁。
+
+| Step | 状态 | 指令 | 自动验证 | 人工验收 |
+| --- | --- | --- | --- | --- |
+| V3-20 | LOCKED | 实现从可信基线应用已验证抽取事件生成新版本 | 守恒、非负和基础版本检查通过 | 用户复核一条完整版本链 |
+| V3-21 | LOCKED | 实现基线已变化时的并发检测 | 两个并发提交不会静默覆盖或产生负数 | 用户确认冲突提示 |
+| V3-22 | LOCKED | 实现无法排序事件的冲突状态 | 冲突不会改变公共版面，并可等待新证据 | 用户完成冲突处理任务 |
+| V3-23 | LOCKED | 实现驳回与作废 | 驳回无公共影响；作废撤销影响并保留审计 | 用户确认公共状态恢复正确 |
+| V3-24 | LOCKED | 实现后续事件重放和无法安全重放时的暂停 | 依赖链测试覆盖成功重放和暂停两类结果 | 用户批准回退策略 |
+| V3-25 | LOCKED | 实现公共观察页的时间、证据、身份和非实时提示 | 页面不出现“保证真实”或“实时库存” | 用户确认可信但不过度承诺 |
+
+### V3-E｜受控试验与开放门
+
+> 区块状态：LOCKED；仅在 V3-D 整区块通过人工验收后解锁。
+
+| Step | 状态 | 指令 | 自动验证 | 人工验收 |
+| --- | --- | --- | --- | --- |
+| V3-26 | LOCKED | 完成安全、权限、滥用、图片隐私和删除压力测试 | 高风险路径无 P0 问题；告警和审计可用 | 用户批准受控试验 |
+| V3-27 | LOCKED | 建立白名单贡献和全人工审核试验 | 未审核提交绝不改变公共状态 | 用户批准小范围运行 |
+| V3-28 | LOCKED | 记录贡献完成率、识别修正、审核成本、冲突和申诉 | 指标可按证据等级和影响等级拆分 | 用户决定 Continue、Adjust 或 Stop |
+| V3-29 | LOCKED | 修复试验问题并演练错误版本回退 | 代表故障、作废和重放场景全部恢复 | 用户批准版本链可靠性 |
+| V3-30 | LOCKED | 评审是否扩大开放范围 | 身份、证据、审核、隐私和贡献意愿同时满足门槛 | 用户明确批准开放范围或维持受控状态 |
+
+## 4. 里程碑完成定义
+
+### V1 完成
+
+- Next.js 网页的版面匹配、本地组件渲染、计算、一抽一记、撤销、本地保存和删除通过；
+- 微信身份、每日 5 次有效识别配额、千问刚性契约、照片不持久化、本人初始／最终结构化观察、抽赏差量、服务端六位码和删除链路通过；
+- V1 私有候选不能被公共查询或直接进入地图，V2 冷启动资格报告可重放；
+- 用户理解概率与期望边界；
+- 真实任务证明持续记录有价值；
+- 用户通过 V1-48 决策门。
+
+### V2 完成
+
+- 所有个人地图贡献均绑定认证账号，用户能查看、撤回和删除本人贡献，且没有引入论坛式社群能力；
+- 微信登录、内部账号主键、公开 ICHI ID、昵称／头像编辑和删除链路可运行，资料变化不影响贡献归属；
+- 合法数据供给、来源回链、新鲜度和下线闭环成立；
+- 用户能按明确关注地点获得经授权、可关闭且不重复的微信订阅提醒，并能在平台限制下使用应用内降级；
+- 用户能分享当前地图线索并生成隐私默认最小化的抽赏结果海报，分享不会自动公开私人记录；
+- 用户不会普遍把线索误解成库存；
+- 地图确实缩短发现时间；
+- 用户通过 V2-20 决策门。
+
+### V3 完成
+
+- 私人记录与公共状态严格分离；
+- 证据、身份、审核、冲突和回退可运行；
+- 公共观察可追溯且不泄露敏感信息；
+- 用户通过 V3-30 开放门。
+2026-08-28 V1 release blocker 工作集：只修复“删除 APPROVED Observation 后 Local Board 无法再次上传”和“NEW upload 继承上一笔备注”。采用 Local Board `boardId` + 1:N 独立 Observation 模型；删除后保留本机 Board 与最近 stale reference，真正 NEW upload 才 owner-scoped 惰性确认／建立新 Observation，同一来源请求确定性幂等，遇到既有 submission 或删除墓碑继续派生下一身份，不复活任何旧 record、不重复 quota、draw event 或 remaining decrement。自动门覆盖 valid/null/stale reference、连续删除墓碑、跨 owner、六位码非安全身份、重复请求、Local Board 持久化、不可变初始 snapshot、完整 draw batch、NEW_UPLOAD 空备注与 NOTE_FAILED 原文保留；不新增 collection、长期 anchor、recovery document，不实现 V2 canonicalization。
+2026-08-28 V1 UPLOAD_STUCK_PENDING 工作集：只纠正客户端六位 display code validator 与正式 `^[A-Z0-9]{6}$` 契约的漂移，确保服务端全字母／全数字合法码不会使版本化 Local Board draft 在 submit 后读回丢失，且 NEW Observation 的 submit 与 verify 使用同一 `recordId/boardId/submissionVersion`。自动门覆盖 Storage 读回、后台 verify 连续调用、PHOTO/NOTE/APPROVED 既有终态、失败状态映射和全量回归；不改服务端生成算法、不调用 Provider、不部署 CloudBase。
+2026-08-28 V1 BOARD / OBSERVATION LIFECYCLE CLOSURE 工作集：锁定 `DELETE_OBSERVATION ≠ DELETE_LOCAL_BOARD`，上传列表只按 `recordId` 消除同一 Observation 的本机／云端重复，同一 `boardId` 的多条 Observation 分别保留；本机删除不得调用云端删除，云端删除不得移除本机 Board。自动门覆盖 APPROVED 与 LOCATION/PHOTO/NOTE FAILED、重启 hydrate、基线/history/remaining 保留、继续两次 draw、fresh O2、O1 不复活、O2 submit/verify 同身份、NEW note 空值、NOTE_FAILED 原文、三类六位码和全量回归；不新增后端资源、不部署、不实现 V2。
+2026-08-28 V1 Local Board 删除 UI 回归工作集：只恢复“我的记录”既有 swipe 垃圾桶入口，把 Local Board summary 的删除资格从 submission state 解耦，确保 unbound/bound/stale 三态都能调用 repository-only delete；自动门锁定按钮条件、手势位移、本机 Storage 删除、零 `delete-my-record` 调用和云 Observation 继续展示。不改 WXML 交互、后端、Storage/ACL、冻结 R2 或 V2。

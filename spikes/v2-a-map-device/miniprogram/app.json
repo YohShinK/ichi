@@ -1,0 +1,18 @@
+{
+  "pages": ["pages/map/index"],
+  "window": {
+    "navigationBarTitleText": "V2-A 地图验证",
+    "navigationBarBackgroundColor": "#f0f2f5",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f0f2f5",
+    "backgroundTextStyle": "dark"
+  },
+  "style": "v2",
+  "permission": {
+    "scope.userLocation": {
+      "desc": "用于地图真机验证，不保存或上传位置"
+    }
+  },
+  "requiredPrivateInfos": ["getLocation"],
+  "sitemapLocation": "sitemap.json"
+}

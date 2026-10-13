@@ -2,12 +2,13 @@
 
 > 当前地图分享约束：`UPLOAD_CONFIRMATION_MAP_SHARING_V2`。原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门；V2已准入数据自动生成Marker，不设二次审核或授权。当前条例覆盖本人此前及以后已上传V1记录。本人记录只显示V1“已上传”，禁止二次分享按钮。现行规范：`docs/decisions/map-upload-sharing-contract.md`。
 
-## 2026-10-13 无ICP的2.0.0重新上传成功，Git归档执行中（最新权威）
+## 2026-10-13 无ICP的2.0.0重新上传与Git归档完成（最新权威）
 
-- 当前仍V2-E/TASK22 Phase8。P8-F1=ICP_REMOVED / MAP_UNCHANGED，P8-F2=REGRESSION_PASS，P8-F3=WECHAT_DEVELOPMENT_UPLOAD_SUCCESS，P8-F4=GITHUB_ARCHIVE_IN_PROGRESS。本人取消的地图设计方案未实施，既有默认入口、查询、定位与缩放全部保持。
-- 2.0.0备注“2.0 版本更新”，微信CLI实际成功，1,054,310字节；130份客户端源码SHA清单与只删除ICP备案展示的差异已绑定。未提审/实际发布/main合并/tag/新生产部署或桥接。
-- 当前1520/1SKIP/0FAIL、类型/Lint/contracts/workflow/分享门/格式/Next/微信原生无ICP回读PASS；网页首轮25/1失败保留，滚动失败单项复查及完整26/26复查PASS，未改相关逻辑或测试。当前候选敏感扫描no leaks。
-- 报告docs/delivery/v2-e-task-22-phase8-no-icp-reupload.md，证据artifacts/task22/phase8-no-icp-20261013/。GitHub沿用codex/v2-release-2.0.0按原授权归档，推送实际回执后收口；无新增手机/平台声明PASS。
+- 当前仍V2-E/TASK22 Phase8；本轮本人最终指定的ICP移除/重新上传范围已完成，P8-F1—F4全部PASS / REQUESTED_REUPLOAD_COMPLETE。取消的地图首屏/定位/视野提案未实施，默认入口、公开查询、定位、缩放、聚合与供给保持原版本；TASK22整体及手机/实际发布不因此升级为已验收。
+- 微信2.0.0开发版重新上传实际成功，备注“2.0 版本更新”，1,054,310字节。130份客户端源文件与Git源码commit 4ba60719a7ec990c62d69eede0a4ad9047216b78逐SHA匹配；已推送codex/v2-release-2.0.0且远端跟踪提交一致，新提交敏感扫描no leaks。
+- 当前1520 PASS/1既有SKIP/0FAIL、类型/Lint/contracts/workflow/分享门/格式/Next/原生模拟器无ICP与5菜单入口回读PASS。网页首次25/1滚动恢复失败保留，未改相关产品/测试代码，单项复查及完整26/26复查PASS；不将复查称永不再现或新手机PASS。
+- ICP展示已撤除，资料用途准确文案与网页原素材保持。未提审/实际发布/main合并/tag、新云部署/准入/桥接或运维密钥轮换。开发包已供本人继续验收，既有手机/平台声明边界保持。
+- 交付docs/delivery/v2-e-task-22-phase8-no-icp-reupload.md，证据artifacts/task22/phase8-no-icp-20261013/。含ICP旧包1056256字节与67260be归档仍为历史；当前无ICP包替代开发候选，无活跃地图修订或待上传工作。
 
 ## 2026-10-13 本人取消地图设计改动，只移除ICP并重新上传2.0（最新权威）
 

@@ -5,7 +5,7 @@
 
 ## 2026-10-13 ICP展示模块撤除，地图保持现状
 
-本人最终取消未实施的地图首页/定位/视野设计修订；不新增public-map-startup模块，home-sharing、public-map-query、原生定位/缩放/聚合实现保持既有版本。撤除app-filing-config.ts/app-filing.ts、home编号与查询handler/WXML/WXSS以及web route镜像；原本机ICP证据和含ICP旧候选保留历史。网页原文件归档与资料用途准确文案继续保留。当前恢复2.0.0开发版本上传和原授权GitHub归档，无新生产资源或后端写入。
+本人最终取消未实施的地图首页/定位/视野设计修订；不新增public-map-startup模块，home-sharing、public-map-query、原生定位/缩放/聚合实现保持既有版本。撤除app-filing-config.ts/app-filing.ts、home编号与查询handler/WXML/WXSS以及web route镜像；原本机ICP证据和含ICP旧候选保留历史。网页原文件归档与资料用途准确文案继续保留。2.0.0无ICP开发版本已成功上传1054310字节，备注“2.0 版本更新”；130源文件与4ba6071匹配并已推送原V2分支。无新生产资源或后端写入，当前交付见无ICP重新上传报告。
 
 ## 2026-10-13 Phase8 实现与回归入口
 

@@ -1,3 +1,4 @@
+import { assertUploadableBoardId } from "./local-board-source.js";
 // Ticket evidence is uploaded to Storage out-of-band and the cloud function
 // receives only its fileID. This is a performance target, not a Storage or
 // function-event hard limit. The provider hard boundary is enforced by the
@@ -229,6 +230,7 @@ export const prepareAuthoritativeDrawRecord = async (
     }[];
   },
 ): Promise<void> => {
+  assertUploadableBoardId(input.boardId);
   const envelope = (await api.callFunction("finalize-draw-update", {
     recordId: input.recordId,
     boardId: input.boardId,
@@ -259,6 +261,7 @@ export const uploadDrawTicketEvidence = async (
     readonly capturedAt?: number;
   },
 ): Promise<PendingDrawTicketEvidence> => {
+  assertUploadableBoardId(input.boardId);
   let imagePath = input.imagePath;
   const generatedLocalPaths = new Set<string>();
   const uploadStartedAt = Date.now();
@@ -378,6 +381,7 @@ export const createPendingDrawTicketVerification = (
   pending: PendingDrawTicketEvidence,
   authoritative?: DrawTicketAuthoritativeContext,
 ): Promise<DrawTicketReviewResult> => {
+  assertUploadableBoardId(pending.boardId);
   const startedAt = Date.now();
   api.log?.("pending_submit_start", pendingRequest(pending));
   return api
@@ -414,6 +418,7 @@ export const runPendingDrawTicketVerification = (
   pending: PendingDrawTicketEvidence,
   authoritative?: DrawTicketAuthoritativeContext,
 ): Promise<DrawTicketReviewResult> => {
+  assertUploadableBoardId(pending.boardId);
   const startedAt = Date.now();
   api.log?.("verification_start", pendingRequest(pending));
   return api
@@ -453,8 +458,9 @@ export const reviewDrawTicketNote = (
     readonly submissionVersion: number;
     readonly userNote: string;
   },
-): Promise<DrawTicketReviewResult> =>
-  api
+): Promise<DrawTicketReviewResult> => {
+  assertUploadableBoardId(input.boardId);
+  return api
     .callFunction("recognize-draw-tickets", {
       action: "review-note",
       recordId: input.recordId,
@@ -463,6 +469,7 @@ export const reviewDrawTicketNote = (
       userNote: input.userNote,
     })
     .then(parseResponse);
+};
 
 export const submitDrawTicketEvidence = async (
   api: DrawTicketEvidenceApi,
@@ -476,6 +483,7 @@ export const submitDrawTicketEvidence = async (
     readonly reuseOriginalEvidenceFileId?: string;
   },
 ): Promise<DrawTicketReviewResult> => {
+  assertUploadableBoardId(input.boardId);
   let pending: PendingDrawTicketEvidence | undefined;
   try {
     pending = input.reuseOriginalEvidenceFileId

@@ -61,8 +61,10 @@ describe("home sharing public contract", () => {
     expect(parsePublicShareTab({ tab: "recognize" })).toBe("recognize");
     expect(parsePublicShareTab({ tab: "map" })).toBe("map");
     expect(parsePublicShareTab({ tab: "my" })).toBe("my");
-    expect(parsePublicShareTab({ tab: "invalid" })).toBe("recognize");
-    expect(parsePublicShareTab({})).toBe("recognize");
+    expect(parsePublicShareTab({ tab: "invalid" })).toBe("map");
+    expect(parsePublicShareTab({})).toBe("map");
+    expect(parsePublicShareTab(undefined)).toBe("map");
+    expect(parsePublicShareTab({ tab: "" })).toBe("map");
   });
 
   it("never serializes private account, record, draw, quota, or profile state", () => {

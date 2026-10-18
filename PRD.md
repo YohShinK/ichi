@@ -2,17 +2,19 @@
 
 > 当前地图分享约束：`UPLOAD_CONFIRMATION_MAP_SHARING_V2`。原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门；V2已准入数据自动生成Marker，不设二次审核或授权。当前条例覆盖本人此前及以后已上传V1记录。本人记录只显示V1“已上传”，禁止二次分享按钮。现行规范：`docs/decisions/map-upload-sharing-contract.md`。
 
+2026-10-18 当前版本状态：用户明确要求GitHub上的2.0.1→2.0.0→main合并，并更新项目状态、收口2.0.0。当前唯一工作集V2-GITHUB-ARCHIVE-CLOSEOUT，GitHub操作尚在执行。微信开发版本2.0.1已上传（1,060,430字节），线上2.0.0由用户确认；不将2.0.1开发上传冒称正式发布，不补造真机/人工验收，不解锁V3或重放生产部署。最终合并回执与收口以docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md及progress顶部为准。 下方早期日期段及状态是历史快照。
+
 2026-10-06：用户已确认TASK22当前Phase1/2及地图修复人工验收完成（HUMAN_APPROVED）；TASK22八Phase总计划仍IN_PROGRESS，下一步Phase3官方网络来源，Phase3—8及正式发布未执行。当前入口为docs/delivery/v2-e-task-22-report-and-human-acceptance.md及progress顶部。历史AWAITING_REVIEW不要求重复验收或重做部署；本次报告/执行说明不启动Phase3。
 
 2026-10-04用户明确保留微信模糊定位：CURRENT_LOCATION_APPROXIMATE_ALLOWED_V1取代前轮个人定位≤100米/精确权限硬门。合法GCJ02回执可供浏览，模糊/低精度/未知精度标明大致位置，已知有效accuracy绘制误差圆；不得要求开启精确权限或用历史marker冒充本人位置。个人点/圆独立于公开计数，点/相机同回执，前台刷新不移动浏览相机、后台清点并取消旧响应；公开准入精度与网格不变。最新状态以progress顶部为准，前轮定位修复报告只作历史追溯。 已在正式开发工作区/新版预览搭载，1208测试及原生验证PASS，尚未正式发布；证据docs/delivery/v2-e-task-22-approximate-location-support.md。
 
 2026-10-04直接上传备注安全门已回查在线；DIRECT_UPLOAD_NOTE_RETRY已在正式开发工作区及新版预览包补齐。真实微信备注pass才创建完成V1记录；拒绝/异常留本机待上传，在“我上传的版面”修改备注后恢复同一识别任务，复用原快照/位置/上传分享确认，不重新识别、追加位置核验或二次授权。成功只显示已上传，条例及既有全局bridge自动处理后续。证据见docs/delivery/v2-e-task-22-direct-upload-note-review-and-retry.md；客户端尚未正式发布。
 
-> 当前状态：V1 `VALIDATED BASELINE / USED FOR PLANNING`；V2唯一活动区块`V2-E / TASK-V2-22 IN_PROGRESS`。Phase2已`PRODUCTION_APPLIED / LIVE_BRIDGE_VERIFIED / GLOBAL_CONTINUOUS_ENABLED / AWAITING_REVIEW`；真实CUFZBP→V2→Marker及43抽详情通过，全局每分钟桥接已开启，所有账号各自同意当前条例后自动覆盖本人旧/新合格上传。正式微信新版发布及NETWORK热启动未执行。
+> 当前状态：V2.0.0 Git归档与收口进行中；2.0.1开发版本已上传，系统体验草稿与默认地图首页已实现；当前工作集`V2-GITHUB-ARCHIVE-CLOSEOUT`。
 >
-> 版本：1.8
+> 文档版本：2.0 收口记录
 >
-> 更新日期：2026-10-04
+> 更新日期：2026-10-18
 >
 > 正式实现细节以 `memory-bank/design-document.md` 为准。
 

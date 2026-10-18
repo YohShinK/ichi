@@ -1,5 +1,12 @@
 import type { MiniProgramStorageDriver } from "./storage.js";
 import { getWxStorageDriver } from "./storage.js";
+import {
+  assertUploadableLocalDraft,
+  isSystemDemoDraft,
+  SYSTEM_DEMO_ISSUANCE_KEY,
+  SYSTEM_DEMO_TUTORIAL_ID,
+  type LocalBoardSource,
+} from "./local-board-source.js";
 import type {
   CloudRecognitionSourcePath,
   ConfirmedBoardSnapshot,
@@ -64,7 +71,7 @@ export interface PendingTicketVerification {
   };
 }
 
-export interface LocalDrawDraft {
+export interface LocalDrawDraft extends LocalBoardSource {
   readonly schemaVersion: 1 | "board-record-r2-1.0.0";
   readonly boardId: string;
   readonly savedAt: number;
@@ -133,7 +140,10 @@ export interface LocalDrawDraftSummary {
   readonly statsMeta: string;
   readonly canResume: boolean;
   readonly canDelete: boolean;
+  readonly isSystemDemo: boolean;
+  readonly canUpload: boolean;
   readonly recordStateLabel:
+    | "不可上传"
     | "待上传"
     | "待核对"
     | "核验失败"
@@ -193,6 +203,7 @@ export const currentRemainingForPrize = (
 export const toInitialCloudSnapshot = (
   draft: LocalDrawDraft,
 ): InitialCloudBoardSnapshot => {
+  assertUploadableLocalDraft(draft);
   const ipName = draft.ipName?.trim();
   const unitPrice = draft.unitPrice;
   if (!ipName || !Number.isSafeInteger(unitPrice) || Number(unitPrice) <= 0)
@@ -290,6 +301,11 @@ export const isLocalDrawDraft = (value: unknown): value is LocalDrawDraft => {
       value.schemaVersion === "board-record-r2-1.0.0") &&
     typeof value.boardId === "string" &&
     value.boardId.length > 0 &&
+    (value.source === undefined ||
+      value.source === "RECOGNIZED" ||
+      value.source === "SYSTEM_DEMO") &&
+    (value.tutorialId === undefined ||
+      value.tutorialId === SYSTEM_DEMO_TUTORIAL_ID) &&
     isNonNegativeFinite(value.savedAt) &&
     Array.isArray(value.prizeData) &&
     value.prizeData.every(isPrize) &&
@@ -442,6 +458,9 @@ const resolveSubmissionState = (
 };
 
 export type LocalDraftStorageStatus = "empty" | "ok" | "schema-incompatible";
+export type SystemDemoEnsureResult =
+  "ISSUED" | "EXISTING" | "ISSUED_MISSING" | "DELETED" | "UNAVAILABLE";
+type SystemDemoIssuanceState = "UNSEEN" | "ISSUED" | "DELETED";
 
 export const inspectLocalDraftStorage = (
   stored: unknown,
@@ -460,6 +479,67 @@ export const inspectLocalDraftStorage = (
 
 export class LocalDrawDraftRepository {
   constructor(private readonly storage: MiniProgramStorageDriver) {}
+
+  private readSystemDemoState(): SystemDemoIssuanceState {
+    const stored = this.storage.getItem(SYSTEM_DEMO_ISSUANCE_KEY);
+    if (stored === null || stored === undefined || stored === "")
+      return "UNSEEN";
+    const value: unknown =
+      typeof stored === "string" ? JSON.parse(stored) : stored;
+    if (
+      !isRecord(value) ||
+      value.tutorialId !== SYSTEM_DEMO_TUTORIAL_ID ||
+      (value.state !== "ISSUED" && value.state !== "DELETED")
+    )
+      throw new Error("SYSTEM_DEMO_ISSUANCE_INVALID");
+    return value.state;
+  }
+
+  private writeSystemDemoState(state: "ISSUED" | "DELETED"): void {
+    this.storage.setItem(
+      SYSTEM_DEMO_ISSUANCE_KEY,
+      JSON.stringify({ tutorialId: SYSTEM_DEMO_TUTORIAL_ID, state }),
+    );
+  }
+
+  // All Storage operations are synchronous; no await can interleave an issue
+  // with another ensure or a user mutation in this Mini Program JS runtime.
+  ensureSystemDemoDraft(
+    createDraft: () => LocalDrawDraft,
+  ): SystemDemoEnsureResult {
+    try {
+      const state = this.readSystemDemoState();
+      const stored = this.storage.getItem(LOCAL_DRAW_DRAFTS_KEY);
+      if (inspectLocalDraftStorage(stored) === "schema-incompatible")
+        return "UNAVAILABLE";
+      const drafts = decodeStoredDrafts(stored);
+      const existing = drafts.some(isSystemDemoDraft);
+      if (state === "DELETED") {
+        if (existing)
+          this.storage.setItem(
+            LOCAL_DRAW_DRAFTS_KEY,
+            JSON.stringify(drafts.filter((draft) => !isSystemDemoDraft(draft))),
+          );
+        return "DELETED";
+      }
+      if (existing) {
+        if (state !== "ISSUED") this.writeSystemDemoState("ISSUED");
+        return "EXISTING";
+      }
+      // An issued Board missing from the repository is never silently reissued.
+      if (state === "ISSUED") return "ISSUED_MISSING";
+      const draft = createDraft();
+      if (!isLocalDrawDraft(draft) || !isSystemDemoDraft(draft))
+        throw new Error("SYSTEM_DEMO_TEMPLATE_INVALID");
+      // One complete Board write before acknowledgement. If the second write
+      // fails, the next ensure reconciles this Board without resetting events.
+      this.upsert(draft);
+      this.writeSystemDemoState("ISSUED");
+      return "ISSUED";
+    } catch {
+      return "UNAVAILABLE";
+    }
+  }
 
   readAll(): LocalDrawDraft[] {
     const stored = this.storage.getItem(LOCAL_DRAW_DRAFTS_KEY);
@@ -481,6 +561,26 @@ export class LocalDrawDraftRepository {
   }
 
   upsert(draft: LocalDrawDraft): LocalDrawDraft[] {
+    if (isSystemDemoDraft(draft)) {
+      if (this.readSystemDemoState() === "DELETED")
+        throw new Error("SYSTEM_DEMO_DELETED");
+      if (
+        draft.cloudRecordId ||
+        draft.pendingCloudDeletion ||
+        draft.recognitionJobId ||
+        draft.pendingFinalization ||
+        draft.verificationPending ||
+        draft.originalEvidenceFileId ||
+        draft.evidenceSubmissionVersion ||
+        draft.currentVerificationVersion ||
+        draft.uploadStatus !== "not-uploaded" ||
+        draft.verificationStatus !== "unverified" ||
+        (draft.submissionState !== undefined &&
+          draft.submissionState !== "local") ||
+        (draft.recordType !== undefined && draft.recordType !== "draw")
+      )
+        throw new Error("SYSTEM_DEMO_LOCAL_ONLY");
+    }
     const existing = this.readAll().filter(
       (item) => item.boardId !== draft.boardId,
     );
@@ -500,18 +600,27 @@ export class LocalDrawDraftRepository {
       return current;
     }
 
-    const next = current.filter((item) => item.boardId !== boardId);
-    this.storage.setItem(LOCAL_DRAW_DRAFTS_KEY, JSON.stringify(next));
-    return next;
+    return this.delete(boardId);
   }
 
   delete(boardId: string): LocalDrawDraft[] {
     const current = this.readAll();
+    if (
+      current.some(
+        (draft) => draft.boardId === boardId && isSystemDemoDraft(draft),
+      )
+    )
+      this.writeSystemDemoState("DELETED");
     const next = current.filter((item) => item.boardId !== boardId);
     if (next.length !== current.length) {
       this.storage.setItem(LOCAL_DRAW_DRAFTS_KEY, JSON.stringify(next));
     }
     return next;
+  }
+
+  clearAll(): void {
+    this.writeSystemDemoState("DELETED");
+    this.storage.removeItem(LOCAL_DRAW_DRAFTS_KEY);
   }
 }
 
@@ -591,7 +700,9 @@ export const summarizeLocalDrawDraft = (
         : `余 ${remaining} / ${total} · 已抽 ${draft.history.length}`;
   const submissionState = resolveSubmissionState(draft);
   const canResume = isResumableLocalDrawDraft(draft);
+  const isSystemDemo = isSystemDemoDraft(draft);
   const recordStateLabel = (() => {
+    if (isSystemDemo) return "不可上传" as const;
     if (recordType === "draw" && !canResume) return "无法恢复" as const;
     if (recordType === "draw" && draft.verificationStatus === "verified")
       return "已上传" as const;
@@ -633,7 +744,9 @@ export const summarizeLocalDrawDraft = (
   return {
     boardId: draft.boardId,
     ...(draft.cloudRecordId ? { cloudRecordId: draft.cloudRecordId } : {}),
-    title: `${recordType === "board-upload" ? "仅上传版面" : "抽赏记录"} · ${recordCode}`,
+    title: isSystemDemo
+      ? "系统体验 · 教程体验版面"
+      : `${recordType === "board-upload" ? "仅上传版面" : "抽赏记录"} · ${recordCode}`,
     remaining,
     total,
     drawCount: draft.history.length,
@@ -646,17 +759,22 @@ export const summarizeLocalDrawDraft = (
     statsMeta,
     canResume,
     canDelete: true,
+    isSystemDemo,
+    canUpload: !isSystemDemo,
     recordStateLabel,
-    ...(recordType === "draw" &&
+    ...(!isSystemDemo &&
+    recordType === "draw" &&
     (draft.verificationStatus === "photo-failed" ||
       draft.verificationStatus === "mismatch" ||
       draft.verificationStatus === "invalid-evidence")
       ? { verificationAction: "reupload" as const }
-      : draft.verificationStatus === "note-failed" &&
+      : !isSystemDemo &&
+          draft.verificationStatus === "note-failed" &&
           (recordType === "draw" ||
             draft.pendingFinalization?.sourcePath === "direct-upload")
         ? { verificationAction: "edit-note" as const }
-        : (recordType === "draw" ||
+        : !isSystemDemo &&
+            (recordType === "draw" ||
               draft.pendingFinalization?.sourcePath === "direct-upload") &&
             (draft.verificationStatus === "needs-review" ||
               draft.verificationStatus === "provider-failed")

@@ -2,6 +2,8 @@
 
 > 当前地图分享约束：`UPLOAD_CONFIRMATION_MAP_SHARING_V2`。原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门；V2已准入数据自动生成Marker，不设二次审核或授权。当前条例覆盖本人此前及以后已上传V1记录。本人记录只显示V1“已上传”，禁止二次分享按钮。现行规范：`docs/decisions/map-upload-sharing-contract.md`。
 
+2026-10-18 当前版本状态：用户明确要求GitHub上的2.0.1→2.0.0→main合并，并更新项目状态、收口2.0.0。当前唯一工作集V2-GITHUB-ARCHIVE-CLOSEOUT，GitHub操作尚在执行。微信开发版本2.0.1已上传（1,060,430字节），线上2.0.0由用户确认；不将2.0.1开发上传冒称正式发布，不补造真机/人工验收，不解锁V3或重放生产部署。最终合并回执与收口以docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md及progress顶部为准。 下方早期日期段及状态是历史快照。
+
 2026-10-09修复版预览后用户明确“人工验收完毕”，本次跨城市修复PHONE_REPAIR_USER_CONFIRMED_PASS、Phase6 COMPLETE/HUMAN_APPROVED；当前最终1481/1 skip/0 fail。用户已接受的未测范围保持，独立Phase7工具新测试使用现有解码Python后通过，后端及修复客户端SHA保持；不冒充未知版本/全生命周期/性能。
 
 2026-10-09 Phase6已按本人明确接受未测边界与“修复后收口”授权完成。MAP_PICKER_RENDERED_LEAD_REVALIDATION_V1防回退：已呈现Marker在视口加载或分页概要缺席时仍通过安全公开detail按8行/2并发重核；不得把缺席当删除/不可用删成0。仅明确不可用/本人删除/已知到期移除，全失效关闭空壳恢复控件；生命周期/政策/版本/准备区与分享门保持。当前1474/1 skip、26 Playwright、真实杭州剩1/已删不可用/跨城50+1、原生受控回放与1054089字节预览PASS，旧六项手机PASS不伪装新手机验收。报告docs/delivery/v2-e-task-22-cross-city-picker-revalidation-repair.md；TASK22整体IN_PROGRESS，Phase7独立聊天授权保持，不重放部署/旧准入或正式发布。

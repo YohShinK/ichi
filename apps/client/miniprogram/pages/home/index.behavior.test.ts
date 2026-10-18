@@ -1,3 +1,9 @@
+import { createSystemDemoDraft } from "../../platform/system-demo-draft.js";
+import {
+  SYSTEM_DEMO_BOARD_ID,
+  SYSTEM_DEMO_ISSUANCE_KEY,
+  SYSTEM_DEMO_TUTORIAL_ID,
+} from "../../platform/local-board-source.js";
 import {
   SYNTHETIC_PUBLIC_MARKERS,
   SyntheticPublicMapService,
@@ -740,7 +746,7 @@ const ticketPeelEvent = (
 });
 
 const enterDraw = (page: RuntimePage): void => {
-  call(page, "onLoad");
+  call(page, "onLoad", { tab: "recognize" });
   page.setData({ currentView: "recognition-result" });
   call(page, "onRecognitionIpInput", { detail: { value: "秋叶原 0812" } });
   call(page, "onRecognitionPriceInput", { detail: { value: "650" } });
@@ -915,6 +921,11 @@ beforeAll(async () => {
 
 beforeEach(() => {
   stored.clear();
+  // Existing page scenarios isolate issuance; new installation cases opt in below.
+  stored.set(
+    SYSTEM_DEMO_ISSUANCE_KEY,
+    JSON.stringify({ tutorialId: SYSTEM_DEMO_TUTORIAL_ID, state: "ISSUED" }),
+  );
   throwReads = false;
   throwWrites = false;
   modalRequests.length = 0;
@@ -1390,14 +1401,14 @@ describe("V1-E page behavior", () => {
     call(page, "onUnload");
   });
 
-  it.each([undefined, "invalid"])(
-    "falls back to recognition for tab=%s",
+  it.each([undefined, "invalid", "", null, 123])(
+    "falls back to map for tab=%s",
     (tab) => {
       const page = createRuntimePage();
       call(page, "onLoad", tab ? { tab } : {});
       expect(page.data).toMatchObject({
-        activeTab: "recognize",
-        currentView: "start",
+        activeTab: "map",
+        currentView: "map-preview",
       });
       call(page, "onUnload");
     },
@@ -1500,6 +1511,7 @@ describe("V1-E page behavior", () => {
 
   it("preloads once after identity is ready without location and cancels late background setup", async () => {
     const page = createRuntimePage();
+    page.setData({ activeTab: "recognize", currentView: "start" });
     const ensure = vi.fn(() => ({ state: { phase: "INITIAL_LOADING" } }));
     let ready!: (value: object) => void;
     (page as unknown as Record<string, unknown>).refreshCloudAccount = () =>
@@ -1541,6 +1553,7 @@ describe("V1-E page behavior", () => {
     "prepares only two foreground details, joins selection, and cancels after %s",
     async (mode) => {
       const page = createRuntimePage();
+      page.setData({ activeTab: "recognize", currentView: "start" });
       const service = new SyntheticPublicMapService();
       let release!: () => void;
       const gate = new Promise<void>((resolve) => {
@@ -2164,7 +2177,7 @@ describe("V1-E page behavior", () => {
   it("shows a technical retry state instead of a profile authorization prompt when silent bootstrap fails", async () => {
     accountBootstrapFailure = true;
     const page = createRuntimePage();
-    call(page, "onLoad");
+    call(page, "onLoad", { tab: "recognize" });
     await call(page, "onShow");
     await vi.waitFor(() => expect(page.data.accountState).toBe("unavailable"));
     expect(page.data.modalView).toBe("");
@@ -2228,7 +2241,7 @@ describe("V1-E page behavior", () => {
   it("blocks a new recognition when quota is exhausted without affecting drafts", async () => {
     quotaRemaining = 0;
     const page = createRuntimePage();
-    call(page, "onLoad");
+    call(page, "onLoad", { tab: "recognize" });
     await call(page, "onImportBoard");
     expect(page.data.currentView).toBe("start");
     expect(page.data.modalView).toBe("quota-exhausted");
@@ -2382,7 +2395,7 @@ describe("V1-E page behavior", () => {
   it("blocks camera entry when current location permission is unavailable", async () => {
     locationFailure = true;
     const page = createRuntimePage();
-    call(page, "onLoad");
+    call(page, "onLoad", { tab: "recognize" });
     await call(page, "onImportBoard");
     expect(page.data.currentView).toBe("start");
     expect(page.data.modalView).toBe("capture-permission-required");
@@ -3295,7 +3308,7 @@ describe("V1-E page behavior", () => {
   it("shows and recovers the schema and storage failure states", () => {
     stored.set(LOCAL_DRAW_DRAFTS_KEY, '{"legacy":true}');
     const incompatible = createRuntimePage();
-    call(incompatible, "onLoad");
+    call(incompatible, "onLoad", { tab: "recognize" });
     expect(incompatible.data.currentView).toBe("schema-incompatible");
     call(incompatible, "onRecoverSchema");
     expect(incompatible.data.currentView).toBe("start");
@@ -3580,6 +3593,8 @@ describe("V1-E page behavior", () => {
 
     const restored = createRuntimePage();
     call(restored, "onLoad");
+    expect(restored.data.currentView).toBe("map-preview");
+    call(restored, "onSelectTab", baseEvent({ tab: "recognize" }));
     expect(restored.data).toMatchObject({
       currentView: "recognition-result",
       recognitionMode: "direct-upload",
@@ -3925,6 +3940,8 @@ describe("V1-E page behavior", () => {
 
     const reloaded = createRuntimePage();
     call(reloaded, "onLoad");
+    expect(reloaded.data.currentView).toBe("map-preview");
+    call(reloaded, "onSelectTab", baseEvent({ tab: "recognize" }));
     expect(reloaded.data.currentView).toBe("draw");
     expect(reloaded.data.activeDraft).toMatchObject({ boardId });
     call(page, "onUnload");
@@ -3980,6 +3997,8 @@ describe("V1-E page behavior", () => {
 
     const reloaded = createRuntimePage();
     call(reloaded, "onLoad");
+    expect(reloaded.data.currentView).toBe("map-preview");
+    call(reloaded, "onSelectTab", baseEvent({ tab: "recognize" }));
     expect(reloaded.data).toMatchObject({
       currentView: "draw",
       activeDraft: { boardId },
@@ -4893,4 +4912,356 @@ describe("TASK21 upload-only discovery defaults", () => {
     expect(page.data.mapSelectedDiscoveryTagIds).toHaveLength(6);
     expect(page.data.mapSearchText).toBe("");
   });
+});
+
+describe("V2.0.1 installation-local system demo", () => {
+  const freshPage = () => {
+    stored.delete(SYSTEM_DEMO_ISSUANCE_KEY);
+    const page = createRuntimePage();
+    page.setData({ currentView: "start", activeTab: "recognize" });
+    return page;
+  };
+  const readDrafts = (): LocalDrawDraft[] =>
+    JSON.parse(String(stored.get(LOCAL_DRAW_DRAFTS_KEY) || "[]"));
+
+  it("issues before the first list commit without account or network and never opens the demo", () => {
+    accountBootstrapFailure = true;
+    const page = freshPage();
+    call(page, "refreshDrafts");
+    expect(page.data.currentView).toBe("start");
+    expect(page.data.activeDraft).toBeNull();
+    expect(page.data.startDrafts).toMatchObject([
+      {
+        boardId: SYSTEM_DEMO_BOARD_ID,
+        remaining: 84,
+        cost: 138,
+        canUpload: false,
+        recordStateLabel: "不可上传",
+      },
+    ]);
+    expect(page.data.contributions).toEqual([]);
+    expect(page.data.uploadedCount).toBe(0);
+    expect(page.data.unuploadedCount).toBe(0);
+    expect(cloudCallFunctionMock).not.toHaveBeenCalled();
+    call(page, "refreshDrafts");
+    expect(readDrafts()).toHaveLength(1);
+  });
+
+  it("loads the new installation on the recognize tab without opening a draft or waiting for bootstrap", () => {
+    const page = freshPage();
+    call(page, "onLoad", { tab: "recognize" });
+    expect(page.data.currentView).toBe("start");
+    expect(page.data.activeDraft).toBeNull();
+    expect(page.data.startDrafts).toHaveLength(1);
+    expect(cloudCallFunctionMock).not.toHaveBeenCalled();
+  });
+  it("adds the demo without changing the currently active real Board or navigation", () => {
+    const page = freshPage();
+    const real = {
+      ...createSystemDemoDraft(1),
+      boardId: "real-existing",
+      source: "RECOGNIZED",
+      tutorialId: undefined,
+    };
+    stored.set(LOCAL_DRAW_DRAFTS_KEY, JSON.stringify([real]));
+    stored.set(ACTIVE_DRAFT_BOARD_KEY, "real-existing");
+    stored.set(RECOGNITION_VIEW_KEY, "draw");
+    page.setData({
+      currentView: "draw",
+      activeDraft: { boardId: "real-existing" },
+    });
+    call(page, "refreshDrafts");
+    expect(page.data.activeDraft).toMatchObject({
+      boardId: "real-existing",
+      remaining: 84,
+    });
+    expect(page.data.currentView).toBe("draw");
+    expect(stored.get(ACTIVE_DRAFT_BOARD_KEY)).toBe("real-existing");
+    expect(
+      readDrafts().find((d) => d.boardId === "real-existing"),
+    ).toMatchObject({ history: real.history, cost: 138, savedAt: 1 });
+  });
+
+  it("continues, restores and undoes seeded draws using the original workbench", async () => {
+    const page = freshPage();
+    call(page, "refreshDrafts");
+    call(page, "onOpenDraft", baseEvent({ boardId: SYSTEM_DEMO_BOARD_ID }));
+    expect(page.data.activeDraft).toMatchObject({
+      remaining: 84,
+      cost: 138,
+      grandPrizes: [
+        { tier: "SP1" },
+        { tier: "A" },
+        { tier: "B" },
+        { tier: "C" },
+      ],
+      normalPrizes: [
+        { tier: "D" },
+        { tier: "E" },
+        { tier: "F" },
+        { tier: "G" },
+        { tier: "H" },
+        { tier: "I" },
+      ],
+    });
+    expect(page.data.outlook).toMatchObject({ status: "available" });
+    call(page, "onUndoDraw");
+    expect(page.data.activeDraft).toMatchObject({ remaining: 85, cost: 69 });
+    call(page, "onUndoDraw");
+    expect(page.data.activeDraft).toMatchObject({
+      remaining: 86,
+      cost: 0,
+      historyItems: [],
+    });
+    call(page, "commitDraw", "F", false);
+    await vi.advanceTimersByTimeAsync(10);
+    expect(readDrafts()[0]).toMatchObject({
+      cost: 69,
+      history: [{ tier: "F" }],
+    });
+    call(page, "onSaveDraftAndExit");
+    expect(page.data.currentView).toBe("start");
+    const restarted = createRuntimePage();
+    call(restarted, "refreshDrafts");
+    call(
+      restarted,
+      "onOpenDraft",
+      baseEvent({ boardId: SYSTEM_DEMO_BOARD_ID }),
+    );
+    expect(restarted.data.activeDraft).toMatchObject({
+      remaining: 85,
+      cost: 69,
+      historyItems: [{ tier: "F" }],
+    });
+    expect(cloudCallFunctionMock).not.toHaveBeenCalled();
+  });
+
+  it("manual local delete never triggers account/cloud work and never reissues", () => {
+    const page = freshPage();
+    call(page, "refreshDrafts");
+    call(page, "onDeleteDraft", baseEvent({ boardId: SYSTEM_DEMO_BOARD_ID }));
+    expect(readDrafts()).toEqual([]);
+    expect(JSON.parse(String(stored.get(SYSTEM_DEMO_ISSUANCE_KEY))).state).toBe(
+      "DELETED",
+    );
+    const restarted = createRuntimePage();
+    call(restarted, "refreshDrafts");
+    expect(restarted.data.startDrafts).toEqual([]);
+    expect(cloudCallFunctionMock).not.toHaveBeenCalled();
+  });
+
+  it("issuance write failure leaves the real active Board usable and retries later", () => {
+    const page = freshPage();
+    const real = {
+      ...createSystemDemoDraft(1),
+      boardId: "real-existing",
+      source: "RECOGNIZED",
+      tutorialId: undefined,
+    };
+    stored.set(LOCAL_DRAW_DRAFTS_KEY, JSON.stringify([real]));
+    page.setData({
+      currentView: "draw",
+      activeDraft: { boardId: "real-existing" },
+    });
+    throwWrites = true;
+    call(page, "refreshDrafts");
+    expect(page.data.activeDraft).toMatchObject({ boardId: "real-existing" });
+    expect(page.data.currentView).toBe("draw");
+    expect(readDrafts()).toHaveLength(1);
+    throwWrites = false;
+    call(page, "refreshDrafts");
+    expect(readDrafts()).toHaveLength(2);
+  });
+
+  it.each([
+    "onOpenShareCapture",
+    "onCaptureEvidence",
+    "captureEvidenceNow",
+    "onSubmitEvidence",
+  ])(
+    "blocks %s even if invoked directly with upload UI state forged",
+    async (method) => {
+      const page = freshPage();
+      call(page, "refreshDrafts");
+      call(page, "onOpenDraft", baseEvent({ boardId: SYSTEM_DEMO_BOARD_ID }));
+      page.setData({
+        shareReady: true,
+        shareImagePath: "photo",
+        shareNote: "note",
+        cameraStatus: "ready",
+      });
+      const captures = cameraCaptureCount,
+        locations = locationRequestCount;
+      await call(page, method);
+      expect(page.data.modalView).not.toBe("share-capture");
+      expect(cameraCaptureCount).toBe(captures);
+      expect(locationRequestCount).toBe(locations);
+      expect(cloudCallFunctionMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    "onRetryTicketVerification",
+    "onReuploadTicketEvidence",
+    "onEditTicketNote",
+  ])("blocks %s for a demo carrying stale cloud metadata", async (method) => {
+    const page = freshPage();
+    const demo = {
+      ...createSystemDemoDraft(),
+      cloudRecordId: "record_" + "a".repeat(32),
+      evidenceSubmissionVersion: 1,
+      verificationStatus: "pending",
+      verificationPending: {
+        boardId: SYSTEM_DEMO_BOARD_ID,
+        recordId: "record_" + "a".repeat(32),
+        submissionVersion: 1,
+        imageFileId: "fake",
+        captureSource: "camera",
+        albumSaveWarning: false,
+        image: { width: 1, height: 1, byteLength: 1 },
+      },
+    };
+    stored.set(LOCAL_DRAW_DRAFTS_KEY, JSON.stringify([demo]));
+    await call(page, method, baseEvent({ boardId: SYSTEM_DEMO_BOARD_ID }));
+    expect(cloudCallFunctionMock).not.toHaveBeenCalled();
+    expect(page.data.modalView).not.toBe("note-review");
+  });
+
+  it("excludes stale finalization, deletion, verification, note and sharing resumes", async () => {
+    const page = freshPage();
+    const demo = {
+      ...createSystemDemoDraft(),
+      cloudRecordId: "record_" + "a".repeat(32),
+      verificationStatus: "pending",
+      verificationPending: {
+        boardId: SYSTEM_DEMO_BOARD_ID,
+        recordId: "record_" + "a".repeat(32),
+        submissionVersion: 1,
+        imageFileId: "fake",
+        captureSource: "camera",
+        albumSaveWarning: false,
+        image: { width: 1, height: 1, byteLength: 1 },
+      },
+      pendingFinalization: {
+        recognitionJobId: "fake",
+        sourcePath: "direct-upload",
+        confirmedSnapshot: {},
+        observedAt: "2026-10-18T00:00:00Z",
+        promptVersion: "fake",
+        consentVersion: "fake",
+        disclosureVersion: "fake",
+      },
+      pendingCloudDeletion: {
+        recordId: "record_" + "a".repeat(32),
+        requestedAt: 1,
+      },
+    };
+    stored.set(LOCAL_DRAW_DRAFTS_KEY, JSON.stringify([demo]));
+    await call(page, "finalizePersistedDraft", demo);
+    await call(page, "resumePendingFinalizations");
+    await call(page, "resumePendingTicketVerifications");
+    await call(page, "runTicketVerification", demo.verificationPending);
+    await call(page, "resumePendingCloudPublicationDeletions", []);
+    page.setData({
+      noteReviewBoardId: SYSTEM_DEMO_BOARD_ID,
+      noteReviewRecordId: demo.cloudRecordId,
+      shareNote: "changed",
+      noteReviewSubmissionVersion: 1,
+    });
+    await call(page, "onSubmitNoteReview");
+    await call(page, "syncSubmittedUploadSharing", demo.cloudRecordId);
+    page.setData({
+      pendingDeleteUploadedBoardId: SYSTEM_DEMO_BOARD_ID,
+      pendingDeleteUploadedRecordId: demo.cloudRecordId,
+    });
+    await call(page, "onConfirmDeleteUploadedBoard");
+    expect(cloudCallFunctionMock).not.toHaveBeenCalled();
+    expect(page.data.contributions).toEqual([]);
+  });
+});
+
+describe("V2.0.1 default map home", () => {
+  it("projects map from the initial data and never briefly renders a saved recognition workspace", () => {
+    const original = createRuntimePage();
+    enterDraw(original);
+    const boardId = (original.data.activeDraft as { boardId: string }).boardId;
+    const saved = stored.get(LOCAL_DRAW_DRAFTS_KEY);
+    const page = createRuntimePage();
+    expect(page.data).toMatchObject({
+      currentView: "map-preview",
+      activeTab: "map",
+    });
+    const commits: Record<string, unknown>[] = [];
+    const setData = page.setData.bind(page);
+    page.setData = (update, callback) => {
+      commits.push(update);
+      setData(update, callback);
+    };
+    call(page, "onLoad");
+    expect(
+      commits.some(
+        (commit) =>
+          commit.currentView === "draw" ||
+          commit.currentView === "start" ||
+          commit.activeTab === "recognize",
+      ),
+    ).toBe(false);
+    expect(page.data).toMatchObject({
+      currentView: "map-preview",
+      activeTab: "map",
+      activeDraft: { boardId },
+    });
+    expect(stored.get(LOCAL_DRAW_DRAFTS_KEY)).toBe(saved);
+    expect(stored.get(ACTIVE_DRAFT_BOARD_KEY)).toBe(boardId);
+    expect(stored.get(RECOGNITION_VIEW_KEY)).toBe("draw");
+    call(page, "onSelectTab", baseEvent({ tab: "recognize" }));
+    expect(page.data).toMatchObject({
+      currentView: "draw",
+      activeTab: "recognize",
+      activeDraft: { boardId },
+    });
+    call(original, "onUnload");
+    call(page, "onUnload");
+  });
+
+  it("issues the demo locally behind the map without bootstrap or automatically opening it", () => {
+    stored.delete(SYSTEM_DEMO_ISSUANCE_KEY);
+    accountBootstrapFailure = true;
+    const page = createRuntimePage();
+    const ensure = vi.fn();
+    (page as unknown as Record<string, unknown>).ensurePublicMapClient = ensure;
+    call(page, "onLoad");
+    expect(page.data).toMatchObject({
+      currentView: "map-preview",
+      activeTab: "map",
+      activeDraft: null,
+    });
+    expect(page.data.startDrafts).toMatchObject([
+      { boardId: SYSTEM_DEMO_BOARD_ID, remaining: 84, cost: 138 },
+    ]);
+    expect(ensure).toHaveBeenCalledOnce();
+    expect(cloudCallFunctionMock).not.toHaveBeenCalled();
+    call(page, "onSelectTab", baseEvent({ tab: "recognize" }));
+    expect(page.data).toMatchObject({
+      currentView: "start",
+      activeTab: "recognize",
+      activeDraft: null,
+    });
+    call(page, "onUnload");
+  });
+
+  it.each(["recognize", "my"] as const)(
+    "keeps the chosen %s tab on foreground resume",
+    async (tab) => {
+      const page = createRuntimePage();
+      call(page, "onLoad", { tab });
+      await call(page, "onShow");
+      await vi.waitFor(() => expect(page.data.accountState).toBe("ready"));
+      expect(page.data).toMatchObject({
+        activeTab: tab,
+        currentView: tab === "my" ? "my" : "start",
+      });
+      call(page, "onUnload");
+    },
+  );
 });

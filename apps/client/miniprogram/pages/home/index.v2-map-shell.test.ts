@@ -71,9 +71,11 @@ describe("TASK-V2-14 existing V1 map host", () => {
     }
   });
 
-  it("keeps the default launch on recognition unless an explicit map share query is present", () => {
+  it("uses map as the initial page while honoring explicit public tab routes", () => {
     expect(ts).toContain("const requestedTab = parsePublicShareTab(query);");
-    expect(ts).toContain('activeTab: "recognize"');
+    expect(ts).toMatch(
+      /Page\(\{\s*data: \{\s*currentView: "map-preview" as HomeView,\s*activeTab: "map" as MainTab/,
+    );
     expect(ts).toContain(
       "currentView: publicEntryView(requestedTab, recognitionEntryView)",
     );

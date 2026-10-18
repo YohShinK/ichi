@@ -1,5 +1,7 @@
 # TASK22 Phase8：移除ICP展示并重新上传2.0
 
+后续当前状态（2026-10-18）：2.0.1开发补丁已通过GitHub PR #4/#5纳入main，2.0.0开发与版本归档已按用户指令收口，见[统一收口记录](v2.0.0-closeout-and-v2.0.1-github-merge.md)。下文保留2.0.0当时上传/归档回执，不据此覆盖最新状态。
+
 当前结果：**ICP_REMOVED / MAP_UNCHANGED / REGRESSION_PASS / WECHAT_DEVELOPMENT_UPLOAD_SUCCESS / GITHUB_ARCHIVE_SUCCESS**。
 
 本人最终取消未实施的地图首页、定位初始化和自动缩放提案，要求保持现状，只去掉ICP备案悬挂并重新上传2.0；版本备注不提地图。本轮只删除小程序“我的”页备案号、查询复制入口、无消费者的app-filing配置/适配，以及历史网页预览的对应镜像。资料用途准确文案和仓库内网页原素材保持。home行为与此前源码逐字节比对，差异仅ICP导入、编号数据和查询handler移除；地图平台模块、分享入口、定位/缩放/供给无改动。

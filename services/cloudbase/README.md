@@ -1,5 +1,7 @@
 # CloudBase
 
+2026-10-18：2.0.0开发与源码归档已收口，2.0.1仅新增客户端系统体验和默认地图入口，没有新的后端部署。当前合同与已应用生产接点以[memory-bank/progress.md](../../memory-bank/progress.md)顶部及[统一收口记录](../../docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md)为准。以下函数数量、资源与阶段描述是V1-F历史基线，不作为当前V2生产资源总量或待执行命令。
+
 V1-F 的 CloudBase 源码采用仓库先行、后端先行：
 
 - `contracts/`：结构化版面与函数响应契约；

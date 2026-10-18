@@ -3,16 +3,18 @@
 > 当前地图分享约束：`UPLOAD_CONFIRMATION_MAP_SHARING_V2`。原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门；V2已准入数据自动生成Marker，不设二次审核或授权。当前条例覆盖本人此前及以后已上传V1记录。本人记录只显示V1“已上传”，禁止二次分享按钮。现行规范：`docs/decisions/map-upload-sharing-contract.md`。
 
 
-## 2026-10-18 V2 GitHub合并与2.0.0收口工作集
+## 2026-10-18 V2.0.0 收口工作集完成
 
-用户明确要求GitHub上的2.0.1→2.0.0→main合并，并更新项目状态、收口2.0.0。当前唯一工作集V2-GITHUB-ARCHIVE-CLOSEOUT，GitHub操作尚在执行。微信开发版本2.0.1已上传（1,060,430字节），线上2.0.0由用户确认；不将2.0.1开发上传冒称正式发布，不补造真机/人工验收，不解锁V3或重放生产部署。最终合并回执与收口以docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md及progress顶部为准。
+2.0.0已按用户明确指令完成开发与版本归档收口，状态CLOSED_BY_USER_REQUEST / GITHUB_MERGED / ARCHIVED。2.0.1→2.0.0经PR #4、2.0.0→main经PR #5实际合并，两次GitHub quality均通过。当前无活动开发区块或产品工作集，不自动解锁V3或重开历史生产任务。2.0.1仅开发版上传成功；线上2.0.0为用户已确认事实，不将2.0.1改记正式发布。
 
 | Step | 工作与验证 | 状态 |
 | --- | --- | --- |
-| CLOSE-01 | 备份、原文件保护、132份上传源码对账、候选秘密扫描与治理检查 | IN_PROGRESS |
-| CLOSE-02 | feature/v2.0.1-system-demo-board提交推送，PR合入codex/v2-release-2.0.0 | PENDING |
-| CLOSE-03 | codex/v2-release-2.0.0经PR合入main，回读远端祖先与132份源码SHA | PENDING |
-| CLOSE-04 | 当前文档状态更新、最终Git归档与2.0.0按用户指令收口 | PENDING |
+| CLOSE-01 | 备份、132份上传源码对账、候选秘密扫描与治理核验 | COMPLETE |
+| CLOSE-02 | 2.0.1提交推送，经PR #4合入2.0.0；quality成功 | COMPLETE |
+| CLOSE-03 | 2.0.0经PR #5合入main；quality成功、三分支132份SHA和祖先链通过 | COMPLETE |
+| CLOSE-04 | 当前文档同步、main归档与2.0.0按用户指令收口 | COMPLETE |
+
+下方DEMO/HOME/INTEGRATE的旧AWAITING_REVIEW是历史自动验证状态；本轮按用户指定范围关闭开发/归档工作，不补造未知人工或真机PASS。原未测/发布边界不阻塞本次已授权归档，也不自动触发后续开发。交付docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md。
 
 ## 2026-10-18 V2.0.1 开发版本上传工作集
 

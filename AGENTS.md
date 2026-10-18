@@ -2,7 +2,7 @@
 
 > 当前地图分享约束：`UPLOAD_CONFIRMATION_MAP_SHARING_V2`。原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门；V2已准入数据自动生成Marker，不设二次审核或授权。当前条例覆盖本人此前及以后已上传V1记录。本人记录只显示V1“已上传”，禁止二次分享按钮。现行规范：`docs/decisions/map-upload-sharing-contract.md`。
 
-2026-10-18 当前版本状态：用户明确要求GitHub上的2.0.1→2.0.0→main合并，并更新项目状态、收口2.0.0。当前唯一工作集V2-GITHUB-ARCHIVE-CLOSEOUT，GitHub操作尚在执行。微信开发版本2.0.1已上传（1,060,430字节），线上2.0.0由用户确认；不将2.0.1开发上传冒称正式发布，不补造真机/人工验收，不解锁V3或重放生产部署。最终合并回执与收口以docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md及progress顶部为准。 下方早期日期段及状态是历史快照。
+2026-10-18 当前版本状态：2.0.0已按用户明确指令完成开发与版本归档收口，状态CLOSED_BY_USER_REQUEST / GITHUB_MERGED / ARCHIVED。2.0.1→2.0.0经PR #4、2.0.0→main经PR #5实际合并，两次GitHub quality均通过。当前无活动开发区块或产品工作集，不自动解锁V3或重开历史生产任务。2.0.1仅开发版上传成功；线上2.0.0为用户已确认事实，不将2.0.1改记正式发布。 当前事实入口为docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md及memory-bank/progress.md顶部；下方早期日期段及状态是历史快照。
 
 2026-10-09修复版预览后用户明确“人工验收完毕”，本次跨城市修复PHONE_REPAIR_USER_CONFIRMED_PASS、Phase6 COMPLETE/HUMAN_APPROVED；当前最终1481/1 skip/0 fail。用户已接受的未测范围保持，独立Phase7工具新测试使用现有解码Python后通过，后端及修复客户端SHA保持；不冒充未知版本/全生命周期/性能。
 

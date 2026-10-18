@@ -2,11 +2,15 @@
 
 > 当前地图分享约束：`UPLOAD_CONFIRMATION_MAP_SHARING_V2`。原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门；V2已准入数据自动生成Marker，不设二次审核或授权。当前条例覆盖本人此前及以后已上传V1记录。本人记录只显示V1“已上传”，禁止二次分享按钮。现行规范：`docs/decisions/map-upload-sharing-contract.md`。
 
-## 2026-10-18 V2版本GitHub归档与2.0.0收口（进行中）
+## 2026-10-18 V2.0.0 已收口，2.0.1两次GitHub合并完成（当前权威）
 
-用户明确要求GitHub上的2.0.1→2.0.0→main合并，并更新项目状态、收口2.0.0。当前唯一工作集V2-GITHUB-ARCHIVE-CLOSEOUT，GitHub操作尚在执行。微信开发版本2.0.1已上传（1,060,430字节），线上2.0.0由用户确认；不将2.0.1开发上传冒称正式发布，不补造真机/人工验收，不解锁V3或重放生产部署。最终合并回执与收口以docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md及progress顶部为准。
+2.0.0已按用户明确指令完成开发与版本归档收口，状态CLOSED_BY_USER_REQUEST / GITHUB_MERGED / ARCHIVED。2.0.1→2.0.0经PR #4、2.0.0→main经PR #5实际合并，两次GitHub quality均通过。当前无活动开发区块或产品工作集，不自动解锁V3或重开历史生产任务。2.0.1仅开发版上传成功；线上2.0.0为用户已确认事实，不将2.0.1改记正式发布。
 
-授权本次Git提交、推送及两次PR合并；先核对已上传132份客户端源码，再发布feature/v2.0.1-system-demo-board至origin并合入codex/v2-release-2.0.0，随后合入main。保留原main本地文档修改和148份无关未跟踪文件，后者不作为本次归档输入；内部证据与凭据继续忽略。代码与本次已完成回归一致，仅补状态记录，不重复上传微信。
+GitHub源码提交3708311c598033a195c71559923dd8bf448792a1，2.0.1分支头0fbdcf605398c8cca4b514e7f7c83313d5ca2356；PR #4合并提交dbd23c31de2bfd97bf72fec873450431b8d953f8，PR #5合并提交8e17ae427f8208b3519a5daf74d55e34f9d5c132。feature/v2.0.1-system-demo-board→codex/v2-release-2.0.0→main祖先关系已验证，本地主main已同步。后续仅文档收口提交，不改已上传源码，最终文档提交由Git日志及本机归档回执追溯。
+
+三个远端分支的132份客户端源码均逐SHA匹配2.0.1上传清单；开发包1,060,430字节、备注“2.0.1 版本更新”。本轮已完成1585 Vitest PASS/1既有SKIP、12 Node实验PASS、26网页流程、双TS/Lint/Next/合同/分享门/原生模板样式及秘密扫描；GitHub两轮quality另有实际成功回执。不重复上传或部署，不将归档升级为新的手机/性能或逐项人工验收。
+
+148份原未跟踪文件和main两份文档的原视觉段落保持在本机，未纳入本次产品归档；内部证据/私人物料继续忽略。既有未测与平台发布边界保留为独立后续事项，不伪造PASS。本轮CLOSE-01—04收口；历史IN_PROGRESS/AWAITING_REVIEW/禁止Git/未提交等段落仅为当时快照。交付docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md，证据artifacts/v2-closeout-20261018/。
 
 ## 2026-10-18 V2.0.1 开发版本上传成功（当前权威）
 

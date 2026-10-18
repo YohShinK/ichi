@@ -1,0 +1,46 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1200"
+  height="670"
+  viewBox="0 0 1200 670"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">ICHI — 一拍看清，好版有迹可循</title>
+  <desc id="desc">
+    原始 ICHI Logo、真实拍摄和地图界面构成首屏。地图底图已作隐私处理，Marker
+    来自原始截图。
+  </desc>
+  <rect width="1200" height="670" rx="28" fill="#ffffff" />
+  <g
+    id="brand"
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif"
+  >
+    <image href="../logo.png" x="48" y="38" width="105" height="101" />
+    <text x="48" y="224" font-size="80" font-weight="900" fill="#111111">
+      一拍看清。
+    </text>
+    <text x="48" y="322" font-size="70" font-weight="900" fill="#E014A0">
+      好版有迹可循。
+    </text>
+    <text x="51" y="392" font-size="30" font-weight="600" fill="#555b64">
+      拍照识别 / 概率计算 / 好版地图
+    </text>
+    <rect x="49" y="453" width="445" height="2" fill="#e5e7eb" />
+    <text x="51" y="510" font-size="29" fill="#111111">把未知留给抽赏，</text>
+    <text x="51" y="553" font-size="29" fill="#111111">把信息交给玩家。</text>
+    <text
+      x="51"
+      y="616"
+      font-size="21"
+      font-family="ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace"
+      fill="#687386"
+    >
+      WECHAT MINI PROGRAM · V2.0
+    </text>
+  </g>
+  <g id="real-product-proof">
+    <image href="../ui-capture.webp" x="584" y="95" width="246" height="501" />
+    <image href="../ui-map.webp" x="861" y="70" width="278" height="547" />
+  </g>
+</svg>

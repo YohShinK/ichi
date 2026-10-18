@@ -1,70 +1,168 @@
-# ICHI
+# ICHI 一奇抽赏助手
 
-> 当前地图分享约束：`UPLOAD_CONFIRMATION_MAP_SHARING_V2`。原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门；V2已准入数据自动生成Marker，不设二次审核或授权。当前条例覆盖本人此前及以后已上传V1记录。本人记录只显示V1“已上传”，禁止二次分享按钮。现行规范：`docs/decisions/map-upload-sharing-contract.md`。
+**拍照识别抽赏版面，附近好版有迹可循。**
 
-2026-10-18 当前版本状态：2.0.0已按用户明确指令完成开发与版本归档收口，状态CLOSED_BY_USER_REQUEST / GITHUB_MERGED / ARCHIVED。2.0.1→2.0.0经PR #4、2.0.0→main经PR #5实际合并，两次GitHub quality均通过。当前无活动开发区块或产品工作集，不自动解锁V3或重开历史生产任务。2.0.1仅开发版上传成功；线上2.0.0为用户已确认事实，不将2.0.1改记正式发布。 当前事实入口为docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md及memory-bank/progress.md顶部；下方早期日期段及状态是历史快照。
+**微信搜索「ICHI 一奇抽赏助手」即可使用。** V2.0 已上线，包含好版地图。
 
-- GitHub合并：[2.0.1 → 2.0.0，PR #4](https://github.com/YohShinK/ichi/pull/4)、[2.0.0 → main，PR #5](https://github.com/YohShinK/ichi/pull/5)，均已合并且quality通过。
-- 最新开发包：2.0.1，系统体验草稿与默认地图首页；微信上传成功，尚未提审/正式发布2.0.1。
-- 开发/归档状态：2.0.0已收口，无活动开发区块；后续工作等待明确指令。
-- [统一收口记录](docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md)包含源码、验证及发布边界。
+<img src="./assets/readme/hero.webp" width="100%" alt="ICHI：一拍看清，好版有迹可循。拍摄识别入口与好版地图。">
 
-2026-10-13：当前工作集为V2-E/TASK22 Phase8上线准备，Phase7按本人修订范围收口为132NETWORK/133公开记录。敏感扫描、备案页脚及完整自动回归已执行；微信上传、审核与实际发布分别以progress顶部和Phase8报告为准。下方日期段为历史。
+ICHI 是面向抽赏玩家的微信小程序：拍摄现场版面，核对各赏级余票，查看概率并记录每次抽取；出发前，也能从好版地图发现附近值得关注的版面。
 
-2026-10-06：用户已确认TASK22当前Phase1/2及地图修复人工验收完成（HUMAN_APPROVED）；TASK22八Phase总计划仍IN_PROGRESS，下一步Phase3官方网络来源，Phase3—8及正式发布未执行。当前入口为docs/delivery/v2-e-task-22-report-and-human-acceptance.md及progress顶部。历史AWAITING_REVIEW不要求重复验收或重做部署；本次报告/执行说明不启动Phase3。
+[最短上手](#开始使用) · [功能展示](#从一张照片到一次抽赏) · [技术思路](#模型负责看见代码负责算清) · [本地开发](#本地开发与验证)
 
-2026-10-04用户明确保留微信模糊定位：CURRENT_LOCATION_APPROXIMATE_ALLOWED_V1取代前轮个人定位≤100米/精确权限硬门。合法GCJ02回执可供浏览，模糊/低精度/未知精度标明大致位置，已知有效accuracy绘制误差圆；不得要求开启精确权限或用历史marker冒充本人位置。个人点/圆独立于公开计数，点/相机同回执，前台刷新不移动浏览相机、后台清点并取消旧响应；公开准入精度与网格不变。最新状态以progress顶部为准，前轮定位修复报告只作历史追溯。 已在正式开发工作区/新版预览搭载，1208测试及原生验证PASS，尚未正式发布；证据docs/delivery/v2-e-task-22-approximate-location-support.md。
+<!-- 地图分享合同
+当前地图分享约束：UPLOAD_CONFIRMATION_MAP_SHARING_V2。
+原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门。
+V2已准入数据自动生成Marker，不设二次审核或授权。
+当前条例覆盖本人此前及以后已上传V1记录。
+本人记录只显示V1“已上传”，禁止二次分享按钮。
+现行规范：docs/decisions/map-upload-sharing-contract.md。
+-->
 
-2026-10-04直接上传备注安全门已回查在线；DIRECT_UPLOAD_NOTE_RETRY已在正式开发工作区及新版预览包补齐。真实微信备注pass才创建完成V1记录；拒绝/异常留本机待上传，在“我上传的版面”修改备注后恢复同一识别任务，复用原快照/位置/上传分享确认，不重新识别、追加位置核验或二次授权。成功只显示已上传，条例及既有全局bridge自动处理后续。证据见docs/delivery/v2-e-task-22-direct-upload-note-review-and-retry.md；客户端尚未正式发布。
+## 把未知留给抽赏，把信息交给玩家
 
-ICHI 是面向一番赏玩家的用户侧产品，按照三个独立决策门逐步发展：V1 即时计算、V2 好版线索地图、V3 可信票池社群。Next.js 手机优先网页是 V1 已批准的视觉与交互基线；V2 地图涉及新的公开数据、同意、位置、服务端读取和真机契约，现已基于验证后的 V1 Current Truth 重建完整计划并通过 Final Human Review，不能被解释为只做页面照搬。
+到店前，往往不知道目标版面还剩什么；到了现场，还要数票、核对余奖、手算机会。零散分享也可能已经过时。
 
-## 早期状态快照（以顶部为准）
+ICHI 把拍照识别、概率计算和地图线索接在一起，让玩家看清当前余票、了解每一抽的机会，也更容易找到下一站。
 
-2026-10-04地图资料接点：生产已绑定当前本人安全昵称、独立公开头像副本、真实核验备注及首次上传时间。旧direct备注仅在本人当前条例已接受后由客户端自动后台补审，使用当次临时OpenID并只存exact-hash安全证明；没有新授权或分享按钮。V2详情只读公开投影，Freshness仍用observedAt。正常active账号举报、封禁/异常/受限制不计数，10个不同合格用户隐藏。最新证据与状态见progress顶部及docs/delivery/v2-e-task-22-map-display-and-public-metadata-audit.md。
+<img src="./assets/readme/product-principle.webp" width="560" alt="我们要把未知留给抽赏，把信息交给玩家。">
 
+## 从一张照片，到一次抽赏
 
-- 当前活动区块：`V2-E / TASK-V2-22 IN_PROGRESS`。Phase2已`PRODUCTION_APPLIED / LIVE_BRIDGE_VERIFIED / GLOBAL_CONTINUOUS_ENABLED / PHASE1_2_HUMAN_APPROVED`；本人v3接受后CUFZBP实际转换为V2并生成原生Marker及43抽详情，全局每分钟timer连续9次成功。四V1 producer/worker/drain/公开query/detail已开启，所有账号共用后端，各自本人当前同意自动覆盖历史与未来完成上传，无需逐账号配置；旧逐条选择服务保持关闭。UPLOAD_ONLY为既有显示筛选，打开可见仅上传记录。最新报告`docs/delivery/v2-e-task-22-production-bridge-live-and-continuous-closeout.md`；正式微信新版发布、Phase3/NETWORK等仍未执行，以`memory-bank/progress.md`顶部为准。
-- 微信小程序 ICHI V1.0.0 已于 `2026-08-30` 审核通过并正式上线，状态 `RELEASED / FROZEN`；`WECHAT_PREMATURE_PROFILE_AUTH_GATE` 已 `RESOLVED / CLOSED`。
-- 应用代码：线上 V1.0.0 source 固定为 `release/v1-freeze-20260828@03942f2067959a4b8b0eb6223c949e51e768587d`。版面识别 R2、Local Board／Upload Submission／Current Cloud Publication、账号／位置／每日配额、照片临时使用后删除、私有结构化记录、CloudBase 定时维护与删除链路均已完成。
-- V1.0.1 分享源码 `8d442aa7cc9f1921a9b9aade231b5884e8d2dd00` 已由合并提交 `929d189a06e13010e50abf4927bfec3b1ebd49fc` 进入 `main`；微信上传与审核均已完成（`UPLOADED=YES`、`APPROVED=YES`），实际发布仍未确认（`PUBLISHED=UNCONFIRMED`），因此不得创建 `v1.0.1` 标签或 Release。
-- V1 Current Truth 已由代码、测试、Git 与发布证据验证，并作为 V2 planning baseline；`feature/v2-board-map` 精确基于上述最新 `main`。
-- `memory-bank/implementation-plan.md` 是唯一 current plan，现含 22 个依赖驱动任务，且 `CURRENT_V2_PLAN_AUTHORITATIVE=APPROVED`。V2-C 提供本地 reference implementation；V2-E 负责生产 adapter、resource/index、设备矩阵、pilot 与发布门；Phase2真实用户链路与全局持续桥接已验证，NETWORK热启动与正式发布仍属后续工作。
-- V2-B 收口证据入口为 `docs/delivery/v2-b-closeout-review.md`；历史计划、entry packet 和草案仅用于追溯。
+### 拍照 → 核对 → 看清余票
 
-## 独立延后分区
+拍摄或导入抽赏版面，核对识别结果，再设定关注的大赏。各赏级余票与概率放在同一个界面；每记录一抽，剩余状态随之更新。
 
-[`apps/xhs-local-tool/`](apps/xhs-local-tool/) 是小红书笔记可挂载的纯本地小工具分区，状态为 `POST-V1 / DEFERRED / USER_DECISION`。它不属于微信小程序 V1 successful publication、V2 或 V3，也不会因 V1 开发完成而自动启动。
+<p>
+  <img src="./assets/readme/ui-capture.webp" width="286" alt="拍摄界面：对准纸质抽赏版面。">
+  <img src="./assets/readme/ui-recognition.webp" width="286" alt="识别结果：核对 IP、单价和各赏级剩余票数，再设定大赏。">
+  <img src="./assets/readme/ui-draw.webp" width="286" alt="辅助抽赏：按赏级显示剩余票数和当前概率，记录每次抽取。">
+</p>
 
-## 正式入口
+### 好版地图：先发现，再去现场
 
-1. [PRD](PRD.md)
-2. [产品设计文档](memory-bank/design-document.md)
-3. [技术栈](memory-bank/tech-stack.md)
-4. [当前实施门禁与 V2 完整重构计划](memory-bank/implementation-plan.md)
-5. [当前进度](memory-bank/progress.md)
-6. [仓库架构](memory-bank/architecture.md)
+查看附近版面，用 IP / 关键词检索，按状态标签寻找线索。点开 Marker 看余票、详情与来源；点位重叠时，通过列表选择具体版面。
 
-## 文档优先级
+<p>
+  <img src="./assets/readme/ui-map.webp" width="286" alt="好版地图：附近版面的余票数字、状态标签与聚合角标，底图已模糊处理。">
+  <img src="./assets/readme/ui-map-detail.webp" width="286" alt="地图详情：余票、各赏级概率、来源与上传时间。">
+  <img src="./assets/readme/ui-map-picker.webp" width="286" alt="重叠点位列表：按 IP、状态标签与上传时间选择版面。">
+</p>
 
-```text
-design-document.md   产品行为与验收
-        ↓
-tech-stack.md        技术实现边界
-        ↓
-implementation-plan.md  区块顺序、step 范围与验收门
-        ↓
-progress.md          当前活动区块、工作集与验证记录
-        ↓
-architecture.md      已存在文件和代码职责
+地图汇集玩家上传与标明来源的网络线索。结合来源、现场记录时间和上传时间，选择值得到店核实的版面。
+
+### 观察窗口与记录：每一抽，都有上下文
+
+观察窗口按当前余票计算接下来几抽的可能情况；抽取记录保留已发生的操作，上传记录显示相应处理状态，便于之后查看。
+
+<p>
+  <img src="./assets/readme/ui-outlook.webp" width="286" alt="局面可能性：查看观察窗口内的目标命中情况与累计花费。">
+  <img src="./assets/readme/ui-history.webp" width="286" alt="抽取记录：按顺序查看抽到的赏级、剩余抽数与花费。">
+  <img src="./assets/readme/ui-records.webp" width="286" alt="上传记录：查看核验失败、已上传与待核对状态。">
+</p>
+
+## 开始使用
+
+1. 在微信搜索 **「ICHI 一奇抽赏助手」**，或识别下方小程序码。
+2. 进入「识别」，拍摄或导入现场抽赏版面，**核对识别结果**，设定大赏。
+3. 查看余票与概率，记录每次抽取，通过观察窗口查看变化。
+4. 打开好版地图，搜索附近版面，查看标签、来源、时间、备注与详情。
+
+<img src="./assets/readme/miniprogram-code.png" width="180" alt="ICHI 一奇抽赏助手微信小程序码。">
+
+愿意贡献现场信息时，确认上传并完成核验，记录会保存到个人云端。账号同意地图贡献条例后，符合公开规则的记录由后台自动转入地图。[了解分享规则](docs/decisions/map-upload-sharing-contract.md)。
+
+## 模型负责看见，代码负责算清
+
+### 01 / REMAIN：只识别必要的余票
+
+从 HYBRID 的全量判断转向 REMAIN：减少对已贴票与整版总量的重复还原，优先提取可见余票。当前 R2 路线由 `qwen3.7-flash` 输出视觉信息，代码解析、校验并归一；用户核对后，概率与抽赏辅助由本机确定性计算生成。
+
+<img src="./assets/readme/remain-comparison.webp" width="100%" alt="HYBRID → REMAIN：从同时识别已贴与未贴，转向聚焦未贴余票。">
+
+### 02 / 前进继承与受控共享
+
+系统结合位置、IP、版面结构与余票变化判断同一版面，关联唯一匹配的记录，保留歧义待确认。版面关联与地图准入分别处理。
+
+<img src="./assets/readme/sharing-flow.svg" width="100%" alt="V1 私有记录，经 Bridge 校验准入，形成 V2 公开地图状态。">
+
+上传确认表达分享意愿，核验完成后保存为 **V1 私有记录**。账号同意当前条例后，**Bridge** 按位置、安全与有效性规则完成准入，生成 **V2 地图状态**。条例覆盖本人此前及以后已上传的合格记录，更新、删除与撤回同步到地图。
+
+### 03 / Canvas PNG 与原生地图
+
+Canvas 将 Marker 绘制为 PNG，按内容缓存，再交给微信原生地图的 `iconPath`。缩放改变可见密度，邻近点位按视图聚合，重叠版面可逐个查看。
+
+<img src="./assets/readme/native-marker.png" width="260" alt="原生 Canvas Marker 样例：剩余 72 抽，状态为刚刚拆套。">
+
+**黑色数字表示代表版面的剩余抽数，玫红角标表示聚合成员数。**
+
+<details>
+<summary>500 Marker 密集渲染测试</summary>
+
+<img src="./assets/readme/marker-stress-500.webp" width="640" alt="500 Marker 压力测试：lead 500、individual 500、cluster 0。">
+
+同屏密集 Marker 场景的渲染验证。[查看测试记录](docs/delivery/v2-d-task-18-true-device-marker-stress-result.md)。
+
+</details>
+
+## 架构与技术栈
+
+产品运行在微信原生小程序。识别与持久化交给云服务，概率、记录与地图规则使用独立领域模块；Next.js 网页用于设计与流程验证。
+
+| 层 | 实际采用 |
+| --- | --- |
+| UI / UX 设计 | Figma，设计与原型 |
+| 产品客户端 | 微信原生小程序、TypeScript、WXML / WXSS |
+| 网页验证 | Next.js 15、React 19 |
+| 领域与状态 | TypeScript 独立模块、确定性计算、记录状态机 |
+| 后端与存储 | 腾讯云 CloudBase、云函数、文档数据库、对象存储 |
+| 图像理解 | 阿里云百炼、`qwen3.7-flash` |
+| 数据约束 | JSON Schema、AJV、版本化契约 |
+| 工程验证 | pnpm workspace、Vitest、Playwright、ESLint、GitHub Actions |
+
+实现分工见[仓库架构](memory-bank/architecture.md)，平台与依赖见[技术栈](memory-bank/tech-stack.md)。
+
+## 本地开发与验证
+
+需要 **Node.js ≥24.11.0 且 <25**，**pnpm 11.9.0**。使用锁定依赖：
+
+```bash
+corepack pnpm install --frozen-lockfile
+corepack pnpm --filter @ichi/web dev
 ```
 
-`docs/references/`、`docs/methodology/`、`product-atlas/` 和 `canvas/` 保留早期研究、NeoPRD 与无限画布实验，但不再作为正式开发依据。
+- `apps/web/`：Next.js 网页原型与流程验证。
+- `apps/client/miniprogram/`：微信原生客户端。在微信开发者工具中导入仓库根目录，使用 `project.config.json` 指定的客户端目录与 TypeScript 编译设置。
+- `services/cloudbase/`、`packages/v2-map/`：识别、私有记录与地图后端，使用 CloudBase 配置云资源、身份与服务端环境。
 
-已完成 V1、被替代的旧 V2 和延后 V3 任务保存在[实施计划历史](memory-bank/implementation-plan-history.md)；2026-09-08 的完整 V2 重建另保存在[V1 事实审阅前的 V2 草案](memory-bank/v2-planning-draft-pre-v1-truth-review.md)。两者仅供追溯，不可解锁任务或覆盖当前计划。
+参考 [`recognize-board/.env.example`](services/cloudbase/functions/recognize-board/.env.example)，配置 `DASHSCOPE_API_KEY`、`DASHSCOPE_WORKSPACE_ID`、`DASHSCOPE_REGION`、`DASHSCOPE_MODEL` 等云函数环境变量。配置方法见 [CloudBase 说明](services/cloudbase/README.md)。
 
-Agent 执行纪律见 [AGENTS.md](AGENTS.md)。
+常用检查：
 
-## Reproducing the checks
+```bash
+corepack pnpm test
+corepack pnpm typecheck
+corepack pnpm lint
+corepack pnpm validate:contracts
+corepack pnpm --filter @ichi/web build
+corepack pnpm test:web
+```
 
-Install the locked Node/pnpm dependencies with `corepack pnpm install --frozen-lockfile`. Image-evidence tests additionally require Python with `Pillow==12.3.0` from `requirements-test.txt` and an absolute `ICHI_IMAGE_DECODER_PYTHON` path. The GitHub quality workflow prepares this dependency explicitly. The original approved web HTML and public images are archived in `apps/web/source/`; the web preview no longer requires files in a developer’s Downloads folder. Local evidence, credentials, exports and generated caches remain outside Git.
+图片证据测试还需要 [`requirements-test.txt`](requirements-test.txt) 固定的 `Pillow==12.3.0`，并设置 `ICHI_IMAGE_DECODER_PYTHON` 为安装了该依赖的 Python **绝对路径**。完整质量门为 `corepack pnpm quality`；配置示例见 [CI 工作流](.github/workflows/quality.yml)。
+
+### 版本状态
+
+线上版本：**2.0.0**。开发版本：**2.0.1**，包含系统体验草稿与默认地图主页。V2-E 已归档，**当前活动区块：无**。发布与开发记录见[版本归档](docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md)。
+
+## 文档与许可
+
+- [产品总览](PRD.md) · [正式产品设计](memory-bank/design-document.md)
+- [当前进度](memory-bank/progress.md) · [实施计划](memory-bank/implementation-plan.md)
+- [地图上传与分享规则](docs/decisions/map-upload-sharing-contract.md)
+- [客户端说明](apps/client/README.md) · [CloudBase 说明](services/cloudbase/README.md)
+- [README 素材来源与制作说明](docs/readme-redesign/asset-plan.md)
+- [Agent 执行纪律](AGENTS.md)
+
+产品设计、技术实现与开发进度维护于 `memory-bank/`。
+
+项目级许可证尚未指定。第三方字形许可见 [Marker 字体许可](apps/client/miniprogram/pages/home/marker-font.LICENSE.txt)。

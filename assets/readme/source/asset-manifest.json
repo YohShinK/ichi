@@ -1,0 +1,326 @@
+{
+  "date": "2026-10-19",
+  "coordinates": "original pixels: left, top, right, bottom",
+  "assets": [
+    {
+      "file": "ui-capture.webp",
+      "source": "@nine/01.PNG",
+      "sourceSha256": "efa94575b4daeb913127d1aa3040adb7fa3f578b9b3f40b3c2dcd86192630b76",
+      "sourceSize": [2480, 3508],
+      "crop": [190, 2070, 776, 3262],
+      "outputSize": [586, 1192],
+      "redactions": [],
+      "note": "Product manual page 3; real UI crop, no invented UI or data",
+      "sha256": "508dd6b5862eed7fa643c9ce2bd5c85a357a4e5af926c6e02e75dd82ed72ddb9",
+      "bytes": 22988
+    },
+    {
+      "file": "ui-recognition.webp",
+      "source": "@nine/01.PNG",
+      "sourceSha256": "efa94575b4daeb913127d1aa3040adb7fa3f578b9b3f40b3c2dcd86192630b76",
+      "sourceSize": [2480, 3508],
+      "crop": [948, 2070, 1536, 3262],
+      "outputSize": [588, 1192],
+      "redactions": [],
+      "note": "Product manual page 3; real UI crop, no invented UI or data",
+      "sha256": "4837f030c9f7f6cf64e4b27ad8123c8d047f7bc8997fb521e027e1cf2544ec79",
+      "bytes": 33134
+    },
+    {
+      "file": "ui-draw.webp",
+      "source": "@nine/01.PNG",
+      "sourceSha256": "efa94575b4daeb913127d1aa3040adb7fa3f578b9b3f40b3c2dcd86192630b76",
+      "sourceSize": [2480, 3508],
+      "crop": [1700, 2070, 2290, 3262],
+      "outputSize": [590, 1192],
+      "redactions": [],
+      "note": "Product manual page 3; real UI crop, no invented UI or data",
+      "sha256": "f8e9b5b91132fa43f6652524b3face26b25661f535db8973b10f66e54cc0335a",
+      "bytes": 40954
+    },
+    {
+      "file": "ui-outlook.webp",
+      "source": "@nine/02.PNG",
+      "sourceSha256": "33a7836af7d93cd0f813d9df8298fa54903d22b7550b906ee7b4b8289a886630",
+      "sourceSize": [2480, 3508],
+      "crop": [188, 406, 770, 1598],
+      "outputSize": [582, 1192],
+      "redactions": [],
+      "note": "Product manual page 4; real UI crop, no invented UI or data",
+      "sha256": "cc92711fc20180020f65ab73e0272707bdaaee57975b65abb788221e2c0fae92",
+      "bytes": 37570
+    },
+    {
+      "file": "ui-history.webp",
+      "source": "@nine/02.PNG",
+      "sourceSha256": "33a7836af7d93cd0f813d9df8298fa54903d22b7550b906ee7b4b8289a886630",
+      "sourceSize": [2480, 3508],
+      "crop": [948, 406, 1538, 1598],
+      "outputSize": [590, 1192],
+      "redactions": [],
+      "note": "Product manual page 4; real UI crop, no invented UI or data",
+      "sha256": "ea5b5e5f1da5e2757e5d88a37769a2370eae9942c045f92759ddbfbd477b87e3",
+      "bytes": 29810
+    },
+    {
+      "file": "ui-records.webp",
+      "source": "@nine/02.PNG",
+      "sourceSha256": "33a7836af7d93cd0f813d9df8298fa54903d22b7550b906ee7b4b8289a886630",
+      "sourceSize": [2480, 3508],
+      "crop": [1700, 406, 2290, 1598],
+      "outputSize": [590, 1192],
+      "redactions": [
+        {
+          "boxInCrop": [169, 336, 262, 361],
+          "operation": "opaque privacy mask",
+          "reason": "remove original record code"
+        },
+        {
+          "boxInCrop": [169, 525, 262, 550],
+          "operation": "opaque privacy mask",
+          "reason": "remove original record code"
+        },
+        {
+          "boxInCrop": [169, 671, 262, 696],
+          "operation": "opaque privacy mask",
+          "reason": "remove original record code"
+        }
+      ],
+      "note": "Product manual page 4; real UI crop, no invented UI or data",
+      "sha256": "3ccd9ec5927f12c7902854864c5029c5d156d3454b9e2be47dedc7d9418b5e16",
+      "bytes": 27864
+    },
+    {
+      "file": "ui-map.webp",
+      "source": "@nine/02.PNG",
+      "sourceSha256": "33a7836af7d93cd0f813d9df8298fa54903d22b7550b906ee7b4b8289a886630",
+      "sourceSize": [2480, 3508],
+      "crop": [228, 2116, 812, 3264],
+      "outputSize": [584, 1148],
+      "redactions": [
+        {
+          "boxInCrop": [32, 198, 555, 1116],
+          "operation": "pixelate and blur original basemap; restore only original UI and marker pixels",
+          "reason": "hide precise streets and geographic position"
+        }
+      ],
+      "note": "Product manual page 4; real UI crop, no invented UI or data",
+      "sha256": "52dfc17bd075fa830a83ae3ae104ac7a331bb53b1a367429dafe88fa24c17e52",
+      "bytes": 38746
+    },
+    {
+      "file": "ui-map-detail.webp",
+      "source": "@nine/02.PNG",
+      "sourceSha256": "33a7836af7d93cd0f813d9df8298fa54903d22b7550b906ee7b4b8289a886630",
+      "sourceSize": [2480, 3508],
+      "crop": [966, 2116, 1552, 3264],
+      "outputSize": [586, 1148],
+      "redactions": [
+        {
+          "boxInCrop": [32, 198, 557, 1116],
+          "operation": "pixelate and blur original basemap; restore only original UI and marker pixels",
+          "reason": "hide precise streets and geographic position"
+        },
+        {
+          "boxInCrop": [144, 841, 413, 862],
+          "operation": "opaque privacy mask",
+          "reason": "remove venue identity and exact-place note"
+        },
+        {
+          "boxInCrop": [104, 874, 426, 916],
+          "operation": "opaque privacy mask",
+          "reason": "remove venue identity and exact-place note"
+        }
+      ],
+      "note": "Product manual page 4; real UI crop, no invented UI or data",
+      "sha256": "01a6b70b6c9027431a47d39f3c7adabeb28d04a73c066effb415375b43552762",
+      "bytes": 46324
+    },
+    {
+      "file": "ui-map-picker.webp",
+      "source": "@nine/02.PNG",
+      "sourceSha256": "33a7836af7d93cd0f813d9df8298fa54903d22b7550b906ee7b4b8289a886630",
+      "sourceSize": [2480, 3508],
+      "crop": [1690, 2116, 2276, 3264],
+      "outputSize": [586, 1148],
+      "redactions": [
+        {
+          "boxInCrop": [32, 198, 557, 1116],
+          "operation": "pixelate and blur original basemap; restore only original UI and marker pixels",
+          "reason": "hide precise streets and geographic position"
+        },
+        {
+          "boxInCrop": [155, 407, 387, 430],
+          "operation": "opaque privacy mask",
+          "reason": "remove uploader/venue notes while keeping original IP, tags and upload time"
+        },
+        {
+          "boxInCrop": [155, 487, 387, 510],
+          "operation": "opaque privacy mask",
+          "reason": "remove uploader/venue notes while keeping original IP, tags and upload time"
+        },
+        {
+          "boxInCrop": [155, 567, 387, 590],
+          "operation": "opaque privacy mask",
+          "reason": "remove uploader/venue notes while keeping original IP, tags and upload time"
+        },
+        {
+          "boxInCrop": [155, 647, 387, 670],
+          "operation": "opaque privacy mask",
+          "reason": "remove uploader/venue notes while keeping original IP, tags and upload time"
+        },
+        {
+          "boxInCrop": [155, 727, 387, 750],
+          "operation": "opaque privacy mask",
+          "reason": "remove uploader/venue notes while keeping original IP, tags and upload time"
+        }
+      ],
+      "note": "Product manual page 4; real UI crop, no invented UI or data",
+      "sha256": "9ac2d675dea1f7e3be67c190819eca339b27c793c59c55ca47b40af5b16da028",
+      "bytes": 44630
+    },
+    {
+      "file": "product-principle.webp",
+      "source": "@nine/04.PNG",
+      "sourceSha256": "0805e76ee7dda7d6974755bbad1508e5bdccd581a4c735fa3c76cf1d253d8990",
+      "sourceSize": [2480, 3508],
+      "crop": [1260, 393, 2200, 563],
+      "outputSize": [940, 170],
+      "redactions": [],
+      "note": "Page 6: original product principle; repeated in Markdown",
+      "sha256": "0ef5b05ef49889761e58a73b3a76b2b61fdcf6a0c80c376c070afc988d4db4ac",
+      "bytes": 21828
+    },
+    {
+      "file": "remain-comparison.webp",
+      "source": "@nine/05.PNG",
+      "sourceSha256": "cbb55bcb6b7b0d1dfc3417703fadfa8152476b66977f3f904e340194f487c842",
+      "sourceSize": [2480, 3508],
+      "crop": [565, 1858, 1928, 2468],
+      "outputSize": [1363, 610],
+      "redactions": [],
+      "note": "Page 7: original HYBRID/REMAIN ticket comparison and arrow; performance estimates excluded",
+      "sha256": "af4dcad6e8cba6df84ed6375a744d70cc87282d6c8c5c240918c9264cfa0eb35",
+      "bytes": 51934
+    },
+    {
+      "file": "marker-stress-500.webp",
+      "source": "@nine/06.PNG",
+      "sourceSha256": "9451c120790d92b332a3c1e8c55112fa60c2e1aa0d5d42d12b905928e0336ed8",
+      "sourceSize": [2480, 3508],
+      "crop": [775, 1210, 1695, 1830],
+      "outputSize": [920, 620],
+      "redactions": [],
+      "note": "Page 8: real historical stress screenshot and original counts; no FPS or universal performance claim",
+      "sha256": "34851bfdc2e6ccf796fda5e1395a8eced66f7a939622e40cf63cc724abb2d116",
+      "bytes": 147386,
+      "corroboratingSource": {
+        "file": "docs/visual/ichi-map-mechanisms-a2/assets/stress-500-original.jpg",
+        "sha256": "2e1b50c064e9e395b86eeb98ce374ba91cf4afb14634d39f39f16e6a7d0bc633",
+        "provenance": "User-provided real screenshot; see the existing map-visual source manifest"
+      }
+    },
+    {
+      "file": "logo.png",
+      "source": "apps/client/miniprogram/assets/v1-29/ichi-avatar.png",
+      "sourceSha256": "541ca095887c88b00b7172f433aad96006b6b107ac719302ca2c80d0abaffd07",
+      "sourceSize": [320, 320],
+      "crop": [73, 59, 247, 259],
+      "outputSize": [174, 200],
+      "redactions": [],
+      "note": "Original ICHI logo; no redraw",
+      "sha256": "de15f9c6548d6479cb02ec19c8925f546100ebb228cce0805b652a30ac6fe7ad",
+      "bytes": 26102
+    },
+    {
+      "file": "native-marker.png",
+      "source": "docs/visual/ichi-map-mechanisms-a2/assets/marker-visual-sample.png",
+      "sourceSha256": "c1e6c0cd6926d2842b66180491dc4490ea50f16f577889eb70c9516f2ea5bcb5",
+      "sourceSize": [420, 216],
+      "crop": null,
+      "outputSize": [420, 216],
+      "redactions": [],
+      "note": "Existing production Canvas renderer output; visual sample, not a live lead",
+      "sha256": "3aae50d18e7ba7f5b9ec05a76d0740a303c68c07b5166d5f8cfc8363016e17f2",
+      "bytes": 14376
+    },
+    {
+      "file": "miniprogram-code.png",
+      "source": "@nine/gh_e40431bdc658_1280 (1).jpg",
+      "sourceSha256": "420e8cf0deef6d934b7ee78c12e317b7ecf4eb871add5b9743d11d617b9ed934",
+      "sourceSize": [1280, 1280],
+      "crop": null,
+      "outputSize": [1280, 1280],
+      "redactions": [],
+      "note": "Full supplied Mini Program code; no crop, pixel-identical PNG conversion; scanning requires user verification",
+      "sha256": "f7d5e4d1593dc3961b362263b27a193ebe71385bd85bedcc1c0f20fed9885417",
+      "bytes": 166481
+    },
+    {
+      "file": "sharing-flow.svg",
+      "source": "docs/decisions/map-upload-sharing-contract.md",
+      "sourceSha256": "d0756f993ba546c3c242800e09bee80c45257cc167e02892d4cee51308427be8",
+      "outputSize": [1200, 390],
+      "sha256": "8ff90f94c53af9d9c98c31a23dd6e6889ff45b50ce4d146e8b334c22f68a1f6a",
+      "bytes": 2147,
+      "note": "Deterministic SVG of verified V1/Bridge/V2 relationships; not a screenshot or a new product flow"
+    },
+    {
+      "file": "hero.webp",
+      "source": "source/hero-layout.svg",
+      "sourceSha256": "a9669a7bda6e8c9854b8ecfc1d94b153934cac75fa3c6bc3fdff1806500924ec",
+      "inputs": ["logo.png", "ui-capture.webp", "ui-map.webp"],
+      "outputSize": [1200, 670],
+      "sha256": "71c2dd7cee4bad9ab01ea1c4b66dec968156c02afbf7314c56ac1351fcc34347",
+      "bytes": 54346,
+      "note": "Deterministic SVG layout composed with sanitized original project assets; published raster needs no external SVG resources"
+    }
+  ],
+  "originalPages": [
+    {
+      "file": "首页.PNG",
+      "sha256": "f460cfdd6d33b108c7df721b3e7ce85e46b8831fc45ddd284da908c8bd20c182",
+      "size": [2480, 3508]
+    },
+    {
+      "file": "目录.PNG",
+      "sha256": "f6f478fab1344ed661b3b9b1e136df186fc2c6b6f176211bf1f57fb691d6524f",
+      "size": [2480, 3508]
+    },
+    {
+      "file": "01.PNG",
+      "sha256": "efa94575b4daeb913127d1aa3040adb7fa3f578b9b3f40b3c2dcd86192630b76",
+      "size": [2480, 3508]
+    },
+    {
+      "file": "02.PNG",
+      "sha256": "33a7836af7d93cd0f813d9df8298fa54903d22b7550b906ee7b4b8289a886630",
+      "size": [2480, 3508]
+    },
+    {
+      "file": "03.PNG",
+      "sha256": "45e28c5b33663d45164bce05eaaddc4aa56174f896f82704b3e0f88009d98fd2",
+      "size": [2480, 3508]
+    },
+    {
+      "file": "04.PNG",
+      "sha256": "0805e76ee7dda7d6974755bbad1508e5bdccd581a4c735fa3c76cf1d253d8990",
+      "size": [2480, 3508]
+    },
+    {
+      "file": "05.PNG",
+      "sha256": "cbb55bcb6b7b0d1dfc3417703fadfa8152476b66977f3f904e340194f487c842",
+      "size": [2480, 3508]
+    },
+    {
+      "file": "06.PNG",
+      "sha256": "9451c120790d92b332a3c1e8c55112fa60c2e1aa0d5d42d12b905928e0336ed8",
+      "size": [2480, 3508]
+    },
+    {
+      "file": "07.PNG",
+      "sha256": "c65b78240f7785a8b47b3e55fc5cfa5900fb1eebd606118bf7852c60a861a369",
+      "size": [2480, 3508]
+    }
+  ]
+}

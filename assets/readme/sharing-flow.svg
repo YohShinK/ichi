@@ -1,0 +1,91 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="1200"
+  height="390"
+  viewBox="0 0 1200 390"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">V1 → Bridge → V2：上传与地图准入</title>
+  <desc id="desc">
+    原上传确认、核验完成后保存 V1
+    私有记录；账号同意当前条例且满足公开规则后，Bridge 校验准入 V2
+    并自动生成地图投影。用户不需要逐条二次分享。继承确认是独立的数据关联判断。
+  </desc>
+  <rect width="1200" height="390" rx="24" fill="#ffffff" />
+  <g
+    font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei','Noto Sans CJK SC',sans-serif"
+  >
+    <rect x="48" y="55" width="322" height="267" rx="24" fill="#f3f4f6" />
+    <rect x="439" y="55" width="322" height="267" rx="24" fill="#191a20" />
+    <rect x="830" y="55" width="322" height="267" rx="24" fill="#f3f4f6" />
+    <text
+      x="209"
+      y="164"
+      text-anchor="middle"
+      font-size="82"
+      font-weight="900"
+      fill="#111111"
+    >
+      V1
+    </text>
+    <text
+      x="209"
+      y="250"
+      text-anchor="middle"
+      font-size="48"
+      font-weight="700"
+      fill="#111111"
+    >
+      私有记录
+    </text>
+    <text
+      x="600"
+      y="164"
+      text-anchor="middle"
+      font-size="67"
+      font-weight="800"
+      fill="#ffffff"
+    >
+      Bridge
+    </text>
+    <text
+      x="600"
+      y="250"
+      text-anchor="middle"
+      font-size="48"
+      font-weight="700"
+      fill="#ffffff"
+    >
+      校验准入
+    </text>
+    <text
+      x="991"
+      y="164"
+      text-anchor="middle"
+      font-size="82"
+      font-weight="900"
+      fill="#E014A0"
+    >
+      V2
+    </text>
+    <text
+      x="991"
+      y="250"
+      text-anchor="middle"
+      font-size="48"
+      font-weight="700"
+      fill="#111111"
+    >
+      公开状态
+    </text>
+    <path
+      d="M384 187h39m-13-13 13 13-13 13M775 187h39m-13-13 13 13-13 13"
+      fill="none"
+      stroke="#E014A0"
+      stroke-width="6"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </g>
+</svg>

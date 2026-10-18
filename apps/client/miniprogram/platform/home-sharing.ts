@@ -12,7 +12,7 @@ export const isPublicShareTab = (value: unknown): value is PublicShareTab =>
 
 export const parsePublicShareTab = (
   query: Readonly<Record<string, unknown>> | undefined,
-): PublicShareTab => (isPublicShareTab(query?.tab) ? query.tab : "recognize");
+): PublicShareTab => (isPublicShareTab(query?.tab) ? query.tab : "map");
 
 const createPublicQuery = (tab: PublicShareTab): string => `tab=${tab}`;
 

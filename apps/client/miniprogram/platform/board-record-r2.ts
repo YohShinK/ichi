@@ -1,3 +1,4 @@
+import { assertUploadableBoardId } from "./local-board-source.js";
 import type { ConfirmedBoardSnapshot } from "./cloud-recognition-task.js";
 
 export const BOARD_RECORD_R2_SCHEMA_VERSION = "board-record-r2-1.0.0" as const;
@@ -40,6 +41,7 @@ export interface R2MapBoardProjection {
 export const toR2MapBoardProjection = (
   record: R2BoardRecordTransport,
 ): R2MapBoardProjection => {
+  assertUploadableBoardId(record.boardId);
   const snapshot = record.finalSnapshot ?? record.initialSnapshot;
   if (
     record.schemaVersion !== BOARD_RECORD_R2_SCHEMA_VERSION ||

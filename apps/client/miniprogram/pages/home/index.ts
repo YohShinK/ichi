@@ -1,3 +1,8 @@
+import { ensureSystemDemoDraft } from "../../platform/system-demo-draft.js";
+import {
+  isSystemDemoDraft,
+  SYSTEM_DEMO_BOARD_ID,
+} from "../../platform/local-board-source.js";
 import { PUBLIC_MAP_CACHE_TTL_MS } from "../../platform/public-map-cache.js";
 import {
   captureBoardImage,
@@ -1542,8 +1547,8 @@ const requestCameraAuthorization = (): Promise<void> =>
 
 Page({
   data: {
-    currentView: "start" as HomeView,
-    activeTab: "recognize" as MainTab,
+    currentView: "map-preview" as HomeView,
+    activeTab: "map" as MainTab,
     topSafePx: 40,
     mapPhase: "INITIAL_IDLE" as PublicMapClientState["phase"],
     mapMarkers: [] as readonly PublicMapMarkerPresentation[],
@@ -1760,8 +1765,8 @@ Page({
         ? "schema-incompatible"
         : stableView;
     this.setData({
-      currentView: recognitionEntryView,
-      activeTab: "recognize",
+      currentView: publicEntryView(requestedTab, recognitionEntryView),
+      activeTab: requestedTab,
       topSafePx: getTopSafePx(),
       ...(cachedAccount
         ? {
@@ -2003,6 +2008,7 @@ Page({
     let drafts: LocalDrawDraft[];
     let storedActiveBoardId: string | null;
     try {
+      ensureSystemDemoDraft(draftRepository);
       drafts = draftRepository.readAll();
       storedActiveBoardId = readActiveDraftBoardId(storage);
     } catch {
@@ -2027,6 +2033,7 @@ Page({
       this.saveNavigation("start", null);
     }
     const submissionStateOf = (draft: LocalDrawDraft) => {
+      if (isSystemDemoDraft(draft)) return "local" as const;
       if (draft.submissionState) return draft.submissionState;
       // A draw draft may have a cloud observation identity before any ticket
       // evidence was submitted. That identity is not a contribution upload.
@@ -2077,7 +2084,8 @@ Page({
         (draft) => localSubmissionState(draft) !== "local",
       ).length,
       unuploadedCount: drafts.filter(
-        (draft) => localSubmissionState(draft) === "local",
+        (draft) =>
+          !isSystemDemoDraft(draft) && localSubmissionState(draft) === "local",
       ).length,
       activeDraft: activeDraft ? toActiveDraftViewModel(activeDraft) : null,
       ...(this.data.currentView === "draw" && !activeDraft
@@ -2116,6 +2124,22 @@ Page({
     } catch {
       this.setData({ modalView: "storage-warning" as const });
       return false;
+    }
+  },
+
+  systemDemoUploadBlocked(boardId?: string): boolean {
+    const target =
+      boardId ??
+      (this.data.activeDraft as ActiveDraftViewModel | null)?.boardId;
+    if (!target) return false;
+    if (target === SYSTEM_DEMO_BOARD_ID) return true;
+    try {
+      const draft = draftRepository
+        .readAll()
+        .find((item) => item.boardId === target);
+      return Boolean(draft && isSystemDemoDraft(draft));
+    } catch {
+      return true;
     }
   },
 
@@ -2538,6 +2562,20 @@ Page({
   },
 
   async syncSubmittedUploadSharing(recordId: string) {
+    try {
+      if (
+        recordId === SYSTEM_DEMO_BOARD_ID ||
+        draftRepository
+          .readAll()
+          .some(
+            (draft) =>
+              isSystemDemoDraft(draft) && draft.cloudRecordId === recordId,
+          )
+      )
+        return;
+    } catch {
+      return;
+    }
     await candidateUploadService.flushSharedUploads();
     if (
       this.data.modalView !== "board-upload-submitted" ||
@@ -2609,6 +2647,7 @@ Page({
     }
     const recordId = String(this.data.pendingDeleteUploadedRecordId || "");
     const boardId = String(this.data.pendingDeleteUploadedBoardId || "");
+    if (this.systemDemoUploadBlocked(boardId)) return;
     if (!recordId || deletingUploadedRecordIds.has(recordId)) return;
     deletingUploadedRecordIds.add(recordId);
     this.setUploadedRecordDeleting(recordId, true);
@@ -2648,6 +2687,7 @@ Page({
   ) {
     const visible = new Set(records.map((record) => record.recordId));
     for (const draft of draftRepository.readAll()) {
+      if (isSystemDemoDraft(draft)) continue;
       const pending = draft.pendingCloudDeletion;
       if (!pending || visible.has(pending.recordId)) continue;
       try {
@@ -3712,7 +3752,7 @@ Page({
       return;
     }
     for (const draft of drafts) {
-      if (draft.pendingFinalization) {
+      if (!isSystemDemoDraft(draft) && draft.pendingFinalization) {
         // Returning from the location permission sheet must not start a second
         // submission while the original direct upload is still running.
         if (
@@ -3728,6 +3768,7 @@ Page({
   },
 
   async finalizePersistedDraft(draft: LocalDrawDraft) {
+    if (isSystemDemoDraft(draft)) return;
     const pending = draft.pendingFinalization;
     if (
       !pending ||
@@ -4691,6 +4732,7 @@ Page({
   },
 
   onOpenShareCapture() {
+    if (this.systemDemoUploadBlocked()) return;
     cameraGeneration += 1;
     this.setData({
       modalView: "share-capture" as const,
@@ -4717,6 +4759,7 @@ Page({
   },
 
   async onCaptureEvidence() {
+    if (this.systemDemoUploadBlocked()) return;
     if (this.data.mediaBusy || this.data.shareImagePath) return;
     if (this.data.cameraStatus === "loading") {
       this.setData({ pendingEvidenceCapture: true });
@@ -4728,6 +4771,7 @@ Page({
   },
 
   async captureEvidenceNow() {
+    if (this.systemDemoUploadBlocked()) return;
     if (
       this.data.mediaBusy ||
       this.data.shareImagePath ||
@@ -4784,6 +4828,7 @@ Page({
   },
 
   async onSubmitEvidence() {
+    if (this.systemDemoUploadBlocked()) return;
     if (!this.data.shareReady || this.data.evidenceSubmitting) return;
     const draft = this.getActiveDraft();
     if (!draft) return;
@@ -5027,6 +5072,7 @@ Page({
         .find((draft) => draft.boardId === pending.boardId);
       if (
         !preparedDraft ||
+        isSystemDemoDraft(preparedDraft) ||
         preparedDraft.currentVerificationVersion !== pending.submissionVersion
       )
         return;
@@ -5103,7 +5149,9 @@ Page({
       .readAll()
       .filter(
         (draft) =>
-          draft.verificationStatus === "pending" && draft.verificationPending,
+          !isSystemDemoDraft(draft) &&
+          draft.verificationStatus === "pending" &&
+          draft.verificationPending,
       )
       .map((draft) => draft.verificationPending!);
     await Promise.all(pending.map((item) => this.runTicketVerification(item)));
@@ -5111,6 +5159,7 @@ Page({
 
   onRetryTicketVerification(event: WechatMiniprogram.BaseEvent) {
     const boardId = String(event.currentTarget.dataset.boardId || "");
+    if (this.systemDemoUploadBlocked(boardId)) return;
     const draft = draftRepository
       .readAll()
       .find((item) => item.boardId === boardId);
@@ -5161,6 +5210,7 @@ Page({
 
   async onReuploadTicketEvidence(event: WechatMiniprogram.BaseEvent) {
     const boardId = String(event.currentTarget.dataset.boardId || "");
+    if (this.systemDemoUploadBlocked(boardId)) return;
     const draft = draftRepository
       .readAll()
       .find((item) => item.boardId === boardId);
@@ -5243,6 +5293,7 @@ Page({
 
   onEditTicketNote(event: WechatMiniprogram.BaseEvent) {
     const boardId = String(event.currentTarget.dataset.boardId || "");
+    if (this.systemDemoUploadBlocked(boardId)) return;
     const draft = draftRepository
       .readAll()
       .find((item) => item.boardId === boardId);
@@ -5284,6 +5335,7 @@ Page({
     const recordId = String(this.data.noteReviewRecordId);
     const boardId = String(this.data.noteReviewBoardId);
     const submissionVersion = Number(this.data.noteReviewSubmissionVersion);
+    if (this.systemDemoUploadBlocked(boardId)) return;
     const originalDraft = draftRepository
       .readAll()
       .find((item) => item.boardId === boardId);
@@ -7887,6 +7939,7 @@ Page({
     }
     try {
       for (const draft of draftRepository.readAll()) {
+        if (isSystemDemoDraft(draft)) continue;
         const version =
           draft.currentVerificationVersion ??
           draft.evidenceSubmissionVersion ??
@@ -8203,9 +8256,10 @@ Page({
     const boardId = event.currentTarget.dataset.boardId as string | undefined;
     if (!boardId) return;
     try {
+      const localOnly = this.systemDemoUploadBlocked(boardId);
       draftRepository.delete(boardId);
       this.refreshDrafts();
-      void this.refreshCloudRecords();
+      if (!localOnly) void this.refreshCloudRecords();
       wx.showToast({ title: "记录已删除", icon: "none" });
     } catch {
       wx.showToast({ title: "删除失败，请稍后重试", icon: "none" });
@@ -8221,7 +8275,7 @@ Page({
       success: ({ confirm }) => {
         if (!confirm) return;
         try {
-          storage.removeItem(LOCAL_DRAW_DRAFTS_KEY);
+          draftRepository.clearAll();
           storage.removeItem(RECOGNITION_FLOW_KEY);
           writeActiveDraftBoardId(storage, null);
           writeRecognitionStableView(storage, "start");

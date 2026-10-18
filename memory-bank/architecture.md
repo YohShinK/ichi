@@ -3,6 +3,37 @@
 > 当前地图分享约束：`UPLOAD_CONFIRMATION_MAP_SHARING_V2`。原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门；V2已准入数据自动生成Marker，不设二次审核或授权。当前条例覆盖本人此前及以后已上传V1记录。本人记录只显示V1“已上传”，禁止二次分享按钮。现行规范：`docs/decisions/map-upload-sharing-contract.md`。
 
 
+## 2026-10-18 V2版本Git归档结构
+
+用户明确要求GitHub上的2.0.1→2.0.0→main合并，并更新项目状态、收口2.0.0。当前唯一工作集V2-GITHUB-ARCHIVE-CLOSEOUT，GitHub操作尚在执行。微信开发版本2.0.1已上传（1,060,430字节），线上2.0.0由用户确认；不将2.0.1开发上传冒称正式发布，不补造真机/人工验收，不解锁V3或重放生产部署。最终合并回执与收口以docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md及progress顶部为准。
+
+归档复用现有两个版本分支及main，不新建运行时模块或资源。2.0.1上传源码按132份路径/字节/SHA清单追溯，源分支基线4ba60719，原main本地归档007a4bb9须纳入祖先链。新增统一收口报告，旧报告均保留历史快照；不把未跟踪视觉资产或内部artifacts纳入产品源码。
+
+## 2026-10-18 V2.0.1 开发版本上传完成
+
+用户明确要求上传2.0.1后，沿用主工作区现有微信CLI与配置，完成版本2.0.1、备注“2.0.1 版本更新”的开发包上传，实际包大小1,060,430字节。132份客户端上传源码前后SHA保持，无新结构、依赖或生产资源。源码仍未提交，未提审/正式发布；交付与精确源码清单见docs/delivery/v2.0.1-development-upload.md及artifacts/v2.0.1-upload-20261018/。
+
+## 2026-10-18 V2.0.1 主工作区本地集成
+
+按用户明确指令，系统体验草稿与默认地图主页的已验证源码现已同步至正式本地主工作区/Users/cunfu/Documents/ichi 2（main），保持未提交状态；新模块职责沿用下方2.0.1两项章节。未新增生产资源或数据模型。原main最新归档及视觉文档章节保持，独立工作树仍保留。主目录1585 Vitest与12 Node实验、26网页流程、双TS/Lint/Next、合同及原生模板/样式编译通过；运行时/测试配置等17份非文档文件与独立工作树逐SHA相同。主工作区验证与集成备份见progress顶部及docs/delivery/v2.0.1-main-workspace-integration.md；下方独立工作区与main未改动文字是各项历史交付快照。
+
+
+## 2026-10-18 V2.0.1 地图默认主页（已实现）
+
+第二项复用既有platform/home-sharing.ts的公开tab解析与home/index.ts的publicEntryView/ensurePublicMapClient，不新增路由页或地图服务。调整无效/缺省tab回退及页面初始/首轮状态；识别navigation-state和本地草稿照常加载，onShow不强制切Tab。第一项系统体验文件及隔离门保持，当前实现与验证见progress顶部。
+
+
+## 2026-10-18 独立V2.0.1系统体验草稿结构（已实现）
+
+SYSTEM_DEMO仅使用现有LocalDrawDraftRepository/Storage/R2和draw-session；新增稳定身份与模板模块，独立issuance状态不绑定包版本。home首次草稿加载先ensure，再提交列表，保持活动Board和导航。所有上传/重试/恢复/快照和客户端传输边界排除系统身份；不新增生产服务、数据模型或地图接点。精确base4ba60719，独立分支feature/v2.0.1-system-demo-board；原主工作区保持。
+
+
+实际新增platform/local-board-source.ts保存稳定身份和客户端阻断断言，platform/system-demo-draft.ts调用原drawPrize生成R2模板；LocalDrawDraftRepository管理独立issuance、完整数组写入、删除墓碑/迟到写入抑制。home刷新前同步ensure，无新导航/账号依赖。cloud-recognition-task、draw-ticket-recognition和board-record-r2在本地传输/投影前防御；draw-session/board-outlook及生产服务未改。新增系统单测与home行为负测，旧条例hash测试改读固定公共fixture，Node实验按自身运行器执行。最终验证/预览/未测边界见本轮独立报告，正式发布未开始。
+
+## 2026-10-14 主分支归档里程碑
+
+按本人明确指令，main已快进包含V2完整既有源码和无ICP2.0.0修订，源码合并点990ef9a与已上传130文件SHA清单一致，实际推送与远端回读成功。本轮仅合并与归档说明，没有新增文件职责/产品能力、后端部署或微信发布；内部证据与私人物料继续本机忽略。推送前953文件/全Git历史及28图片元数据隐私复核见progress顶部和归档证据。
+
 ## 2026-10-13 ICP展示模块撤除，地图保持现状
 
 本人最终取消未实施的地图首页/定位/视野设计修订；不新增public-map-startup模块，home-sharing、public-map-query、原生定位/缩放/聚合实现保持既有版本。撤除app-filing-config.ts/app-filing.ts、home编号与查询handler/WXML/WXSS以及web route镜像；原本机ICP证据和含ICP旧候选保留历史。网页原文件归档与资料用途准确文案继续保留。2.0.0无ICP开发版本已成功上传1054310字节，备注“2.0 版本更新”；130源文件与4ba6071匹配并已推送原V2分支。无新生产资源或后端写入，当前交付见无ICP重新上传报告。

@@ -2,6 +2,8 @@
 
 > 当前地图分享约束：`UPLOAD_CONFIRMATION_MAP_SHARING_V2`。原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门；V2已准入数据自动生成Marker，不设二次审核或授权。当前条例覆盖本人此前及以后已上传V1记录。本人记录只显示V1“已上传”，禁止二次分享按钮。现行规范：`docs/decisions/map-upload-sharing-contract.md`。
 
+2026-10-18 当前版本状态：用户明确要求GitHub上的2.0.1→2.0.0→main合并，并更新项目状态、收口2.0.0。当前唯一工作集V2-GITHUB-ARCHIVE-CLOSEOUT，GitHub操作尚在执行。微信开发版本2.0.1已上传（1,060,430字节），线上2.0.0由用户确认；不将2.0.1开发上传冒称正式发布，不补造真机/人工验收，不解锁V3或重放生产部署。最终合并回执与收口以docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md及progress顶部为准。 下方早期日期段及状态是历史快照。
+
 2026-10-13：当前工作集为V2-E/TASK22 Phase8上线准备，Phase7按本人修订范围收口为132NETWORK/133公开记录。敏感扫描、备案页脚及完整自动回归已执行；微信上传、审核与实际发布分别以progress顶部和Phase8报告为准。下方日期段为历史。
 
 2026-10-06：用户已确认TASK22当前Phase1/2及地图修复人工验收完成（HUMAN_APPROVED）；TASK22八Phase总计划仍IN_PROGRESS，下一步Phase3官方网络来源，Phase3—8及正式发布未执行。当前入口为docs/delivery/v2-e-task-22-report-and-human-acceptance.md及progress顶部。历史AWAITING_REVIEW不要求重复验收或重做部署；本次报告/执行说明不启动Phase3。
@@ -12,7 +14,7 @@
 
 ICHI 是面向一番赏玩家的用户侧产品，按照三个独立决策门逐步发展：V1 即时计算、V2 好版线索地图、V3 可信票池社群。Next.js 手机优先网页是 V1 已批准的视觉与交互基线；V2 地图涉及新的公开数据、同意、位置、服务端读取和真机契约，现已基于验证后的 V1 Current Truth 重建完整计划并通过 Final Human Review，不能被解释为只做页面照搬。
 
-## 当前状态
+## 早期状态快照（以顶部为准）
 
 2026-10-04地图资料接点：生产已绑定当前本人安全昵称、独立公开头像副本、真实核验备注及首次上传时间。旧direct备注仅在本人当前条例已接受后由客户端自动后台补审，使用当次临时OpenID并只存exact-hash安全证明；没有新授权或分享按钮。V2详情只读公开投影，Freshness仍用observedAt。正常active账号举报、封禁/异常/受限制不计数，10个不同合格用户隐藏。最新证据与状态见progress顶部及docs/delivery/v2-e-task-22-map-display-and-public-metadata-audit.md。
 

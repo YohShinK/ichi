@@ -1,3 +1,4 @@
+import { assertUploadableBoardId } from "./local-board-source.js";
 import type { RecognitionPrizeDraft } from "./recognition-flow.js";
 import {
   callCloudFunction,
@@ -169,7 +170,10 @@ export const finalizeCloudObservation = (
   readonly status: string;
   readonly idempotent: boolean;
   readonly uploadSharingAcknowledged?: boolean;
-}> => callCloudFunction(api, "finalize-board-observation", input);
+}> => {
+  if (input.boardId) assertUploadableBoardId(input.boardId);
+  return callCloudFunction(api, "finalize-board-observation", input);
+};
 
 export const prepareCloudObservationForUpload = (
   api: CloudFunctionApi,
@@ -203,9 +207,11 @@ export const prepareCloudObservationForUpload = (
   readonly idempotent: boolean;
   readonly created: boolean;
   readonly uploadSharingAcknowledged?: boolean;
-}> =>
-  callCloudFunction(api, "finalize-board-observation", {
+}> => {
+  assertUploadableBoardId(input.boardId);
+  return callCloudFunction(api, "finalize-board-observation", {
     action: "prepare-new-upload",
     sourcePath: "assisted-draw",
     ...input,
   });
+};

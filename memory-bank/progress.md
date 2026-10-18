@@ -2,6 +2,52 @@
 
 > 当前地图分享约束：`UPLOAD_CONFIRMATION_MAP_SHARING_V2`。原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门；V2已准入数据自动生成Marker，不设二次审核或授权。当前条例覆盖本人此前及以后已上传V1记录。本人记录只显示V1“已上传”，禁止二次分享按钮。现行规范：`docs/decisions/map-upload-sharing-contract.md`。
 
+## 2026-10-18 V2版本GitHub归档与2.0.0收口（进行中）
+
+用户明确要求GitHub上的2.0.1→2.0.0→main合并，并更新项目状态、收口2.0.0。当前唯一工作集V2-GITHUB-ARCHIVE-CLOSEOUT，GitHub操作尚在执行。微信开发版本2.0.1已上传（1,060,430字节），线上2.0.0由用户确认；不将2.0.1开发上传冒称正式发布，不补造真机/人工验收，不解锁V3或重放生产部署。最终合并回执与收口以docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md及progress顶部为准。
+
+授权本次Git提交、推送及两次PR合并；先核对已上传132份客户端源码，再发布feature/v2.0.1-system-demo-board至origin并合入codex/v2-release-2.0.0，随后合入main。保留原main本地文档修改和148份无关未跟踪文件，后者不作为本次归档输入；内部证据与凭据继续忽略。代码与本次已完成回归一致，仅补状态记录，不重复上传微信。
+
+## 2026-10-18 V2.0.1 开发版本上传成功（当前权威）
+
+用户在本地集成完成后明确要求“上传2.0.1版本”。当前活动区块V2-E，唯一工作集V2.0.1-DEVELOPMENT-UPLOAD；授权使用/Users/cunfu/Documents/ichi 2当前源码上传微信开发版本2.0.1，备注“2.0.1 版本更新”。此前仅本地开发/禁止上传文字为历史授权边界，本次仅开发包上传已被最新指令解锁，不含提审/正式发布、Git提交/推送或生产后端部署。
+
+微信CLI于2026-10-18 17:01:53（Asia/Tokyo）完成2.0.1开发版本上传，备注“2.0.1 版本更新”，包大小1,060,430字节；退出码0、日志“✔ upload”及结构化size回执均已核对。132份客户端上传源码（含原许可证/说明资产）上传前后逐SHA一致，相较线上2.0.0清单9份修改/新增。17份本轮非文档文件与刚通过主目录回归的SHA一致；沿用本轮1585 Vitest/1既有SKIP、12 Node实验、26 Web和类型/Lint/构建/合同/平台编译证据，不重复运行未变代码。
+
+状态REQUESTED_DEVELOPMENT_UPLOAD_COMPLETE；本轮上传工作集已完成。148份原未跟踪文件及main HEAD 007a4bb9保持，源码仍未提交。仅开发版本上传，不升级人工或真机验收，不将线上版本改记为2.0.1。未提审/正式发布、Git提交/推送、后端部署或业务数据写入。交付docs/delivery/v2.0.1-development-upload.md，证据artifacts/v2.0.1-upload-20261018/；上传成功标记首次词语解析未匹配勾号已按真实日志复核，未重复上传。
+
+## 2026-10-18 V2.0.1 已合入主工作区（本地回归通过）
+
+当前活动区块：V2-E；区块状态：IN_PROGRESS；当前唯一工作集V2.0.1-MAIN-INTEGRATION，状态LOCAL_INTEGRATED / LOCAL_GATES_PASS / AWAITING_REVIEW。用户本轮明确要求将2.0.1独立工作区合并回主工作区。已将24份未提交改动合入/新增至/Users/cunfu/Documents/ichi 2的main工作区，另增本轮集成报告；main HEAD仍为007a4bb9fb1414686ba45a1ec847275664c4f16a。默认地图与系统体验两项均已搭载。主目录重跑1585 Vitest PASS/1既有SKIP/0FAIL、12 Node实验PASS、26/26网页流程PASS；双TS、Lint、contracts/workflow、Next构建及WCC/WCSC均通过。最终分享门、格式、Git差异及960份源码扫描通过；不用独立分支旧PASS冒称新真机验收。
+
+原main两份dirty文档、10-14归档及10-16视觉任务记录逐段保留，148份既有untracked文件逐SHA未变。三份文档的分叉通过将V2.0.1新增章节前置到main原正文解决；其余目标来自一致基线。独立分支/工作树及其24份改动均保持，集成前备份、清单和收据位于artifacts/v2.0.1-main-integration/。不创建Git提交，不推送、不正式部署或微信上传/审核/发布；不自行标HUMAN_APPROVED或真机通过。
+
+当前入口docs/delivery/v2.0.1-main-workspace-integration.md。微信开发者工具应使用用户截图中的主目录并重新编译；普通启动进入地图，切至识别可查看本机体验草稿，已删除不补发规则保持。下方独立工作树交付和“main未改动”仅为当时快照。未将离线验证项目、测试Storage标记或真实账号数据迁入主项目。
+
+
+## 2026-10-18 V2.0.1 第二项：地图默认主页（当前工作集）
+
+当前活动区块：V2-E；区块状态：IN_PROGRESS；独立分支feature/v2.0.1-system-demo-board继续保留第一项全部未提交代码。用户明确追加第二项“进入小程序的主页从识别页切换成地图页”；当前V2.0.1-MAP-HOME已实现，LOCAL_IMPLEMENTED / TESTS_PASS / AWAITING_REVIEW / RELEASE_NOT_STARTED。无/非法tab默认地图，有效分享链接指定页保持，前后台不覆盖当前Tab；识别持久状态及本地体验规则保持。第一项收口是上一快照，不将第二项新增验证冒称旧证据。原main和线上2.0.0不改，无Git提交/推送、云端写入或微信上传/审核/发布。
+
+
+本轮1585 Vitest PASS/1既有SKIP/0FAIL、12 Node实验PASS、26 Web、双TS/Lint/contracts/workflow/Next PASS；原生隔离13步确认默认地图、指定分享路由和位置请求0，截图已查。最终平台编译/格式/diff/源码扫描PASS，TRUE_DEVICE_NOT_RUN。交付docs/delivery/v2.0.1-map-default-home.md，证据artifacts/v2.0.1-map-home/；第一项规则保持，主工作区预览仍需本人打开独立2.0.1工作区才能带新代码。
+
+## 2026-10-18 独立V2.0.1系统体验草稿本地实现完成（当前本地工作集）
+
+用户已确认当前线上2.0.0就是10月13日无ICP包，对应源码4ba60719a7ec990c62d69eede0a4ad9047216b78（上传清单与该提交匹配）。新独立工作树分支feature/v2.0.1-system-demo-board从此SHA建立，HEAD仍为base；原main工作区及dirty/untracked文件全部保留。最新用户授权只实施V2.0.1-LOCAL-DEMO，不继续历史TASK22外部动作或V3。
+
+当前活动区块：V2-E；区块状态：IN_PROGRESS；唯一工作集V2.0.1-LOCAL-DEMO（独立分支）。状态V2.0.1_LOCAL_IMPLEMENTED / TESTS_PASS / RELEASE_NOT_STARTED；自动完成、人工复核AWAITING_REVIEW。纯本地一次发放/可撤销D+C事件/持久与删除/所有上传和地图路径隔离已完成；不自动导航、不改观察窗口。发布状态确认是用户本轮陈述，不补造平台回执、发布日期或手机型号。无Git提交/推送/PR/tag、云端/微信上传/审核/发布动作。
+
+
+最终自动门：1578 Vitest PASS/1既有SKIP/0FAIL、12 Node实验PASS、26 Playwright PASS、双TypeScript/Lint/contracts/workflow/分享门/Next PASS，最终2 WXML/4 WXSS编译与50运行时TS转译PASS；原生隔离30步/4截图PASS（试玩/重编译恢复/删除后0份/上传前后云拦截无增量），源码秘密扫描及格式/diff PASS。TRUE_DEVICE_NOT_RUN。根测试运行器归属及旧条例hash公共fixture已修复为可随源码复现。报告docs/delivery/v2.0.1-system-demo-board-local-issuance.md；证据artifacts/v2.0.1-system-demo/。云端写入0、线上2.0.0保持、发布未开始；不解锁V3或重放TASK22生产动作。
+
+## 2026-10-14 V2主分支归档完成，推送前隐私复核通过（最新权威）
+
+- 本人明确授权“将V2分支合并到main并推送”，并追加要求推送前处理项目隐私。当前V2-E/TASK22 Phase8本项MAIN_ARCHIVE_COMPLETE；main从929d189快进合并codex/v2-release-2.0.0至源码合并点990ef9a046d06d9056791d20d1d689afb19f099b，实际推送成功，远端refs/heads/main直接回读一致；后续提交仅补本归档说明。
+- 合并无冲突、无force、源码树与此前已验证V2完全一致。130份微信上传源文件仍逐SHA匹配；沿用当前1520/1SKIP与26网页复查证据，不重复测试或上传。ICP保持移除，地图与其余产品行为不变。
+- 推送前重新扫描953份Git归档文件，源码Gitleaks无凭据命中；全部Git历史6项与既有已核实SDK表达式误报fingerprint一致。手机号/身份证形状0，30项OpenID形状均代码名称/负向代码断言，1邮箱为依赖公开联系人；28张图片元数据核查无GPS/个人作者/相机信息，仅色彩与尺寸。内部artifacts/exports/凭据/私人物料等在Git中0项，保留本机忽略；模式/元数据检查不冒称对全部历史二进制做过OCR语义审查。
+- 无提审、实际微信发布、tag、后端部署/迁移或运维密钥轮换。TASK22整体仍IN_PROGRESS，既有手机和平台声明待办保持。证据artifacts/task22/phase8-main-archive-20261013/，交付见phase8-no-icp-reupload报告的主分支归档节。
+
 ## 2026-10-13 无ICP的2.0.0重新上传与Git归档完成（最新权威）
 
 - 当前仍V2-E/TASK22 Phase8；本轮本人最终指定的ICP移除/重新上传范围已完成，P8-F1—F4全部PASS / REQUESTED_REUPLOAD_COMPLETE。取消的地图首屏/定位/视野提案未实施，默认入口、公开查询、定位、缩放、聚合与供给保持原版本；TASK22整体及手机/实际发布不因此升级为已验收。

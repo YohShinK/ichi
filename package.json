@@ -13,7 +13,7 @@
     "format:check": "prettier --check .",
     "lint": "eslint apps packages services scripts",
     "typecheck": "tsc -p tsconfig.json --pretty false && tsc -p apps/web/tsconfig.json --pretty false",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run --passWithNoTests && node --test experiments/remaining-observation-r0/remaining-observation-resolver.test.js",
     "test:core": "vitest run packages/core",
     "test:web": "corepack pnpm --filter @ichi/web test:e2e",
     "validate:v1f": "node scripts/validate-v1f-release.mjs",

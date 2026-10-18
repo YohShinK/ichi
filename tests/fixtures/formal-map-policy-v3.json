@@ -1,0 +1,46 @@
+{
+  "terms": {
+    "version": "map-contribution-20261003-v3",
+    "scopeDigest": "5242636e393cec66b6a1ce75abe3dd3aa7817a3f1eeb68992d54f2c1c83767d6",
+    "uploadSharingScope": "UPLOADED_V1_RECORDS",
+    "rightsAttestationIncluded": true
+  },
+  "scope": {
+    "version": "player-public-scope-20261003-v3",
+    "termsTextSha256": "5a04187ca8ee98aa0ac0b26b5ee75885960dd484be609f44f3eb26442b01b702",
+    "sourceTypes": ["DRAW_RECORD", "UPLOAD_RECORD"],
+    "publicFields": [
+      "publicLocation",
+      "observedAt",
+      "boardSafeFacts",
+      "opportunity",
+      "freshness",
+      "reviewedVenueNote",
+      "safeContributor",
+      "recordType"
+    ],
+    "locationPolicy": {
+      "version": "player-public-location-20261003-v1",
+      "ruleId": "gcj02-grid-0.001-accuracy-100m-v1",
+      "precisionMode": "APPROXIMATE",
+      "gridDegrees": 0.001,
+      "maxAccuracyMeters": 100
+    },
+    "requires": [
+      "SERVER_COMPLETED_V1_UPLOAD",
+      "CURRENT_ACCOUNT_SCOPE_ACCEPTED",
+      "RIGHTS_ATTESTED_IN_ACCOUNT_TERMS",
+      "FOLLOW_CURRENT_VERSION"
+    ],
+    "historicalDefault": "CURRENT_AND_PRIOR_COMPLETED_V1_UPLOADS_AFTER_EXPLICIT_CURRENT_CONSENT",
+    "deletion": "PROPAGATE_HIDE_NO_RESURRECTION",
+    "sharingAuthorization": "UPLOADED_V1_AND_EXPLICIT_ACCOUNT_CONSENT",
+    "uploadSharingScope": "UPLOADED_V1_RECORDS"
+  },
+  "previousProductionTerms": {
+    "version": "map-contribution-20261003-v2",
+    "scopeDigest": "4bbd5de5b49d44a5eb11e4e3c96e77194ab48e06cdfdb4b7ec2319af2ef82230"
+  },
+  "termsTextSha256": "5a04187ca8ee98aa0ac0b26b5ee75885960dd484be609f44f3eb26442b01b702",
+  "status": "LOCAL_V3_CANDIDATE"
+}

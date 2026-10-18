@@ -157,10 +157,7 @@ describe("production map boundary", () => {
   });
   it("binds account consent for previous completed V1 uploads to its explicit terms scope", () => {
     const candidate = JSON.parse(
-      fs.readFileSync(
-        "artifacts/task22/phase2-uploaded-v1-consent/formal-policy-candidate.json",
-        "utf8",
-      ),
+      fs.readFileSync("tests/fixtures/formal-map-policy-v3.json", "utf8"),
     );
     const stable = (v: unknown) =>
       JSON.stringify(v, (_k, x) =>

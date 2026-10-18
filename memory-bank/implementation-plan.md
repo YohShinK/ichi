@@ -3,6 +3,70 @@
 > 当前地图分享约束：`UPLOAD_CONFIRMATION_MAP_SHARING_V2`。原上传确认即分享意愿；核验后进入V1（不依赖条例），同意条例后通过V1→V2准入门；V2已准入数据自动生成Marker，不设二次审核或授权。当前条例覆盖本人此前及以后已上传V1记录。本人记录只显示V1“已上传”，禁止二次分享按钮。现行规范：`docs/decisions/map-upload-sharing-contract.md`。
 
 
+## 2026-10-18 V2 GitHub合并与2.0.0收口工作集
+
+用户明确要求GitHub上的2.0.1→2.0.0→main合并，并更新项目状态、收口2.0.0。当前唯一工作集V2-GITHUB-ARCHIVE-CLOSEOUT，GitHub操作尚在执行。微信开发版本2.0.1已上传（1,060,430字节），线上2.0.0由用户确认；不将2.0.1开发上传冒称正式发布，不补造真机/人工验收，不解锁V3或重放生产部署。最终合并回执与收口以docs/delivery/v2.0.0-closeout-and-v2.0.1-github-merge.md及progress顶部为准。
+
+| Step | 工作与验证 | 状态 |
+| --- | --- | --- |
+| CLOSE-01 | 备份、原文件保护、132份上传源码对账、候选秘密扫描与治理检查 | IN_PROGRESS |
+| CLOSE-02 | feature/v2.0.1-system-demo-board提交推送，PR合入codex/v2-release-2.0.0 | PENDING |
+| CLOSE-03 | codex/v2-release-2.0.0经PR合入main，回读远端祖先与132份源码SHA | PENDING |
+| CLOSE-04 | 当前文档状态更新、最终Git归档与2.0.0按用户指令收口 | PENDING |
+
+## 2026-10-18 V2.0.1 开发版本上传工作集
+
+用户明确授权上传2.0.1。当前V2-E唯一工作集V2.0.1-DEVELOPMENT-UPLOAD；只上传已集成的主工作区源码，版本2.0.1、备注“2.0.1 版本更新”。本指令覆盖此前本地开发的禁止上传边界；不包含提审/正式发布、Git提交/推送或新后端动作。
+
+| Step | 任务与验证 | 状态 |
+| --- | --- | --- |
+| UPLOAD-01 | 核对17份已回归文件SHA、132份客户端上传清单、目标项目与登录状态 | COMPLETE |
+| UPLOAD-02 | 微信CLI上传2.0.1并核对成功日志、结构化包大小回执 | COMPLETE；1,060,430字节、✔ upload |
+| UPLOAD-03 | 上传前后源码一致性、工作流/差异检查及交付收口 | COMPLETE；132份源码与148份原文件保持，见交付报告 |
+
+用户请求的开发版本上传完成，不将本次上传记作人工/真机验收或正式发布；既有V2-E总体状态保持。交付docs/delivery/v2.0.1-development-upload.md。
+
+## 2026-10-18 V2.0.1 主工作区集成工作集
+
+用户明确授权独立工作区合入主工作区；当前V2-E活动范围仅完成两项2.0.1的本地集成，不包含发布、推送或新增产品能力。
+
+| Step | 任务与验证 | 状态 |
+| --- | --- | --- |
+| INTEGRATE-01 | 源分支/基线/主工作区dirty核对与原文件备份、无损合入24份改动 | COMPLETE |
+| INTEGRATE-02 | 17份非文档源文件逐SHA一致、三份文档保留main正文、148份原untracked保持 | COMPLETE |
+| INTEGRATE-03 | 主工作区完整测试/类型/Lint/Next/Web/平台/工作流/源码扫描及收口 | AWAITING_REVIEW；本地集成完成，结果见交付报告 |
+
+
+## 2026-10-18 V2.0.1 第二项工作集：地图默认主页
+
+当前活动区块仍V2-E，独立2.0.1分支工作集扩为系统体验草稿+地图默认主页；第一项已完成基线保留。用户本轮明确解锁第二项本地实现，不包含Git提交/推送或微信发布。
+
+| Step | 工作与验证 | 状态 |
+| --- | --- | --- |
+| HOME-01 | 无参数/非法tab默认地图、有效分享指定Tab、首帧地图 | AWAITING_REVIEW |
+| HOME-02 | 识别草稿恢复/体验发放、onShow保持、存储异常与地图入口回归 | AWAITING_REVIEW |
+| HOME-03 | 类型/Lint/全量测试/构建/平台编译/工作流与报告 | AWAITING_REVIEW |
+
+
+## 2026-10-18 独立V2.0.1系统体验草稿工作集
+
+用户明确授权执行Downloads总命令，并确认线上无ICP2.0.0源码4ba60719。唯一新开发工作集V2.0.1-LOCAL-DEMO（独立分支），不继续历史TASK22生产工作或V3。
+
+| Step | 工作与验证 | 状态 |
+| --- | --- | --- |
+| DEMO-01 | 精确基线、无损隔离分支、同步产品/技术合同 | COMPLETE |
+| DEMO-02 | R2模板及合法D/C事件、逐次撤销/费用与重启恢复 | AWAITING_REVIEW |
+| DEMO-03 | 首次加载发放、离线/老新设备/并发/删除/故障恢复 | AWAITING_REVIEW |
+| DEMO-04 | 卡片标识、工作台能力、上传及地图来源全入口负测 | AWAITING_REVIEW |
+| DEMO-05 | 1578+12自动测试、26 Web、类型/Lint/Next、原生编译及隔离30步/4截图、diff/秘密扫描/报告PASS | AWAITING_REVIEW |
+
+自动通过后为AWAITING_REVIEW/LOCAL_IMPLEMENTED；无真机明确TRUE_DEVICE_NOT_RUN，不等待手机即可完成本地开发交付；不伪造人工门或线上状态。禁止commit/push/PR/merge/tag/正式部署/微信upload/review/publish。
+
+
+## 2026-10-14 Phase8 主分支归档已按本人指令完成
+
+P8-G=MAIN_ARCHIVE_COMPLETE / PRIVACY_RECHECK_PASS。本人明确授权V2→main合并并推送、推送前隐私处理；953文件源码与全部Git历史扫描/模式复核、28图片元数据核查及私有文件忽略边界完成。main从929d189快进至V2源码990ef9a，实际push成功/远端main回读一致，130微信源文件SHA保持。归档说明追加提交不改代码，不需重新上传。正式微信提审/实际发布/tag及手机/平台声明仍按各自待办与授权处理，不升级TASK22整体完成。
+
 ## 2026-10-13 最终唯一工作集：P8-F 移除ICP并重新上传2.0
 
 本人取消地图首页/定位/自动视野设计修订，保持现状。此前P8-F1—F4未实施，不再执行。当前活动区块仍V2-E/TASK22 Phase8；备案展示旧候选由无ICP新包取代，微信版本沿用2.0.0，备注“2.0 版本更新”。
